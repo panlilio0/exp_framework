@@ -1,0 +1,4 @@
+- build form scratch
+- use torch for layers and nodes
+- might need to code compute/feedforward funcs (ask on tuesday)
+- explore activation functions and decide which is best for robot actuation / snn
