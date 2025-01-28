@@ -10,58 +10,20 @@ import random
 import numpy as np
 from evogym import EvoWorld, EvoSim, EvoViewer
 from evogym import WorldObject
+from cmaes import CMA
 
-def run_rmhc(gens, show=True):
-    """
-    Run a RMHC in evogym. 
+robot_spawn_x = 3
+robot_spawn_y = 10
+actuator_min_len = 0.6
+actuator_max_len = 1.6
+frame_cycle_len = 10
+num_actuators = 10
+num_iters = 200
+mutate_rate = 0.2
+fitness_offset = 100
 
-    Fitness is defined as the sum of the distance that the 
-    robot's center of mass moves in between each step of the simulation.
-    The robot morphology is predefined and imported from "speed_bot.json". 
-    It has ten actuators. The robot's genome is a vector of twenty scalars. 
-    At each time step, the x & y coordinates of the robot's center of mass 
-    are averaged and this scalar is multiplied by the genome vector. In a loop, 
-    for ten frames, this value is multiplied by the first ten values of the vector. 
-    For the next ten frames, they are multipled by the second ten. These values are 
-    then clipped to between 0.6 and 1.6 and each represent an actuator target length 
-    for that simulation step. The genome is mutated by replacing a vector index with 
-    a random float between 0 and 1 with a 20% probabillity for each index.
-    
-    Parameters:
-        iters (int): How many generations to run.
-        show (bool): If true, renders all simulations. If false, only renders the fittest robot.
-    
-    Returns:
-        (ndarray, fitness): The fittest genome the RMHC finds and its fitness.
-    """
-
-    iters = 100
-    genome = np.random.rand(20)
-    best_fitness = run_simulation(iters, genome, show)
-
-    print("Starting fitness:", best_fitness)
-
-    for i in range(gens):
-
-        # Mutate
-        mutated_genome = genome.copy()
-
-        mutated_genome = np.array([random.random() if random.random() < 0.2 else x for x in mutated_genome])
-
-        new_fitness = run_simulation(iters, mutated_genome, show)
-
-        # Replace old genome with new genome if it is fitter
-        if new_fitness > best_fitness:
-            print("Found better after", i, "generations:", new_fitness)
-            best_fitness = new_fitness
-            genome = mutated_genome
-
-    # Show fittest genome
-    print("Final fitness", best_fitness)
-    run_simulation(500, genome)
-
-    return (genome, best_fitness)
-
+env_file_name = "simple_environment.json"
+robot_file_name = "speed_bot.json"
 
 def run_simulation(iters, genome, show=True):
     """
@@ -78,16 +40,16 @@ def run_simulation(iters, genome, show=True):
     """
 
     # Create world
-    world = EvoWorld.from_json(os.path.join('world_data', 'simple_environment.json'))
+    world = EvoWorld.from_json(os.path.join('world_data', env_file_name))
 
     # Add robot
-    robot = WorldObject.from_json(os.path.join('world_data', 'speed_bot.json'))
+    robot = WorldObject.from_json(os.path.join('world_data', robot_file_name))
 
     world.add_from_array(
         name='robot',
         structure=robot.get_structure(),
-        x=3,
-        y=10,
+        x=robot_spawn_x,
+        y=robot_spawn_y,
         connections=robot.get_connections())
 
     # Create simulation
@@ -113,12 +75,12 @@ def run_simulation(iters, genome, show=True):
         action = genome * ((com_1[0] + com_1[1]) / 2)
 
         # Clip actuator target lengths to be between 0.6 and 1.6 to prevent buggy behavior
-        action = np.clip(action, 0.6, 1.6)
+        action = np.clip(action, actuator_min_len, actuator_max_len)
 
-        if i % 20 < 10:
-            action = action[0:10]
+        if i % (frame_cycle_len * 2) < frame_cycle_len:
+            action = action[0:num_actuators]
         else:
-            action = action[10:20]
+            action = action[num_actuators:(num_actuators * 2)]
 
         # Set robot action to the action vector. Each actuator corresponds to a vector
         # index and will try to expand/contract to that value
@@ -137,10 +99,38 @@ def run_simulation(iters, genome, show=True):
 
         if show:
             viewer.render('screen', verbose=True)
+
     viewer.close()
 
-
-    return fitness
+    return fitness_offset - fitness
 
 if __name__ == "__main__":
-    run_rmhc(50, False)
+    optimizer = CMA(mean=np.ones(20), sigma=2)
+
+    all_solutions = []
+
+    for generation in range(5):
+        solutions = []
+
+        for _ in range(optimizer.population_size):
+            x = optimizer.ask()
+            value = run_simulation(num_iters, x, False)
+            solutions.append((x, value))
+
+        optimizer.tell(solutions)
+        print([i[1] for i in solutions])
+        print("Generation", generation, "Best Fitness:", solutions[0][1])
+
+        all_solutions.append(solutions)
+
+    best_fitness = fitness_offset
+    best_genome = []
+
+    for generation in all_solutions:
+        if generation[0][1] < best_fitness:
+            best_fitness = generation[0][1]
+            best_genome = generation[0][0]
+
+    print("Final Best Fitness", best_fitness)
+
+    run_simulation(num_iters, best_genome)
