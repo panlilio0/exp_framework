@@ -1,13 +1,15 @@
 """
-Simple RMHC of walking robot from scratch in evogym
+Run cma-es of walking robot in evogym
 
 Author: Thomas Breimer
-January 22nd, 2025
+January 29th, 2025
 """
 
 import os
-import random
+import pathlib
+import datetime
 import numpy as np
+import pandas as pd
 from evogym import EvoWorld, EvoSim, EvoViewer
 from evogym import WorldObject
 from cmaes import CMA
@@ -16,14 +18,36 @@ robot_spawn_x = 3
 robot_spawn_y = 10
 actuator_min_len = 0.6
 actuator_max_len = 1.6
-frame_cycle_len = 10
 num_actuators = 10
 num_iters = 200
-mutate_rate = 0.2
+num_gens = 50
 fitness_offset = 100
+fps = 50
+
+avg_freq = 0.1
+avg_amp = 1
+avg_phase_off = 0
+sigma = 2
 
 env_file_name = "simple_environment.json"
 robot_file_name = "speed_bot.json"
+
+def sine_wave(time, frequency, amplitude, phase_offset):
+  """
+  Calculates the sine value at a given time with specified parameters.
+
+  Args:
+    time: Time at which to calculate the sine value, in seconds.
+    frequency: Frequency of the sine wave in Hz.
+    amplitude: Amplitude of the sine wave.
+    phase_offset: Phase offset in radians.
+
+  Returns:
+    The sine value at the given time.
+  """
+
+  angular_frequency = 2 * np.pi * frequency
+  return amplitude * np.sin(angular_frequency * time + phase_offset)
 
 def run_simulation(iters, genome, show=True):
     """
@@ -31,9 +55,7 @@ def run_simulation(iters, genome, show=True):
 
     Parameters:
         iters (int): How many iterations to run.
-        genome (ndarray): The genome of the robot, which is an 
-        array of scalars from the robot's average position to the 
-        desired length of the muscles.
+        genome (ndarray): The genome of the robot.
 
     Returns:
         float: The fitness of the genome.
@@ -70,17 +92,17 @@ def run_simulation(iters, genome, show=True):
         # Get mean of robot voxels
         com_1 = np.mean(pos_1, 1)
 
-        # Compute the action vector by averaging the avg x & y
-        # coordinates and multiplying this scalar by the genome
-        action = genome * ((com_1[0] + com_1[1]) / 2)
+        time = i / fps
+
+        # Compute the action vector by taking the first three
+        # elements of the genome and inputing them as the frequency,
+        # amplitude and phase offset for a sin function at the
+        # given time, and using this value for the first actuator,
+        # and so on for all actuators
+        action = [sine_wave(time, genome[j], genome[j+1], genome[j+2]) for j in range(0, len(genome), 3)]
 
         # Clip actuator target lengths to be between 0.6 and 1.6 to prevent buggy behavior
         action = np.clip(action, actuator_min_len, actuator_max_len)
-
-        if i % (frame_cycle_len * 2) < frame_cycle_len:
-            action = action[0:num_actuators]
-        else:
-            action = action[num_actuators:(num_actuators * 2)]
 
         # Set robot action to the action vector. Each actuator corresponds to a vector
         # index and will try to expand/contract to that value
@@ -102,35 +124,46 @@ def run_simulation(iters, genome, show=True):
 
     viewer.close()
 
-    return fitness_offset - fitness
+    return fitness_offset - fitness # Turn into a minimization problem
 
-if __name__ == "__main__":
-    optimizer = CMA(mean=np.ones(20), sigma=2)
+def run_cma_es(gens):
+    """
+    Runs the cma_es algorithm on the robot locomotion problem,
+    with sin-like robot actuators.
 
-    all_solutions = []
+    Parameters:
+        gens (int): How many generations to run.
+    """
+    
+    # Generate Results DF
+    df_cols = ['Generation', 'Individual', 'Fitness']
 
-    for generation in range(5):
+    for i in range(num_actuators):
+        df_cols = df_cols + ['frequency' + str(i), 'amplitude' + str(i), 'phase_offset' + str(i)]
+
+    df = pd.DataFrame(columns=df_cols)
+
+    optimizer = CMA(mean=np.array([avg_freq, avg_amp, avg_phase_off] * num_actuators), sigma=sigma)
+
+    for generation in range(gens):
         solutions = []
 
-        for _ in range(optimizer.population_size):
+        for indv_num in range(optimizer.population_size):
             x = optimizer.ask()
             value = run_simulation(num_iters, x, False)
             solutions.append((x, value))
+            to_add = [generation, indv_num, value] + list(x)
+            df.loc[len(df)] = to_add
+
 
         optimizer.tell(solutions)
         print([i[1] for i in solutions])
         print("Generation", generation, "Best Fitness:", solutions[0][1])
 
-        all_solutions.append(solutions)
+    # Save csv
+    this_dir = pathlib.Path(__file__).parent.resolve()    
+    df.to_csv(os.path.join(this_dir, 'out', str(datetime.datetime.now()) + '_run.csv'), index=False)
 
-    best_fitness = fitness_offset
-    best_genome = []
 
-    for generation in all_solutions:
-        if generation[0][1] < best_fitness:
-            best_fitness = generation[0][1]
-            best_genome = generation[0][0]
-
-    print("Final Best Fitness", best_fitness)
-
-    run_simulation(num_iters, best_genome)
+if __name__ == "__main__":
+    run_cma_es(num_gens)
