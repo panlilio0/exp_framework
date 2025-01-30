@@ -2,7 +2,7 @@ import random
 
 
 SPIKE_DECAY = 0.1
-MAX_BIAS = 10
+MAX_BIAS = 5
 
 
 class SpikyNode:
@@ -17,27 +17,26 @@ class SpikyNode:
         if size > 0:
             self._weights = []
             # Initialize input weights between -1 and 1
-            for _ in range(size-1):
+            for _ in range(size):
                 self._weights.append((random.uniform(0, 1) * 2) - 1)
             # Add bias weight between 0 and MAX_BIAS
             self._weights.append(random.uniform(0, 1) * MAX_BIAS)
-        print(f"weights size: {len(self._weights)}, inp size: {size}")
     
     def compute(self, inputs):
         # Maintain firelog size (max 200 entries)
         while len(self.firelog) > 200:
             self.firelog.pop(0)
         # Decay the neuron’s activation level
-        print(f"current level: {self.level}")
+        print(f"current level: {self.level}, bias: {self.bias()}")
         self.level = max(self.level - SPIKE_DECAY, 0.0)
         # Validate input dimensions
         if (len(inputs) + 1) != len(self._weights):
-            print(f"Error: {len(inputs)} inputs vs {len(self._weights)-1} weights")
+            print(f"Error: {len(inputs)} inputs vs {len(self._weights)} weights")
             return 0.0
         # Calculate weighted sum of inputs
         weighted_sum = sum(inputs[i] * self._weights[i] for i in range(len(inputs)))
         self.level += weighted_sum
-        print(f"new level: {self.level}, bias: {self.bias()}")
+        print(f"new level: {self.level}")
         # Check if neuron fires
         if self.level >= self.bias():
             self.level = 0.0
@@ -111,7 +110,6 @@ class SpikyNet:
 
     def compute(self, inputs):
         hidden_output = self.hidden_layer.compute(inputs)
-        print(f"hidden output: {hidden_output}")
         # Return duty cycles of output layer instead of raw spikes
         return self.output_layer.compute(hidden_output)
     
@@ -134,9 +132,16 @@ class SpikyNet:
 
 
 if __name__=='__main__':
+    print('SpikyNode:')
+    node = SpikyNode(5)
+    node.print_weights()
+    print(node.compute(list(range(1, 6))))
+    node.print_weights()
+    print('\nSpikyNet:')
     net = SpikyNet(5, 2, 4)
     net.print_structure()
-    net.compute(list(range(1, 8, 2)))
+    print('\n')
+    print(net.compute(list(range(1, 11, 2))))
 
 
 # Not sure if this works properly, will need to test if using this for implementing SNN
