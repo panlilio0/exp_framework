@@ -10,8 +10,8 @@ import run_cma_es
 import pathlib
 import pandas as pd
 
-individual = 2
-generation = 10
+individual = 10
+generation = 1
 iters = 200
 filename = "2025-01-29 17:03:02.626331_run.csv"
 

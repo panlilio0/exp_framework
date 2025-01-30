@@ -1,8 +1,8 @@
 """
-Simple RMHC of walking robot from scratch in evogym
+Run cma-es of walking robot in evogym
 
 Author: Thomas Breimer
-January 22nd, 2025
+January 29th, 2025
 """
 
 import os
@@ -14,7 +14,6 @@ from evogym import EvoWorld, EvoSim, EvoViewer
 from evogym import WorldObject
 from cmaes import CMA
 
-
 robot_spawn_x = 3
 robot_spawn_y = 10
 actuator_min_len = 0.6
@@ -24,6 +23,11 @@ num_iters = 200
 num_gens = 50
 fitness_offset = 100
 fps = 50
+
+avg_freq = 0.1
+avg_amp = 1
+avg_phase_off = 0
+sigma = 2
 
 env_file_name = "simple_environment.json"
 robot_file_name = "speed_bot.json"
@@ -51,9 +55,7 @@ def run_simulation(iters, genome, show=True):
 
     Parameters:
         iters (int): How many iterations to run.
-        genome (ndarray): The genome of the robot, which is an 
-        array of scalars from the robot's average position to the 
-        desired length of the muscles.
+        genome (ndarray): The genome of the robot.
 
     Returns:
         float: The fitness of the genome.
@@ -134,7 +136,6 @@ def run_cma_es(gens):
     """
     
     # Generate Results DF
-
     df_cols = ['Generation', 'Individual', 'Fitness']
 
     for i in range(num_actuators):
@@ -142,7 +143,7 @@ def run_cma_es(gens):
 
     df = pd.DataFrame(columns=df_cols)
 
-    optimizer = CMA(mean=np.array([0.1, 1, 0] * num_actuators), sigma=2)
+    optimizer = CMA(mean=np.array([avg_freq, avg_amp, avg_phase_off] * num_actuators), sigma=sigma)
 
     for generation in range(gens):
         solutions = []
