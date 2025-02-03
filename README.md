@@ -4,7 +4,7 @@ This repository offers a basic development framework for running cma-es experime
 
 ## CMA-ES Demo
 
-A simple cma-es demo and potential experimental framework. [Link](https://github.com/Union-College-Computer-Science/exp_framework/tree/main)
+A simple cma-es demo and potential experimental framework. [Link](https://github.com/Union-College-Computer-Science/exp_framework/tree/main/cmaes_demo)
 
 ## Morphology
 
