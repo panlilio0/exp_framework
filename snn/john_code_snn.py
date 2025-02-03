@@ -2,7 +2,7 @@ import random
 
 
 SPIKE_DECAY = 0.1
-MAX_BIAS = 10
+MAX_BIAS = 5
 
 
 class SpikyNode:
@@ -27,14 +27,16 @@ class SpikyNode:
         while len(self.firelog) > 200:
             self.firelog.pop(0)
         # Decay the neuron’s activation level
+        print(f"current level: {self.level}, bias: {self.bias()}")
         self.level = max(self.level - SPIKE_DECAY, 0.0)
         # Validate input dimensions
         if (len(inputs) + 1) != len(self._weights):
-            print(f"Error: {len(inputs)} inputs vs {len(self._weights)-1} weights")
+            print(f"Error: {len(inputs)} inputs vs {len(self._weights)} weights")
             return 0.0
         # Calculate weighted sum of inputs
         weighted_sum = sum(inputs[i] * self._weights[i] for i in range(len(inputs)))
         self.level += weighted_sum
+        print(f"new level: {self.level}")
         # Check if neuron fires
         if self.level >= self.bias():
             self.level = 0.0
@@ -51,6 +53,9 @@ class SpikyNode:
         if len(self.firelog) > 30:
             return fires / len(self.firelog)
         return 0.0
+    
+    def print_weights(self):
+        print(self._weights)
     
     def set_weights(self, inws):
         if len(inws) != len(self._weights):
@@ -125,4 +130,18 @@ class SpikyNet:
             node.print_weights()
 
 
-# Not sure if this works porperly, will need to test if using this for implementing SNN
+
+if __name__=='__main__':
+    print('SpikyNode:')
+    node = SpikyNode(5)
+    node.print_weights()
+    print(node.compute(list(range(1, 6))))
+    node.print_weights()
+    print('\nSpikyNet:')
+    net = SpikyNet(5, 2, 4)
+    net.print_structure()
+    print('\n')
+    print(net.compute(list(range(1, 11, 2))))
+
+
+# Not sure if this works properly, will need to test if using this for implementing SNN
