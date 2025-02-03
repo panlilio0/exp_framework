@@ -37,18 +37,18 @@ def run_rmhc(gens, show=True):
 
     Fitness is defined as the sum of the distance that the 
     robot's center of mass moves in between each step of the simulation.
-    The robot morphology is predefined and imported from "speed_bot.json". 
-    It has ten actuators. The robot's genome is a vector of twenty scalars. 
+    The robot morphology is predefined and imported from a json file. 
+    It has actuators. The robot's genome is a vector of scalars. 
     At each time step, the x & y coordinates of the robot's center of mass 
     are averaged and this scalar is multiplied by the genome vector. In a loop, 
-    for ten frames, this value is multiplied by the first ten values of the vector. 
-    For the next ten frames, they are multipled by the second ten. These values are 
+    for ten frames, this value is multiplied by the first len/2 values of the vector. 
+    For the next ten frames, they are multipled by the second len/2. These values are 
     then clipped to between 0.6 and 1.6 and each represent an actuator target length 
     for that simulation step. The genome is mutated by replacing a vector index with 
     a random float between 0 and 1 with a 20% probabillity for each index.
     
     Parameters:
-        iters (int): How many generations to run.
+        gens (int): How many generations to run.
         show (bool): If true, renders all simulations. If false, only renders the fittest robot.
     
     Returns:
@@ -101,6 +101,8 @@ def run_simulation(iters, genome, show=True, fittest=False): #if fittest, then t
         genome (ndarray): The genome of the robot, which is an 
         array of scalars from the robot's average position to the 
         desired length of the muscles.
+        show (bool): Whether or not to display a simulation of the robot.
+        fittest (bool):  Whether or not the robot is the fittest if its generation
 
     Returns:
         float: The fitness of the genome.
@@ -190,9 +192,11 @@ def run_simulation_from_action(iters, given_actions, show=True, fittest=False): 
     Parameters:
         iters (int): How many iterations to run.
         given_actions (ndarray): action arrays of the existing robot. to be modified for example.
+        show (bool): Whether or not to display a simulation of the robot.
+        fittest (bool):  Whether or not the robot is the fittest if its generation
 
     Returns:
-        float: The fitness of the genome.
+        float: The fitness of the genome. (though this value is not used or updated here.)
     """
 
     # Create world
@@ -255,6 +259,18 @@ def run_simulation_from_action(iters, given_actions, show=True, fittest=False): 
 
 
 def plot_scores(fit_func_scores, fit_func_scores_best, gen_number):
+    '''
+    Plots the scores of the robot on the fitness function.
+    Plots both each generation and the best by "x" generation.
+
+    Parameters:
+        fit_func_scores (ndarray): Contains the scores of each generation.
+        fit_func_scores_best (ndarray): Contains the best scores at or before each generation.
+        gen_number (int): the number of generations in this simulation.
+
+    Returns:
+        A matplotlib plot output to a directory. Plot shows the fitness function score over the generations.
+    '''
 
     #make plot
     gen_array = np.arange(1, gen_number+1, 1)
@@ -270,6 +286,17 @@ def plot_scores(fit_func_scores, fit_func_scores_best, gen_number):
 
 
 def plot_action(action_arrays, sped=False):
+    '''
+    Plots the voxel action arrays at each step of a simulation
+
+    Parameters:
+        action_arrays (ndarray): Contains more ndarrays, one for each action array. One action array per simulator step. 
+        sped (bool): If this is the "sped up" version of the actions or not.
+
+    Returns:
+        Several matplotlib plot outputs to a directory. One with all actuator voxels and then one per voxel.
+        Also outputs an excel spreadsheet of all of the actuators' actions. 
+    '''
 
     stepcount_array = np.arange(1, len(action_arrays)+1, 1)
     plottitle = robot_file_name + " actions"
@@ -306,6 +333,18 @@ def plot_action(action_arrays, sped=False):
 
 
 def plot_voxel(stepcount_array, voxel_action, voxel_num, sped=False):
+    '''
+    Plots the voxel action arrays at each step of a simulation
+
+    Parameters:
+        stepcount_array (ndarray): An array with the number of steps from 1 to n. 
+        voxel_action (ndarray): An array with the actuator's actions at each step. 
+        voxel_num: The actuator number. Used to differentiate this actuator from the others.
+        sped (bool): If this is the "sped up" version of the actions or not.
+
+    Returns:
+        A matplotlib plot output to a directory. Plot shows the actuator's action over the course of the simulation.
+    '''
     plottitle = robot_file_name + " voxel: " + str(voxel_num)
     plt.title(plottitle)
     plt.ylabel("target length")
