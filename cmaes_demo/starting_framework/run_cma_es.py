@@ -20,7 +20,7 @@ actuator_min_len = 0.6
 actuator_max_len = 1.6
 num_actuators = 10
 num_iters = 200
-num_gens = 50
+num_gens = 2
 fitness_offset = 100
 fps = 50
 
