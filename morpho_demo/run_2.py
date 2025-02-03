@@ -27,6 +27,10 @@ env_file_name = "simple_environment_long.json"
 robot_file_name = "walkbot4billion.json"
 generations = 1500 
 
+exper_directory = 'score_plots_2/'+ robot_file_name[:-5] + " " + time.asctime() #directory generated for a single run of the program. Stores outputs.
+# [:-5] clips the ".json" off all of the robot names. It is always -5 and it's only used right here.
+# Surely that doesn't justify wasting storage on a variable to "de-magic" it? Especially with this helpful explanation? 
+
 def run_rmhc(gens, show=True):
     """
     Run a RMHC in evogym. 
@@ -50,6 +54,8 @@ def run_rmhc(gens, show=True):
     Returns:
         (ndarray, fitness): The fittest genome the RMHC finds and its fitness.
     """
+
+    os.mkdir(exper_directory) #generate special directory for results.
 
     iters = num_iters
     genome = np.random.rand(num_actuators * 2)
@@ -179,7 +185,7 @@ def run_simulation(iters, genome, show=True, fittest=False): #if fittest, then t
 
 def run_simulation_from_action(iters, given_actions, show=True, fittest=False): #if fittest, then track action
     """
-    Runs a single simulation of a given genome.
+    Runs a single sped-up simulation of a given collection of action arrays.
 
     Parameters:
         iters (int): How many iterations to run.
@@ -210,8 +216,7 @@ def run_simulation_from_action(iters, given_actions, show=True, fittest=False): 
     # Take take every other element, then double the remaining.
     # "speeds up" robot's actions. 
     halved = given_actions[::2]
-    #sped_up_action_array = np.append(halved, halved.tolist())
-    sped_up_action_array = np.concatenate((halved,halved))
+    sped_up_action_array = np.concatenate((halved,halved)) #glues two halves together so the total number of action arrays remains the same.
 
     # Set up viewer
     viewer = EvoViewer(sim)
@@ -244,29 +249,30 @@ def run_simulation_from_action(iters, given_actions, show=True, fittest=False): 
 
     if fittest:
         action_array = np.asarray(action_list)
-        plot_action(action_array)
+        plot_action(action_array, sped=True)
     
     return fitness
 
 
 def plot_scores(fit_func_scores, fit_func_scores_best, gen_number):
 
+    #make plot
     gen_array = np.arange(1, gen_number+1, 1)
-    plottitle = robot_file_name + " " + time.asctime()
+    plottitle = robot_file_name + " scores"
     plt.title(plottitle)
     plt.ylabel("scores")
     plt.xlabel("generations")
     plt.plot(gen_array, fit_func_scores, label= "at gen")
     plt.plot(gen_array, fit_func_scores_best, label= "best by gen")
     plt.legend(loc='upper center')
-    plt.savefig('score_plots_2/'+ plottitle + '.png')
+    plt.savefig(exper_directory +"/"+ plottitle + '.png')
     plt.close()
 
 
-def plot_action(action_arrays):
+def plot_action(action_arrays, sped=False):
 
     stepcount_array = np.arange(1, len(action_arrays)+1, 1)
-    plottitle = robot_file_name + " action " + time.asctime()
+    plottitle = robot_file_name + " actions"
     plt.title(plottitle)
     plt.ylabel("target length")
     plt.xlabel("steps")
@@ -281,26 +287,35 @@ def plot_action(action_arrays):
         plt.plot(stepcount_array, voxel_action, label= "voxel: " + str(i))
 
     plt.legend(loc='upper center')
-    plt.savefig('score_plots_2/'+ plottitle + '.png')
+    if sped:
+        plt.savefig(exper_directory + "/" + plottitle + ' (sped).png')
+    else:
+        plt.savefig(exper_directory + "/" + plottitle + '.png')
     plt.close()
 
     #Save voxel data for later examination
     df = pd.DataFrame(voxels_list)
-    df.to_excel('score_plots_2/'+ plottitle +'.xlsx', index=False)
+    if sped:
+        df.to_excel(exper_directory +"/"+ plottitle +' (sped).xlsx', index=False)
+    else:
+        df.to_excel(exper_directory +"/"+ plottitle +'.xlsx', index=False)
 
     #plot individual voxels
-    for i in range(len(voxels_list)): #I USE i!!!!!
-        plot_voxel(stepcount_array, voxels_list[i], i)
+    for i in range(len(voxels_list)): #I USE i!!!!! 
+        plot_voxel(stepcount_array, voxels_list[i], i, sped)
 
 
-def plot_voxel(stepcount_array, voxel_action, voxel_num):
-    plottitle = robot_file_name + " voxel: " + str(voxel_num) + " " + time.asctime()
+def plot_voxel(stepcount_array, voxel_action, voxel_num, sped=False):
+    plottitle = robot_file_name + " voxel: " + str(voxel_num)
     plt.title(plottitle)
     plt.ylabel("target length")
     plt.xlabel("steps")
     plt.plot(stepcount_array, voxel_action, label= "voxel: " + str(voxel_num))
     plt.legend(loc='upper center')
-    plt.savefig('score_plots_2/'+ plottitle + '.png')
+    if sped:
+        plt.savefig(exper_directory + "/" + plottitle + ' (sped).png')
+    else:
+        plt.savefig(exper_directory + "/" + plottitle + '.png')
     plt.close()
 
 if __name__ == "__main__":
