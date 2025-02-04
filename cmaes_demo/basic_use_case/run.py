@@ -1,29 +1,38 @@
 """
-Simple RMHC of walking robot from scratch in evogym
+CMA-ES implementation of searching for a walking robot in evogym.
+Accepts two command line arguments: number of generations to run, and sigma.
+Example: `python3 run.py 50 2`
 
 Author: Thomas Breimer
-January 22nd, 2025
+February 3rd, 2025
 """
 
 import os
-import random
+import sys
 import numpy as np
 from evogym import EvoWorld, EvoSim, EvoViewer
 from evogym import WorldObject
 from cmaes import CMA
 
-robot_spawn_x = 3
-robot_spawn_y = 10
-actuator_min_len = 0.6
-actuator_max_len = 1.6
-frame_cycle_len = 10
-num_actuators = 10
-num_iters = 200
-mutate_rate = 0.2
-fitness_offset = 100
+# Simulation constants
+ROBOT_SPAWN_X = 3
+ROBOT_SPAWN_Y = 10
+ACTUATOR_MIN_LEN = 0.6
+ACTUATOR_MAX_LEN = 1.6
+NUM_ITERS = 200
 
-env_file_name = "simple_environment.json"
-robot_file_name = "speed_bot.json"
+# Robot characteristics
+FRAME_CYCLE_LEN = 10
+NUM_ACTUATORS = 10
+
+# CMA-ES constants
+FITNESS_OFFSET = 100
+NUM_GENS = 10
+SIGMA = 2
+
+# Files
+ENV_FILENAME = "simple_environment.json"
+ROBOT_FILENAME = "speed_bot.json"
 
 def run_simulation(iters, genome, show=True):
     """
@@ -34,22 +43,23 @@ def run_simulation(iters, genome, show=True):
         genome (ndarray): The genome of the robot, which is an 
         array of scalars from the robot's average position to the 
         desired length of the muscles.
+        show (bool): Runs in headless mode when False.
 
     Returns:
         float: The fitness of the genome.
     """
 
     # Create world
-    world = EvoWorld.from_json(os.path.join('world_data', env_file_name))
+    world = EvoWorld.from_json(os.path.join('world_data', ENV_FILENAME))
 
     # Add robot
-    robot = WorldObject.from_json(os.path.join('world_data', robot_file_name))
+    robot = WorldObject.from_json(os.path.join('world_data', ROBOT_FILENAME))
 
     world.add_from_array(
         name='robot',
         structure=robot.get_structure(),
-        x=robot_spawn_x,
-        y=robot_spawn_y,
+        x=ROBOT_SPAWN_X,
+        y=ROBOT_SPAWN_Y,
         connections=robot.get_connections())
 
     # Create simulation
@@ -75,12 +85,12 @@ def run_simulation(iters, genome, show=True):
         action = genome * ((com_1[0] + com_1[1]) / 2)
 
         # Clip actuator target lengths to be between 0.6 and 1.6 to prevent buggy behavior
-        action = np.clip(action, actuator_min_len, actuator_max_len)
+        action = np.clip(action, ACTUATOR_MIN_LEN, ACTUATOR_MAX_LEN)
 
-        if i % (frame_cycle_len * 2) < frame_cycle_len:
-            action = action[0:num_actuators]
+        if i % (FRAME_CYCLE_LEN * 2) < FRAME_CYCLE_LEN:
+            action = action[0:NUM_ACTUATORS]
         else:
-            action = action[num_actuators:(num_actuators * 2)]
+            action = action[NUM_ACTUATORS:(NUM_ACTUATORS * 2)]
 
         # Set robot action to the action vector. Each actuator corresponds to a vector
         # index and will try to expand/contract to that value
@@ -102,28 +112,43 @@ def run_simulation(iters, genome, show=True):
 
     viewer.close()
 
-    return fitness_offset - fitness
+    return FITNESS_OFFSET - fitness
 
-if __name__ == "__main__":
-    optimizer = CMA(mean=np.ones(20), sigma=2)
+def run_cma(gens, sigma):
+    """
+    Runs cma-es with run_simulation as the fitness function.
+    
+    Parameters:
+        gens (int): Number of generations to run.
+        sigma (float): The standard deviation of the normal distribution 
+        used to generate new candidate solutions
+    """
 
+    # Set up cma-es
+    optimizer = CMA(mean=np.ones(NUM_ACTUATORS * 2), sigma=sigma)
     all_solutions = []
 
-    for generation in range(5):
+    # Run generations
+    for generation in range(gens):
         solutions = []
 
+        # Run individuals
         for _ in range(optimizer.population_size):
             x = optimizer.ask()
-            value = run_simulation(num_iters, x, False)
+            value = run_simulation(NUM_ITERS, x, False)
             solutions.append((x, value))
 
+        # Tell CMA-ES about preformance of individuals
         optimizer.tell(solutions)
+
+        # Update logs
         print([i[1] for i in solutions])
         print("Generation", generation, "Best Fitness:", solutions[0][1])
-
         all_solutions.append(solutions)
 
-    best_fitness = fitness_offset
+    # Find best individual (not nec. in last generation)
+
+    best_fitness = FITNESS_OFFSET
     best_genome = []
 
     for generation in all_solutions:
@@ -131,6 +156,19 @@ if __name__ == "__main__":
             best_fitness = generation[0][1]
             best_genome = generation[0][0]
 
+    # Show best individual
+
     print("Final Best Fitness", best_fitness)
 
-    run_simulation(num_iters, best_genome)
+    run_simulation(NUM_ITERS, best_genome)
+
+if __name__ == "__main__":
+    args = sys.argv
+
+    if len(args) > 1:
+        NUM_GENS = int(args[1])
+
+    if len(args) > 2:
+        SIGMA = float(args[2])
+
+    run_cma(NUM_GENS, SIGMA)
