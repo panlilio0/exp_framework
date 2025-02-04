@@ -17,3 +17,12 @@ Add custom tests to the block of code at the end of the file, or create a separa
 - Files `node.py`, `layers.py`, and `net.py` are created for designing our own SNN different from John's. 
 - Should be made from scratch using numpy only for math, no use of pytorch/tensorflow.
 - Need to figure out the activation function for the SNN that is the most efficient/best for robot actuation.
+
+## Objectives
+
+Due Tuesday 02/11
+- [ ] Figure out how to unpack CMA-ES output into weights and biases of individual SNNs
+- [ ] Build SNN
+- [ ] Build pipeline to get input values from and send output values to the evogym codebase
+- [ ] Experiment with and test the SNN itself without evogym, then try checking if it works with the pipeline through manually sending custom values
+- [ ] Compare results using input variations - decimal (actual values) vs binary vs spike-encoded vs normalized
