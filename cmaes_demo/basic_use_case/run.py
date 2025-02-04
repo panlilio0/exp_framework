@@ -165,10 +165,10 @@ def run_cma(gens, sigma):
 if __name__ == "__main__":
     args = sys.argv
 
-    if len(args) > 0 and isinstance(args[0], int):
-        NUM_GENS = args[0]
+    if len(args) > 1:
+        NUM_GENS = int(args[1])
 
-    if len(args) > 1 and isinstance(args[1], float):
-        SIGMA = args[1]
+    if len(args) > 2:
+        SIGMA = float(args[2])
 
     run_cma(NUM_GENS, SIGMA)
