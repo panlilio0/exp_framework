@@ -7,29 +7,31 @@ January 22nd, 2025
 
 import os
 import random
+import time
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import time
 from evogym import EvoWorld, EvoSim, EvoViewer
 from evogym import WorldObject
 
-robot_spawn_x = 3
-robot_spawn_y = 10
-actuator_min_len = 0.6
-actuator_max_len = 1.6
-frame_cycle_len = 10
-num_actuators = 8 #8 for walkbot4billion
-num_iters = 100
-mutate_rate = 0.2
+ROBOT_SPAWN_X = 3
+ROBOT_SPAWN_Y = 10
+ACTUATOR_MIN_LEN = 0.6
+ACTUATOR_MAX_LEN = 1.6
+FRAME_CYCLE_LEN = 10
+NUM_ACTUATORS = 8  #8 for walkbot4billion
+NUM_ITERS = 100
+MUTATE_RATE = 0.2
 
-env_file_name = "simple_environment_long.json"
-robot_file_name = "walkbot4billion.json"
-generations = 1500 
+ENV_FILENAME = "simple_environment_long.json"
+ROBOT_FILENAME = "walkbot4billion.json"
+GENS = 1500
 
-exper_directory = 'score_plots_2/'+ robot_file_name[:-5] + " " + time.asctime() #directory generated for a single run of the program. Stores outputs.
+EXPER_DIR = 'score_plots_2/' + ROBOT_FILENAME[:-5] + " " + time.asctime(
+)  #directory generated for a single run of the program. Stores outputs.
 # [:-5] clips the ".json" off all of the robot names. It is always -5 and it's only used right here.
-# Surely that doesn't justify wasting storage on a variable to "de-magic" it? Especially with this helpful explanation? 
+# Surely that doesn't justify wasting storage on a variable to "de-magic" it? Especially with this helpful explanation?
+
 
 def run_rmhc(gens, show=True):
     """
@@ -55,22 +57,25 @@ def run_rmhc(gens, show=True):
         (ndarray, fitness): The fittest genome the RMHC finds and its fitness.
     """
 
-    os.mkdir(exper_directory) #generate special directory for results.
+    os.mkdir(EXPER_DIR)  #generate special directory for results.
 
-    iters = num_iters
-    genome = np.random.rand(num_actuators * 2)
+    iters = NUM_ITERS
+    genome = np.random.rand(NUM_ACTUATORS * 2)
     best_fitness = run_simulation(iters, genome, show)
 
     print("Starting fitness:", best_fitness)
-    fitness_by_gen = np.array([]) #array of fitness
-    best_fitness_by_gen = np.array([]) #array of fitness (best as of i gen)
+    fitness_by_gen = np.array([])  #array of fitness
+    best_fitness_by_gen = np.array([])  #array of fitness (best as of i gen)
 
     for i in range(gens):
 
         # Mutate
         mutated_genome = genome.copy()
 
-        mutated_genome = np.array([random.random() if random.random() < mutate_rate else x for x in mutated_genome])
+        mutated_genome = np.array([
+            random.random() if random.random() < MUTATE_RATE else x
+            for x in mutated_genome
+        ])
 
         new_fitness = run_simulation(iters, mutated_genome, show)
 
@@ -84,15 +89,18 @@ def run_rmhc(gens, show=True):
 
         best_fitness_by_gen = np.append(best_fitness_by_gen, best_fitness)
 
-
     # Show fittest genome
     print("Final fitness", best_fitness)
-    run_simulation(num_iters * 5, genome, fittest=True)
+    run_simulation(NUM_ITERS * 5, genome, fittest=True)
     plot_scores(fitness_by_gen, best_fitness_by_gen, gens)
 
     return (genome, best_fitness)
 
-def run_simulation(iters, genome, show=True, fittest=False): #if fittest, then track action
+
+def run_simulation(iters,
+                   genome,
+                   show=True,
+                   fittest=False):  #if fittest, then track action
     """
     Runs a single simulation of a given genome.
 
@@ -109,17 +117,16 @@ def run_simulation(iters, genome, show=True, fittest=False): #if fittest, then t
     """
 
     # Create world
-    world = EvoWorld.from_json(os.path.join('world_data', env_file_name))
+    world = EvoWorld.from_json(os.path.join('world_data', ENV_FILENAME))
 
     # Add robot
-    robot = WorldObject.from_json(os.path.join('world_data', robot_file_name))
+    robot = WorldObject.from_json(os.path.join('world_data', ROBOT_FILENAME))
 
-    world.add_from_array(
-        name='robot',
-        structure=robot.get_structure(),
-        x=robot_spawn_x,
-        y=robot_spawn_y,
-        connections=robot.get_connections())
+    world.add_from_array(name='robot',
+                         structure=robot.get_structure(),
+                         x=ROBOT_SPAWN_X,
+                         y=ROBOT_SPAWN_Y,
+                         connections=robot.get_connections())
 
     # Create simulation
     sim = EvoSim(world)
@@ -146,12 +153,12 @@ def run_simulation(iters, genome, show=True, fittest=False): #if fittest, then t
         action = genome * ((com_1[0] + com_1[1]) / 2)
 
         # Clip actuator target lengths to be between 0.6 and 1.6 to prevent buggy behavior
-        action = np.clip(action, actuator_min_len, actuator_max_len)
+        action = np.clip(action, ACTUATOR_MIN_LEN, ACTUATOR_MAX_LEN)
 
-        if i % (frame_cycle_len * 2) < frame_cycle_len:
-            action = action[0:num_actuators]
+        if i % (FRAME_CYCLE_LEN * 2) < FRAME_CYCLE_LEN:
+            action = action[0:NUM_ACTUATORS]
         else:
-            action = action[num_actuators:(num_actuators * 2)]
+            action = action[NUM_ACTUATORS:(NUM_ACTUATORS * 2)]
 
         # Set robot action to the action vector. Each actuator corresponds to a vector
         # index and will try to expand/contract to that value
@@ -180,12 +187,17 @@ def run_simulation(iters, genome, show=True, fittest=False): #if fittest, then t
     if fittest:
         action_array = np.asarray(action_list)
         plot_action(action_array)
-        run_simulation_from_action(iters, action_array, True, True) #Yeah, this is a hack, I know. I'm sorry.
+        run_simulation_from_action(
+            iters, action_array, True,
+            True)  #Yeah, this is a hack, I know. I'm sorry.
 
     return fitness
 
 
-def run_simulation_from_action(iters, given_actions, show=True, fittest=False): #if fittest, then track action
+def run_simulation_from_action(iters,
+                               given_actions,
+                               show=True,
+                               fittest=False):  #if fittest, then track action
     """
     Runs a single sped-up simulation of a given collection of action arrays.
 
@@ -200,17 +212,16 @@ def run_simulation_from_action(iters, given_actions, show=True, fittest=False): 
     """
 
     # Create world
-    world = EvoWorld.from_json(os.path.join('world_data', env_file_name))
+    world = EvoWorld.from_json(os.path.join('world_data', ENV_FILENAME))
 
     # Add robot
-    robot = WorldObject.from_json(os.path.join('world_data', robot_file_name))
+    robot = WorldObject.from_json(os.path.join('world_data', ROBOT_FILENAME))
 
-    world.add_from_array(
-        name='robot',
-        structure=robot.get_structure(),
-        x=robot_spawn_x,
-        y=robot_spawn_y,
-        connections=robot.get_connections())
+    world.add_from_array(name='robot',
+                         structure=robot.get_structure(),
+                         x=ROBOT_SPAWN_X,
+                         y=ROBOT_SPAWN_Y,
+                         connections=robot.get_connections())
 
     # Create simulation
     sim = EvoSim(world)
@@ -218,9 +229,11 @@ def run_simulation_from_action(iters, given_actions, show=True, fittest=False): 
 
     # Modify action array
     # Take take every other element, then double the remaining.
-    # "speeds up" robot's actions. 
+    # "speeds up" robot's actions.
     halved = given_actions[::2]
-    sped_up_action_array = np.concatenate((halved,halved)) #glues two halves together so the total number of action arrays remains the same.
+    sped_up_action_array = np.concatenate(
+        (halved, halved)
+    )  #glues two halves together so the total number of action arrays remains the same.
 
     # Set up viewer
     viewer = EvoViewer(sim)
@@ -232,7 +245,7 @@ def run_simulation_from_action(iters, given_actions, show=True, fittest=False): 
 
     for i in range(iters):
 
-        action = sped_up_action_array[i-1]
+        action = sped_up_action_array[i - 1]
 
         # Set robot action to the action vector. Each actuator corresponds to a vector
         # index and will try to expand/contract to that value
@@ -246,7 +259,6 @@ def run_simulation_from_action(iters, given_actions, show=True, fittest=False): 
             print(action)
             action_list.append(action)
 
-
         if show:
             viewer.render('screen', verbose=True)
     viewer.close()
@@ -254,7 +266,7 @@ def run_simulation_from_action(iters, given_actions, show=True, fittest=False): 
     if fittest:
         action_array = np.asarray(action_list)
         plot_action(action_array, sped=True)
-    
+
     return fitness
 
 
@@ -273,15 +285,15 @@ def plot_scores(fit_func_scores, fit_func_scores_best, gen_number):
     '''
 
     #make plot
-    gen_array = np.arange(1, gen_number+1, 1)
-    plottitle = robot_file_name + " scores"
+    gen_array = np.arange(1, gen_number + 1, 1)
+    plottitle = ROBOT_FILENAME + " scores"
     plt.title(plottitle)
     plt.ylabel("scores")
     plt.xlabel("generations")
-    plt.plot(gen_array, fit_func_scores, label= "at gen")
-    plt.plot(gen_array, fit_func_scores_best, label= "best by gen")
+    plt.plot(gen_array, fit_func_scores, label="at gen")
+    plt.plot(gen_array, fit_func_scores_best, label="best by gen")
     plt.legend(loc='upper center')
-    plt.savefig(exper_directory +"/"+ plottitle + '.png')
+    plt.savefig(EXPER_DIR + "/" + plottitle + '.png')
     plt.close()
 
 
@@ -298,37 +310,40 @@ def plot_action(action_arrays, sped=False):
         Also outputs an excel spreadsheet of all of the actuators' actions. 
     '''
 
-    stepcount_array = np.arange(1, len(action_arrays)+1, 1)
-    plottitle = robot_file_name + " actions"
+    stepcount_array = np.arange(1, len(action_arrays) + 1, 1)
+    plottitle = ROBOT_FILENAME + " actions"
     plt.title(plottitle)
     plt.ylabel("target length")
     plt.xlabel("steps")
-    
+
     voxels_list = []
-    for i in range(len(action_arrays[0])): #for each voxel
+    for i in range(len(action_arrays[0])):  #for each voxel
         voxel_action = np.array([])
-        for j in range(len(action_arrays)): #for each step
-            voxel_action = np.append(voxel_action, action_arrays[j][i]) #I use both i and j, so this is okay, right?
+        for j in range(len(action_arrays)):  #for each step
+            voxel_action = np.append(
+                voxel_action, action_arrays[j]
+                [i])  #I use both i and j, so this is okay, right?
         #plot_voxel(stepcount_array, voxel_action, i)
         voxels_list.append(voxel_action)
-        plt.plot(stepcount_array, voxel_action, label= "voxel: " + str(i))
+        plt.plot(stepcount_array, voxel_action, label="voxel: " + str(i))
 
     plt.legend(loc='upper center')
     if sped:
-        plt.savefig(exper_directory + "/" + plottitle + ' (sped).png')
+        plt.savefig(EXPER_DIR + "/" + plottitle + ' (sped).png')
     else:
-        plt.savefig(exper_directory + "/" + plottitle + '.png')
+        plt.savefig(EXPER_DIR + "/" + plottitle + '.png')
     plt.close()
 
     #Save voxel data for later examination
     df = pd.DataFrame(voxels_list)
     if sped:
-        df.to_excel(exper_directory +"/"+ plottitle +' (sped).xlsx', index=False)
+        df.to_excel(EXPER_DIR + "/" + plottitle + ' (sped).xlsx',
+                    index=False)
     else:
-        df.to_excel(exper_directory +"/"+ plottitle +'.xlsx', index=False)
+        df.to_excel(EXPER_DIR + "/" + plottitle + '.xlsx', index=False)
 
     #plot individual voxels
-    for i in range(len(voxels_list)): #I USE i!!!!! 
+    for i in range(len(voxels_list)):  #I USE i!!!!!
         plot_voxel(stepcount_array, voxels_list[i], i, sped)
 
 
@@ -345,21 +360,21 @@ def plot_voxel(stepcount_array, voxel_action, voxel_num, sped=False):
     Returns:
         A matplotlib plot output to a directory. Plot shows the actuator's action over the course of the simulation.
     '''
-    plottitle = robot_file_name + " voxel: " + str(voxel_num)
+    plottitle = ROBOT_FILENAME + " voxel: " + str(voxel_num)
     plt.title(plottitle)
     plt.ylabel("target length")
     plt.xlabel("steps")
-    plt.plot(stepcount_array, voxel_action, label= "voxel: " + str(voxel_num))
+    plt.plot(stepcount_array, voxel_action, label="voxel: " + str(voxel_num))
     plt.legend(loc='upper center')
     if sped:
-        plt.savefig(exper_directory + "/" + plottitle + ' (sped).png')
+        plt.savefig(EXPER_DIR + "/" + plottitle + ' (sped).png')
     else:
-        plt.savefig(exper_directory + "/" + plottitle + '.png')
+        plt.savefig(EXPER_DIR + "/" + plottitle + '.png')
     plt.close()
 
-if __name__ == "__main__":
-    run_rmhc(generations, False)
 
+if __name__ == "__main__":
+    run_rmhc(GENS, False)
 
 # TWO PROOFS:
 # "can" action and replay it sped up vs normal. Robot should act totally different
