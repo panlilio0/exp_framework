@@ -1,3 +1,0 @@
-- build from scratch
-- need to code compute func
-- explore activation functions and decide which is best for robot actuation / snn

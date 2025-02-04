@@ -2,7 +2,7 @@
 
 ## Install Python3
 
-[Link](https://www.python.org/downloads/)
+[Python download page](https://www.python.org/downloads/)
 
 ## Create a virtual environment
 
@@ -11,6 +11,10 @@
 ## Activate your virtual environment
 
 `source .venv/bin/activate`
+
+## Clone the repository
+
+`git clone https://github.com/Union-College-Computer-Science/exp_framework.git`
 
 ## Install requirements
 
