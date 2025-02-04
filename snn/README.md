@@ -21,8 +21,8 @@ Add custom tests to the block of code at the end of the file, or create a separa
 ## Objectives
 
 Due Tuesday 02/11
-- [ ] Figure out how to unpack CMA-ES output into weights and biases of individual SNNs
-- [ ] Build SNN
-- [ ] Build pipeline to get input values from and send output values to the evogym codebase
-- [ ] Experiment with and test the SNN itself without evogym, then try checking if it works with the pipeline through manually sending custom values
-- [ ] Compare results using input variations - decimal (actual values) vs binary vs spike-encoded vs normalized
+- [ ] Figure out how to unpack CMA-ES output into weights and biases of individual SNNs - Abhay
+- [ ] Build SNN - Atharv, Jonathan, Miguel
+- [ ] Build pipeline to get input values from and send output values to the evogym codebase - Luodi
+- [ ] Experiment with and test the SNN itself without evogym, then try checking if it works with the pipeline through manually sending custom values - Jonathan, Miguel
+- [ ] Compare results using input variations - decimal (actual values) vs binary vs spike-encoded vs normalized - TBD after SNN is built to compare actual results
