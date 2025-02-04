@@ -8,7 +8,7 @@
 
 `python3 -m venv .venv`
 
-## Activate your virtual enviornment
+## Activate your virtual environment
 
 `source .venv/bin/activate`
 
