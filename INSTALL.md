@@ -1,12 +1,15 @@
 # Install
 
-## Install Python3
+## Install Python 3.10
 
 [Python download page](https://www.python.org/downloads/)
 
+### Ubuntu
+`sudo apt-get install python3.10`
+
 ## Create a virtual environment
 
-`python3 -m venv .venv`
+`python3.10 -m venv .venv`
 
 ## Activate your virtual environment
 
