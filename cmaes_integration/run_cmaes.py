@@ -26,7 +26,7 @@ def run_cma_es(gens, sigma_val):
 
     # Generate output.csv file
 
-    csv_header = ['Generation', 'Best-Fitness']
+    csv_header = ['generation', 'best_fitness']
 
     for i in range(sim.NUM_ACTUATORS):
         csv_header = csv_header + ['frequency' + str(i), 'amplitude' + str(i),
