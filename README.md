@@ -4,7 +4,7 @@ This repository offers a basic development framework for running cma-es experime
 
 ## CMA-ES-Integration
 
-The current experimental framework, integrated with CMA-ES. [Link](https://github.com/Union-College-Computer-Science/exp_framework/tree/main/cma_es_integration)
+The current experimental framework, integrated with CMA-ES. [Link](https://github.com/Union-College-Computer-Science/exp_framework/tree/main/cmaes_integration)
 
 ## CMA-ES Demo
 
