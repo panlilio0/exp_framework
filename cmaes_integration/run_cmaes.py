@@ -74,7 +74,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='RL')
     parser.add_argument(
         '--mode', #headless, screen, video, both h, s, v, b
-        help='number of generations to run',
+        help='mode for output. h-headless , s-screen, v-video, b-both',
         default="h")
     parser.add_argument(
         '--gens',
