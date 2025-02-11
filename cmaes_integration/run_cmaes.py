@@ -1,6 +1,11 @@
 """
 Runs cma-es on `run_simulation.py` as a fitness function.
-Continually updates output.csv with best individual from each generation.
+Creates output.csv and updates it continuously with the best individual from each generation.
+Whether to show the simulation or save as video, number of generations, sigma can be passed as
+command line arguments. Example: `python3 run_cmaes.py headless 50 2` runs cma-es for 50 generations
+in headless mode with a sigma of 2. Replacing "headless" with "screen" makes the simulation output to
+the screen, and replacing it with "video" saves each simulation as a video in `./videos`. "both" shows
+on screen and saves a video.
 
 Author: Thomas Breimer
 February 4th, 2025
@@ -12,13 +17,18 @@ import run_simulation as sim
 from cmaes import CMA
 import numpy as np
 
-def run_cma_es(gens, sigma_val):
+def run_cma_es(mode, gens, sigma_val):
     """
     Runs the cma_es algorithm on the robot locomotion problem,
     with sin-like robot actuators. Saves a csv file to ./output
     with each robot's genome & fitness for every generation.
 
     Parameters:
+        mode (string): How to run the simulation. 
+                       "headless" runs without any video or visual output.
+                       "video" outputs the simulation as a video in the "./videos folder.
+                       "screen" shows the simulation on screen as a window.
+                       "both: shows the simulation on a window and saves a video.
         gens (int): How many generations to run.
         sigma_val (float): The standard deviation of the normal distribution
         used to generate new candidate solutions
@@ -46,7 +56,7 @@ def run_cma_es(gens, sigma_val):
 
         for indv_num in range(optimizer.population_size):
             x = optimizer.ask()
-            fitness = sim.run(sim.NUM_ITERS, x, False)
+            fitness = sim.run(sim.NUM_ITERS, x, mode, str(generation) + "_" + str(indv_num))
             solutions.append((x, fitness))
 
         optimizer.tell(solutions)
@@ -60,17 +70,19 @@ def run_cma_es(gens, sigma_val):
             writer = csv.writer(file)
             writer.writerow(new_row)
 
-
 if __name__ == "__main__":
     args = sys.argv
 
     if len(args) > 1:
-        sim.NUM_GENS = int(args[1])
+        sim.MODE = args[1]
 
     if len(args) > 2:
-        sim.SIGMA = float(args[2])
+        sim.NUM_GENS = int(args[2])
 
-    run_cma_es(sim.NUM_GENS, sim.SIGMA)
+    if len(args) > 3:
+        sim.SIGMA = float(args[3])
+
+    run_cma_es(sim.MODE, sim.NUM_GENS, sim.SIGMA)
 
 
 

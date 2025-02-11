@@ -1,16 +1,18 @@
 """
-Run cma-es of a sin-based walking robot in evogym.
-Accepts two command line arguments: number of generations to run, and sigma.
-Example: `python3 run_cma_es.py 50 2`
+Given a genome, runs a simulation of a walking robot in evogym, providing a fitness score 
+corresponding to how far the robot walked.
 
 Author: Thomas Breimer
 January 29th, 2025
 """
 
 import os
+import time
+import cv2
 import numpy as np
 from evogym import EvoWorld, EvoSim, EvoViewer
 from evogym import WorldObject
+import gymnasium as gym
 
 # Simulation constants
 ROBOT_SPAWN_X = 3
@@ -19,6 +21,7 @@ ACTUATOR_MIN_LEN = 0.6
 ACTUATOR_MAX_LEN = 1.6
 NUM_ITERS = 200
 FPS = 50
+MODE = "headless" # "headless", "screen", or "video"
 
 # Starting sin wave characteristics
 AVG_FREQ = 0.1
@@ -53,17 +56,34 @@ def sine_wave(sin_time, frequency, amplitude, phase_offset):
     angular_frequency = 2 * np.pi * frequency
     return amplitude * np.sin(angular_frequency * sin_time + phase_offset)
 
-def run(iters, genome, show=True):
+def create_video(source, fps=FPS, output_name='output'):
+    current_directory = os.getcwd()
+    vid_path = os.path.join(current_directory, "videos", output_name + ".mp4")
+    out = cv2.VideoWriter(vid_path, cv2.VideoWriter_fourcc(*'mp4v'), 
+                          fps, (source[0].shape[1], source[0].shape[0]))
+    for i in range(len(source)):
+        out.write(source[i])
+    out.release()
+
+def run(iters, genome, mode, vid_name=None):
     """
     Runs a single simulation of a given genome.
 
     Parameters:
         iters (int): How many iterations to run.
         genome (ndarray): The genome of the robot.
-
+        mode (string): How to run the simulation. 
+                       "headless" runs without any video or visual output.
+                       "video" outputs the simulation as a video in the "./videos folder.
+                       "screen" shows the simulation on screen as a window.
+                       "both: shows the simulation on a window and saves a video.
+        vid_name (string): If mode is "video" or "both", this is the name of the saved video.
     Returns:
         float: The fitness of the genome.
     """
+
+    if mode == "video":
+        os.makedirs("videos", exist_ok=True)
 
     # Create world
     world = EvoWorld.from_json(os.path.join('world_data', ENV_FILENAME))
@@ -87,6 +107,8 @@ def run(iters, genome, show=True):
     viewer.track_objects('robot')
 
     fitness = 0
+
+    video_frames = []
 
     for i in range(iters):
 
@@ -124,9 +146,17 @@ def run(iters, genome, show=True):
         reward = com_2[0] - com_1[0]
         fitness += reward
 
-        if show:
-            viewer.render('screen', verbose=True)
+        if mode == "video":
+            video_frames.append(viewer.render(verbose=True, mode="rgb_array"))
+        elif mode == "screen":
+            viewer.render(verbose=True, mode="screen")
+        elif mode == "both":
+            viewer.render(verbose=True, mode="screen")
+            video_frames.append(viewer.render(verbose=True, mode="rgb_array"))
 
     viewer.close()
+
+    if mode == "video" or mode == "both":
+        create_video(video_frames, FPS, vid_name)
 
     return FITNESS_OFFSET - fitness # Turn into a minimization problem
