@@ -82,7 +82,7 @@ def run(iters, genome, mode, vid_name=None):
         float: The fitness of the genome.
     """
 
-    if mode == "video":
+    if mode == "video" or mode == "both":
         os.makedirs("videos", exist_ok=True)
 
     # Create world
