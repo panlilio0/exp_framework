@@ -1,3 +1,7 @@
+"""
+6 weights and 2 biases into a single list per SNN
+"""
+
 import random
 
 
