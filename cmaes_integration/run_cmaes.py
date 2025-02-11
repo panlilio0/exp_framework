@@ -3,9 +3,9 @@ Runs cma-es on `run_simulation.py` as a fitness function.
 Creates output.csv and updates it continuously with the best individual from each generation.
 Whether to show the simulation or save as video, number of generations, sigma can be passed as
 command line arguments. Example: `python3 run_cmaes.py headless 50 2` runs cma-es for 50 generations
-in headless mode with a sigma of 2. Replacing "headless" with "screen" makes the simulation output to
-the screen, and replacing it with "video" saves each simulation as a video in `./videos`. "both" shows
-on screen and saves a video.
+in headless mode with a sigma of 2. Replacing "headless" with "screen" makes the simulation 
+output to the screen, and replacing it with "video" saves each simulation as a video in `./videos`. 
+"both" shows on screen and saves a video.
 
 Author: Thomas Breimer
 February 4th, 2025
@@ -13,9 +13,9 @@ February 4th, 2025
 
 import sys
 import csv
-import run_simulation as sim
 from cmaes import CMA
 import numpy as np
+import run_simulation as sim
 
 def run_cma_es(mode, gens, sigma_val):
     """
@@ -44,12 +44,12 @@ def run_cma_es(mode, gens, sigma_val):
 
     with open("output.csv", "w", newline="") as file:
         writer = csv.writer(file)
-        writer.writerow(csv_header) 
+        writer.writerow(csv_header)
 
     # Init CMA
 
-    optimizer = CMA(mean=np.array([sim.AVG_FREQ, sim.AVG_AMP, sim.AVG_PHASE_OFFSET] * sim.NUM_ACTUATORS),
-                    sigma=sigma_val)
+    optimizer = CMA(mean=np.array([sim.AVG_FREQ, sim.AVG_AMP, sim.AVG_PHASE_OFFSET]
+                                   * sim.NUM_ACTUATORS), sigma=sigma_val)
 
     for generation in range(gens):
         solutions = []
@@ -83,7 +83,3 @@ if __name__ == "__main__":
         sim.SIGMA = float(args[3])
 
     run_cma_es(sim.MODE, sim.NUM_GENS, sim.SIGMA)
-
-
-
-

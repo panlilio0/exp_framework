@@ -14,7 +14,8 @@ FILENAME = "output.csv"
 df = pd.read_csv("output.csv")
 
 plt.figure(figsize=(8, 5))
-plt.plot(np.array(df["generation"]), np.array(df["best_fitness"]), marker='o', linestyle='-', color='b', label="Best Fitness")
+plt.plot(np.array(df["generation"]), np.array(df["best_fitness"]),
+         marker='o', linestyle='-', color='b', label="Best Fitness")
 plt.xlabel("Generation")
 plt.ylabel("Best Fitness")
 plt.title("Fitness Evolution Over Generations")

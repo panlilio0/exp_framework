@@ -7,12 +7,10 @@ January 29th, 2025
 """
 
 import os
-import time
 import cv2
 import numpy as np
 from evogym import EvoWorld, EvoSim, EvoViewer
 from evogym import WorldObject
-import gymnasium as gym
 
 # Simulation constants
 ROBOT_SPAWN_X = 3
@@ -57,12 +55,22 @@ def sine_wave(sin_time, frequency, amplitude, phase_offset):
     return amplitude * np.sin(angular_frequency * sin_time + phase_offset)
 
 def create_video(source, fps=FPS, output_name='output'):
+    """
+    Saves a video from a list of frames
+
+    Parameters:
+        source (list): List of cv2 frames.
+        fps (int): Frames per second of video to save.
+        output_name (string): Filename of output video.
+
+    """
     current_directory = os.getcwd()
     vid_path = os.path.join(current_directory, "videos", output_name + ".mp4")
-    out = cv2.VideoWriter(vid_path, cv2.VideoWriter_fourcc(*'mp4v'), 
+    out = cv2.VideoWriter(vid_path, cv2.VideoWriter_fourcc(*'mp4v'),
                           fps, (source[0].shape[1], source[0].shape[0]))
-    for i in range(len(source)):
-        out.write(source[i])
+
+    for frame in source:
+        out.write(frame)
     out.release()
 
 def run(iters, genome, mode, vid_name=None):
@@ -82,7 +90,7 @@ def run(iters, genome, mode, vid_name=None):
         float: The fitness of the genome.
     """
 
-    if mode == "video" or mode == "both":
+    if mode in ["video", "both"]:
         os.makedirs("videos", exist_ok=True)
 
     # Create world
@@ -156,7 +164,7 @@ def run(iters, genome, mode, vid_name=None):
 
     viewer.close()
 
-    if mode == "video" or mode == "both":
+    if mode in ["video", "both"]:
         create_video(video_frames, FPS, vid_name)
 
     return FITNESS_OFFSET - fitness # Turn into a minimization problem
