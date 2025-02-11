@@ -11,8 +11,7 @@ Author: Thomas Breimer
 February 4th, 2025
 """
 
-import sys
-import csv
+import sys, csv, argparse
 from cmaes import CMA
 import numpy as np
 import run_simulation as sim
@@ -70,16 +69,23 @@ def run_cma_es(mode, gens, sigma_val):
             writer = csv.writer(file)
             writer.writerow(new_row)
 
+
 if __name__ == "__main__":
-    args = sys.argv
+    parser = argparse.ArgumentParser(description='RL')
+    parser.add_argument(
+        '--mode', #headless, screen, video, both h, s, v, b
+        help='mode for output. h-headless , s-screen, v-video, b-both',
+        default="h")
+    parser.add_argument(
+        '--gens',
+        type=int,
+        help='number of generations to run',
+        default=100)
+    parser.add_argument(
+        '--sigma',
+        type=int,
+        default=2,
+        help='sigma value for cma-es')
+    args = parser.parse_args()
 
-    if len(args) > 1:
-        sim.MODE = args[1]
-
-    if len(args) > 2:
-        sim.NUM_GENS = int(args[2])
-
-    if len(args) > 3:
-        sim.SIGMA = float(args[3])
-
-    run_cma_es(sim.MODE, sim.NUM_GENS, sim.SIGMA)
+    run_cma_es(args.mode, args.gens, args.sigma)
