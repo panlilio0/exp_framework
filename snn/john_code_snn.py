@@ -78,7 +78,7 @@ class SpikyNode:
     
 
     """
-    allows to set a weight for a particular node
+    sets a weight for a particular node
     """
     def set_weight(self, idx, val):
         if 0 <= idx < len(self._weights):
@@ -88,7 +88,7 @@ class SpikyNode:
     
 
     """
-    allows to set the nueron's bias
+    sets the nueron's bias
     """
     def set_bias(self, val):
         self._weights[-1] = val
@@ -151,8 +151,8 @@ Combines 2 spiky layers
 """
 class SpikyNet:
     def __init__(self, input_size, hidden_size, output_size):
-        self.hidden_layer = SpikyLayer(hidden_size, input_size)     # receives input and processes it
-        self.output_layer = SpikyLayer(output_size, hidden_size)    # takes hidden layer output and computes final results
+        self.hidden_layer = SpikyLayer(hidden_size, input_size)     # creates a hidden layer with the given parameters
+        self.output_layer = SpikyLayer(output_size, hidden_size)    # creates an output layer with the given parameters
 
 
     """
@@ -161,7 +161,6 @@ class SpikyNet:
     """
     def compute(self, inputs):
         hidden_output = self.hidden_layer.compute(inputs)
-        # Return duty cycles of output layer instead of raw spikes
         return self.output_layer.compute(hidden_output)
     
 
@@ -169,8 +168,11 @@ class SpikyNet:
     assigns weights to the hidden and the output layer
     """
     def set_weights(self, input_weights):
+        # input_weights contains weights for both - hidden and output layers
+
         # Split weights into two equal parts for hidden and output layers
         half = len(input_weights) // 2
+
         self.hidden_layer.set_weights(input_weights[:half])
         self.output_layer.set_weights(input_weights[half:])
     
@@ -179,7 +181,7 @@ class SpikyNet:
     displays the network weights
     """
     def print_structure(self):
-        print("Hidden Layer:")
+        print("\nHidden Layer:")
         for i, node in enumerate(self.hidden_layer.nodes):
             print(f"Node {i}: ", end="")
             node.print_weights()
@@ -193,7 +195,7 @@ class SpikyNet:
 # testing
 
 if __name__=='__main__':
-    print('SpikyNode:')
+    print('\nSpikyNode:')
     node = SpikyNode(5)
     node.print_weights()
     print(node.compute(list(range(1, 6))))
