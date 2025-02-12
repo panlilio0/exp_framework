@@ -19,7 +19,7 @@ ACTUATOR_MIN_LEN = 0.6
 ACTUATOR_MAX_LEN = 1.6
 NUM_ITERS = 200
 FPS = 50
-MODE = "headless" # "headless", "screen", or "video"
+MODE = "h" # "headless", "screen", or "video"
 
 # Starting sin wave characteristics
 AVG_FREQ = 0.1
@@ -81,16 +81,16 @@ def run(iters, genome, mode, vid_name=None):
         iters (int): How many iterations to run.
         genome (ndarray): The genome of the robot.
         mode (string): How to run the simulation. 
-                       "headless" runs without any video or visual output.
-                       "video" outputs the simulation as a video in the "./videos folder.
-                       "screen" shows the simulation on screen as a window.
-                       "both: shows the simulation on a window and saves a video.
-        vid_name (string): If mode is "video" or "both", this is the name of the saved video.
+                       "h" runs without any video or visual output.
+                       "v" outputs the simulation as a video in the "./videos folder.
+                       "s" shows the simulation on screen as a window.
+                       "b: shows the simulation on a window and saves a video.
+        vid_name (string): If mode is "v" or "b", this is the name of the saved video.
     Returns:
         float: The fitness of the genome.
     """
 
-    if mode in ["video", "both"]:
+    if mode in ["v", "b"]: #video or both
         os.makedirs("videos", exist_ok=True)
 
     # Create world
@@ -154,17 +154,17 @@ def run(iters, genome, mode, vid_name=None):
         reward = com_2[0] - com_1[0]
         fitness += reward
 
-        if mode == "video":
+        if mode == "v":
             video_frames.append(viewer.render(verbose=True, mode="rgb_array"))
-        elif mode == "screen":
+        elif mode == "s":
             viewer.render(verbose=True, mode="screen")
-        elif mode == "both":
+        elif mode == "b":
             viewer.render(verbose=True, mode="screen")
             video_frames.append(viewer.render(verbose=True, mode="rgb_array"))
 
     viewer.close()
 
-    if mode in ["video", "both"]:
+    if mode in ["v", "b"]:
         create_video(video_frames, FPS, vid_name)
 
     return FITNESS_OFFSET - fitness # Turn into a minimization problem
