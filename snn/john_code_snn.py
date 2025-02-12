@@ -85,6 +85,16 @@ class SpikyNode:
             self._weights[idx] = val
         else:
             print(f"Invalid weight index: {idx}")
+
+    
+    """
+    allows to set the nueron's weights
+    """
+    def set_weights(self, input_weights):
+        if len(input_weights) != len(self._weights):
+            print("Weight size mismatch in node")
+        else:
+            self._weights = input_weights.copy()
     
 
     """
@@ -195,16 +205,78 @@ class SpikyNet:
 # testing
 
 if __name__=='__main__':
-    print('\nSpikyNode:')
-    node = SpikyNode(5)
-    node.print_weights()
-    print(node.compute(list(range(1, 6))))
-    node.print_weights()
-    print('\nSpikyNet:')
-    net = SpikyNet(5, 2, 4)
+    # print('\nSpikyNode:')
+    # node = SpikyNode(5)
+    # node.print_weights()
+    # print(node.compute(list(range(1, 6))))
+    # node.print_weights()
+    # print('\nSpikyNet:')
+    # net = SpikyNet(5, 2, 4)
+    # net.print_structure()
+    # print('\n')
+    # print(net.compute(list(range(1, 11, 2))))
+
+    # ----- Test a single SpikyNode -----
+    print("\n--- Testing SpikyNode ---")
+    test_node = SpikyNode(5)
+    print("Initial weights:")
+    test_node.print_weights()
+    
+    # setting weights manually
+    print("\nSetting weights manually")
+    test_weights = [0.7, -0.4, 0.9, 0.0, -0.2, 0.8]
+    test_node.set_weights(test_weights)
+    print("Updated weights:")
+    test_node.print_weights()
+    
+    print("\nGetting '1' output for manual input")
+    output = test_node.compute([1, 2, 3, 4, 5])
+    print("Output:", output)
+
+    print("\nGetting '0' output for manual input")
+    test_weights = [0.7, -0.4, -0.9, 0.0, -0.2, 0.8]
+    test_node.set_weights(test_weights)
+    print("Updated weights:")
+    test_node.print_weights()
+    output = test_node.compute([1, 2, 3, 4, 5])
+    print("Output:", output)
+    
+    # ----- Testing a SpikyLayer (3 nodes, 4 inputs) -----
+    print("\n--- Testing SpikyLayer ---")
+    test_layer = SpikyLayer(3, 4)
+    test_inputs = [1, 2, 3, 4]
+    layer_outputs = test_layer.compute(test_inputs)
+    print("SpikyLayer outputs:", layer_outputs)
+    
+    # setting layer weights manually
+    # each node requires 4 weights + 1 bias = 5 weights --> for 3 nodes, total 15 items
+    print("\nSetting weights manually")
+    test_layer_weights = [0.1 * i for i in range(15)]
+    test_layer.set_weights(test_layer_weights)
+    print("Updated weights:")
+    for i, n in enumerate(test_layer.nodes):
+        print(f"Node {i} weights:", n._weights)
+    
+    # ----- Testing SpikyNet (2 hidden nodes, 3 output nodes, 4 inputs) -----
+    print("\n--- Testing SpikyNet ---")
+    net = SpikyNet(4, 2, 3)
+    print("Original structure:")
     net.print_structure()
-    print('\n')
-    print(net.compute(list(range(1, 11, 2))))
-
-
-# Not sure if this works properly, will need to test if using this for implementing SNN
+    
+    print("\nTesting computing")
+    net_output = net.compute([1, 2, 3, 4])
+    print("SpikyNet output:", net_output)
+    
+    # Set new weights for the network.
+    # Hidden layer: 2 nodes with (4 weights + 1 bias)= 10 items
+    # Output layer: 3 nodes with (2 weights + 1 bias)= 9 items
+    # Total = 19 items
+    print("\nSetting weights manually")
+    test_net_weights = [0.1 * i for i in range(19)]
+    net.set_weights(test_net_weights)
+    print("Updated weights:")
+    net.print_structure()
+    
+    print("Getting output for the updated weights")
+    net_output = net.compute([1, 2, 3, 4])
+    print("SpikyNet output:", net_output)
