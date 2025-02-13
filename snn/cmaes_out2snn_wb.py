@@ -13,21 +13,18 @@ Also replace hidden layer size and output size to actual numbers instead of `X` 
 # CONSTANT
 
 # Placeholder numbers - for now used numbers from the example SNN described while talking to John
-NUM_SNN = pipeline.get_num_actuators()     # Number of spiking neural networks (actuators)
+NUM_SNN =  4  # pipeline.get_num_actuators()     # Number of spiking neural networks (actuators)
 INP_SIZE = NUM_SNN - 1                     # Input size - total number of actuators (number of SNNs - 1)
-HIDDEN_SIZE = X
-OUTPUT_SIZE = Y
+HIDDEN_SIZE = 1  # X
+OUTPUT_SIZE = 1  # Y
 
 NUM_WEIGHTS_PER_HIDDEN_NODE = INP_SIZE      # Number of weight parameters per node
-NUM_BIASES_PER_HIDDEN_NODE = 1              # Number of biases per node
 NUM_WEIGHTS_PER_OUTPUT_NODE = HIDDEN_SIZE
-NUM_BIASES_PER_OUTPUT_NODE = 1
 
 # Total number of parameters per SNN is the sum of weights and biases.
-PARAMS_PER_HIDDEN_LAYER = (NUM_WEIGHTS_PER_HIDDEN_NODE + NUM_BIASES_PER_HIDDEN_NODE) * HIDDEN_SIZE
-PARAMS_PER_OUTPUT_LAYER = (NUM_WEIGHTS_PER_OUTPUT_NODE + NUM_BIASES_PER_OUTPUT_NODE) * OUTPUT_SIZE
+PARAMS_PER_HIDDEN_LAYER = (NUM_WEIGHTS_PER_HIDDEN_NODE + 1) * HIDDEN_SIZE  # 1 = number of bias in the node
+PARAMS_PER_OUTPUT_LAYER = (NUM_WEIGHTS_PER_OUTPUT_NODE + 1) * OUTPUT_SIZE  # 1 = number of bias in the node
 PARAMS_PER_SNN = PARAMS_PER_HIDDEN_LAYER + PARAMS_PER_OUTPUT_LAYER
-
 CMAES_OUT_SIZE = NUM_SNN * PARAMS_PER_SNN
 
 # Mapping voxel (SNN) to SNN parameters in the `snn_param` list
@@ -40,7 +37,7 @@ CMAES_OUT_SIZE = NUM_SNN * PARAMS_PER_SNN
 # }
 
 
-def unpack_cmaes_output():
+def unpack_cmaes_output(cmaes_out):
     """
     Retrieve the flat CMA-ES output and reshape it into a structured format.
 
@@ -53,34 +50,65 @@ def unpack_cmaes_output():
     Raises:
         ValueError: If the length of the CMA-ES output does not match the expected size.
     """
-    # Assume get_cmaes_out() is provided by another module.
-    # For example, one might import it like:
-    # from external_module import get_cmaes_out
-    
-    # Expected to return a flat array-like object. 
-    # Function can be added or imported from evogym codebase once the team finishes building it.
-    flat_vector = np.array(pipeline.get_cmaes_out())
+
+    flat_vector = np.array(cmaes_out)  # np.array(pipeline.get_cmaes_out())
 
     if flat_vector.size != CMAES_OUT_SIZE:
         raise ValueError(f"Expected CMA-ES output vector of size {CMAES_OUT_SIZE}, got {flat_vector.size}.")
 
     # Reshape the flat vector to a 2D array: each row corresponds to one SNN.
     reshaped = flat_vector.reshape((NUM_SNN, PARAMS_PER_SNN))
+    print(f"reshaped array: {reshaped}")
     
     # For each SNN, split the parameters into weights and biases.
-    snn_parameters = []
-    for snn in reshaped:
+    snn_parameters = {}
+    for snn_idx, params_per_snn in enumerate(reshaped):
+        print(f"params_per_snn: {params_per_snn}")
         hidden_params = []
-        offset = 0
-
+        current_node = 0
         for _ in range(HIDDEN_SIZE):
-            hidden_weights = snn[offset:(offset + NUM_WEIGHTS_PER_HIDDEN_NODE)]
-            hidden_biases = params[NUM_BIASES_PER_HIDDEN_NODE:]
-            hidden_params.append()
+            offset = current_node + NUM_WEIGHTS_PER_HIDDEN_NODE
+            hidden_weights = params_per_snn[current_node:offset]
+            hidden_biases = params_per_snn[offset]
+            hidden_params.append({
+                'weights': hidden_weights,
+                'bias': hidden_biases
+            })
+            current_node += PARAMS_PER_HIDDEN_LAYER
         
-        snn_parameters.append({
-            'weights': hidden_weights,
-            'biases': hidden_biases
-        })
+        output_params = []
+        for _ in range(OUTPUT_SIZE):
+            offset = current_node + NUM_WEIGHTS_PER_OUTPUT_NODE
+            output_weights = params_per_snn[current_node:offset]
+            output_biases = params_per_snn[offset]
+            output_params.append({
+                'weights': output_weights,
+                'bias': output_biases
+            })
+            current_node += PARAMS_PER_OUTPUT_LAYER
+        
+        snn_parameters[snn_idx] = {
+            'hidden_layer': hidden_params,
+            'output_layer': output_params
+        }
     
     return snn_parameters
+
+
+if __name__ == '__main__':
+    try:
+        snn_params = unpack_cmaes_output(np.random.randint(1, 15, CMAES_OUT_SIZE))
+        for snn_id, params in snn_params.items():
+            print(f"SNN {snn_id}:")
+
+            print("    Hidden Layer:")
+            for i, node in enumerate(params['hidden_layer']):
+                print(f"        Node {i}: Weights = {node['weights']}; Bias = {node['bias']}")
+            
+            print("    Output Layer:")
+            for i, node in enumerate(params['output_layer']):
+                print(f"        Node {i}: Weights = {node['weights']}; Bias = {node['bias']}")
+            
+            print('\n')
+    except Exception as error:
+        print(f"Error while unpacking: {error}")
