@@ -17,3 +17,10 @@ and then returns a list of dictionaries explicitly separating weights and biases
 February 13th, 2025 | By James Gaskell & Thomas Breimer
 - Added proper named command line arguments for all scripts
 - Improved implementation with argparse
+
+
+### John's SNN Code
+February 13th, 2025 | By Atharv Tekurkar
+- Removed unecessay elements
+- Fixed the functions that are giving errors
+- Added unit tests for the functions
