@@ -12,3 +12,11 @@ Feb 11th | By Abhay Kashyap | PR pending
 - Added script to transform CMA-ES output to SNN weights and biases
 - Script reshapes the flat array into an array of shape (NUM_SNN * PARAMS_PER_SNN) 
 and then returns a list of dictionaries explicitly separating weights and biases of each SNN
+
+### 
+Thurs. Feb 13th | Luodi Wang | SNN output to evogym through .json file
+- Currently, we don't have any CMAES input, so we're just generating random inputs to the SNN 
+- Run the SNN to make outputs (duty cycles == spike output)
+- Saving the output into a json file
+- Also, within the SNN folder increased pylint score from 5.54/10 to 10/10 by 80.5%!
+- Deleted unused files: node.py, layers.py, net.py
