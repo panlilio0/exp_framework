@@ -1,18 +1,18 @@
 """
 Run a single individual from its genome in an output csv file.
-Takes one command line arg corresponding to generation number.
-Second command line argument tells whether to show simulation, save it to
-video, or both. "screen" renders the video to the screen. "video" saves a
-video to the "./videos" folder. "both" does both of these things.
+Takes one command line arg "--gen" corresponding to generation number.
+Takes another command line arg "--mode" which displays the simulation in different ways.
+"--mode s" makes the simulation output to the screen, replacing it with "--mode v" saves 
+each simulation as a video in `./videos`. "-mode b" shows on screen and saves a video.
 
-Example: `python3 run_individual.py 10 screen`
+Example: `python3 run_individual.py --gen 1 --mode s`
 
 Author: Thomas Breimer
 January 29th, 2025
 """
 
 import os
-import sys
+import argparse
 import pathlib
 import time
 import pandas as pd
@@ -43,9 +43,18 @@ def run_indvididual(generation, mode):
     run_simulation.run(ITERS, genome, mode, str(int(time.time())))
 
 if __name__ == "__main__":
-    args = sys.argv
+    parser = argparse.ArgumentParser(description='RL')
 
-    if len(args) < 3:
-        print("Too few arguments!")
-    else:
-        run_indvididual(int(args[1]), args[2])
+    parser.add_argument(
+        '--mode', #headless, screen, video, both h, s, v, b
+        help='mode for output. h-headless , s-screen, v-video, b-both',
+        default="s")
+    parser.add_argument(
+        '--gen',
+        type=int,
+        help='what generation to grab',
+        default=1)
+
+    args = parser.parse_args()
+
+    run_indvididual(args.gen, args.mode)
