@@ -1,27 +1,38 @@
 """
 Plot genome values on the x and y axis and color based on fitness.
 Takes three command line arguments: csv filename, x-axis name, y-axis name.
-Example: `python3 plot_genome.py output.csv frequency0 amplitude0`
+Example: `python3 plot_genome.py --filename output.csv --xaxis frequency0 --yaxis amplitude0`
 
 Author: Thomas Breimer
 January 29th, 2025
 """
 
 import os
-import sys
+import argparse
 import pathlib
 import matplotlib.pyplot as plt
 import pandas as pd
 
-args = sys.argv
+parser = argparse.ArgumentParser(description='RL')
 
-if len(args) < 4:
-    print("Too few arguments!")
-    sys.exit()
+parser.add_argument(
+    '--filename',  #headless, screen, video, both h, s, v, b
+    help='name of csv file',
+    default="output.csv")
+parser.add_argument('--xaxis',
+                    type=str,
+                    help='what genome element to go on the x-axis',
+                    default="frequency0")
+parser.add_argument('--yaxis',
+                    type=str,
+                    help='what genome element to go on the y-axis',
+                    default="amplitude0")
 
-filename = args[1]
-x_axis_name = args[2]
-y_axis_name = args[3]
+args = parser.parse_args()
+
+filename = args.filename
+x_axis_name = args.xaxis
+y_axis_name = args.yaxis
 
 this_dir = pathlib.Path(__file__).parent.resolve()
 path = os.path.join(this_dir, filename)
@@ -34,7 +45,12 @@ fitness = df["best_fitness"]
 
 # Create scatter plot
 plt.figure(figsize=(8, 6))
-sc = plt.scatter(x_values, y_values, c=fitness, cmap="viridis", edgecolors="k", alpha=0.75)
+sc = plt.scatter(x_values,
+                 y_values,
+                 c=fitness,
+                 cmap="viridis",
+                 edgecolors="k",
+                 alpha=0.75)
 
 # Add color bar
 cbar = plt.colorbar(sc)
