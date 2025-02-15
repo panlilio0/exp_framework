@@ -5,10 +5,26 @@ A class representing corner of a robot in evogym
 import math
 import numpy as np
 
-class corner:
+class Corner:
+    """
+    A class reperesenting a corner of an evogym robot.
+    Could represent any point-mass, really. But it was made for corners.
+
+    ...
+
+    Attributes
+    ----------
+    index : int:
+        the index of the corner in it's pos array
+
+    Methods
+    -------
+    get_corner_distances(positions, corners):
+        Gets distances to the given corners in the given pos array and returns them.
+    """
 
     def __init__(self, index):
-        self.index = index # the index of the corner in the 
+        self.index = index # the index of the corner in the pos array.
 
     def __str__(self):
         return "Corner at " + str(self.index)
@@ -36,7 +52,7 @@ class corner:
         for corner in corners: # standard distance formula
             other_x = positions[0][corner.index]
             other_y = positions[1][corner.index]
-            distance = math.sqrt((other_x-local_x)*(other_x-local_x) + 
+            distance = math.sqrt((other_x-local_x)*(other_x-local_x) +
                                  (other_y-local_y)*(other_y-local_y))
             distances.append(distance)
         return np.array(distances)

@@ -7,15 +7,15 @@ January 22nd, 2025
 
 import os
 import random
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
 import time
 import argparse
 import json
-from special_classes import corner as corn
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
 from evogym import EvoWorld, EvoSim, EvoViewer
 from evogym import WorldObject
+from special_classes import corner as corn
 
 ROBOT_SPAWN_X = 3
 ROBOT_SPAWN_Y = 10
@@ -35,15 +35,25 @@ ENV_FILENAME = "simple_environment_long.json"
 
 
 def retrieve_actuator_count(robot_filename):
+    '''
+    Retrieves the number of actuator voxels the given robot has.
+
+    Parameters:
+        robot_filename (str): Location of robot json.
+
+    Returns:
+        An int: the number of actuators in the robot.
+    '''
     jsonpath = os.path.join('world_data', robot_filename)
     jsonf = open(jsonpath)
     data = json.load(jsonf)
     actuator_count = 0
     key_for_robot = list(data["objects"].keys())[0] # No, I'm not happy about it, either.
-    # The robot's key in the json dicts can vary because the design tool is stupid. So this is a fix.
-    for voxel in data["objects"][key_for_robot]["types"]: 
-        if voxel == 3 or voxel == 4: # 3 and 4 represent horizontal and vertical actuators.
-            actuator_count += 1 
+    # The robot's key in the json dicts can vary because the design tool is stupid.
+    # So this is a fix.
+    for voxel in data["objects"][key_for_robot]["types"]:
+        if voxel in (3, 4): # 3 and 4 represent horizontal and vertical actuators.
+            actuator_count += 1
 
     return actuator_count
 
@@ -82,7 +92,8 @@ def run_rmhc(gens, iters, robot_filename, exper_dir, show=True):
 
     num_actuators = retrieve_actuator_count(robot_filename)
     genome = np.random.rand(num_actuators * 2)
-    best_fitness = run_simulation(iters, genome, robot_filename, corners, show)
+    best_fitness = run_simulation(iters, genome, robot_filename,
+                                  corners, exper_dir, show)
 
     print("Starting fitness:", best_fitness)
     fitness_by_gen = np.array([])  #array of fitness
@@ -98,7 +109,8 @@ def run_rmhc(gens, iters, robot_filename, exper_dir, show=True):
             for x in mutated_genome
         ])
 
-        new_fitness = run_simulation(iters, mutated_genome, robot_filename, corners, show)
+        new_fitness = run_simulation(iters, mutated_genome, robot_filename,
+                                     corners, exper_dir, show)
 
         fitness_by_gen = np.append(fitness_by_gen, new_fitness)
 
@@ -112,7 +124,7 @@ def run_rmhc(gens, iters, robot_filename, exper_dir, show=True):
 
     # Show fittest genome
     print("Final fitness", best_fitness)
-    run_simulation(iters * 5, genome, robot_filename, corners, fittest=True)
+    run_simulation(iters * 5, genome, robot_filename, corners, exper_dir, fittest=True)
     plot_scores(fitness_by_gen, best_fitness_by_gen, gens, robot_filename, exper_dir)
 
     return (genome, best_fitness)
@@ -122,6 +134,7 @@ def run_simulation(iters,
                    genome,
                    robot_filename,
                    corners,
+                   exper_dir,
                    show=True,
                    fittest=False):  #if fittest, then track action
     """
@@ -179,10 +192,8 @@ def run_simulation(iters,
         # CORNERS TELEMETRY STUFF
         # SNN SQUAD, YOUR DATA IS HERE
         # CHANGE THE PRINT TO BE WHATEVER YOUR STUFF NEEDS!
-        
         distances = get_all_distances(pos_1, corners)
         print("Corners dists at iter " + str(i) + " :\n" + str(distances) +"\n")
-
         # and also probably mess with the genome stuff or something idk
         # /CORNERS TELEMETRY STUFF
 
@@ -235,12 +246,14 @@ def plot_action(action_arrays, robot_filename, exper_dir):
     Plots the voxel action arrays at each step of a simulation
 
     Parameters:
-        action_arrays (ndarray): Contains more ndarrays, one for each action array. One action array per simulator step.
+        action_arrays (ndarray): Contains more ndarrays, one for each action array.
+        One action array per simulator step.
         robot_filename (str): Location of robot json.
         exper_dir (str): Location of experiment directory. 
 
     Returns:
-        Several matplotlib plot outputs to a directory. One with all actuator voxels and then one per voxel.
+        Several matplotlib plot outputs to a directory.
+        One with all actuator voxels and then one per voxel.
         Also outputs an excel spreadsheet of all of the actuators' actions. 
     '''
 
@@ -285,7 +298,8 @@ def plot_voxel(stepcount_array, voxel_action, voxel_num, robot_filename, exper_d
         exper_dir (str): Location of experiment directory.
 
     Returns:
-        A matplotlib plot output to a directory. Plot shows the actuator's action over the course of the simulation.
+        A matplotlib plot output to a directory.
+        Plot shows the actuator's action over the course of the simulation.
     '''
     plottitle = robot_filename + " voxel: " + str(voxel_num)
     plt.title(plottitle)
@@ -309,7 +323,8 @@ def plot_scores(fit_func_scores, fit_func_scores_best, gen_number, robot_filenam
         exper_dir (str): Location of experiment directory.
 
     Returns:
-        A matplotlib plot output to a directory. Plot shows the fitness function score over the generations.
+        A matplotlib plot output to a directory.
+        Plot shows the fitness function score over the generations.
     '''
 
     #make plot
@@ -324,7 +339,7 @@ def plot_scores(fit_func_scores, fit_func_scores_best, gen_number, robot_filenam
     plt.savefig(os.path.join(exper_dir, plottitle + '.png'))
     plt.close()
 
-    #save scores for later 
+    #save scores for later
     df = pd.DataFrame((fit_func_scores,fit_func_scores_best))
     df.to_csv(os.path.join(exper_dir, plottitle + '.csv'), index=False)
 
@@ -368,16 +383,16 @@ def find_corners(robot_filename):
     x_max = xy_coords[0].max()
     y_max = xy_coords[1].max()
 
-    top_right = corn.corner(find_pm_index(xy_coords, x_max, y_max))
-    top_left = corn.corner(find_pm_index(xy_coords, x_min, y_max))
-    bottom_right = corn.corner(find_pm_index(xy_coords, x_max, y_min))
-    bottom_left = corn.corner(find_pm_index(xy_coords, x_min, y_min))
+    top_right = corn.Corner(find_pm_index(xy_coords, x_max, y_max))
+    top_left = corn.Corner(find_pm_index(xy_coords, x_min, y_max))
+    bottom_right = corn.Corner(find_pm_index(xy_coords, x_max, y_min))
+    bottom_left = corn.Corner(find_pm_index(xy_coords, x_min, y_min))
 
     toreturn = np.array([top_right, top_left, bottom_right, bottom_left])
 
     return toreturn
 
-    
+
 def find_pm_index(xy_coords, x_target, y_target):
     '''
     Finds the index of the point mass at the given x and y coords.
@@ -393,7 +408,7 @@ def find_pm_index(xy_coords, x_target, y_target):
     for i in range(len(xy_coords[0])): # i is the point, so this isn't a list comp thing.
         if xy_coords[0][i] == x_target and  xy_coords[1][i] == y_target:
             return i
-    raise Exception("No point mass with target coords.") 
+    raise ValueError("No point mass with target coords.")
 
 
 def get_all_distances(xy_coords, corners):
@@ -427,15 +442,20 @@ def get_all_distances(xy_coords, corners):
 
 if __name__ == "__main__":
 
-    #args 
+    #args
     parser = argparse.ArgumentParser(description="Arguments for simple experiment.")
-    parser.add_argument("robot_filename", type=str, help="The json file of the robot you want to run the experiment with.")
-    parser.add_argument("--iters", default=100, type=int, help="number of iterations per generation.")
-    parser.add_argument("--gens", default=1500, type=int, help="number of generations.")
+    parser.add_argument("robot_filename", type=str,
+                        help="The json file of the robot you want to run the experiment with.")
+    parser.add_argument("--iters", default=100, type=int,
+                        help="number of iterations per generation.")
+    parser.add_argument("--gens", default=1500, type=int,
+                        help="number of generations.")
 
     args = parser.parse_args()
 
-    exper_dir = os.path.join('score_plots', args.robot_filename[:-5] + " " + time.asctime())
-    genome, best_fitness = run_rmhc(args.gens, args.iters, args.robot_filename, exper_dir, show=False)
+    exper_dir_out = os.path.join('score_plots',
+                             args.robot_filename[:-5] + " " + time.asctime())
+    genome_out, best_fitness_out = run_rmhc(args.gens,
+                                    args.iters, args.robot_filename, exper_dir_out, show=False)
 
     # python run_1_arg_corners.py bestbot.json
