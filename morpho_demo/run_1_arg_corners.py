@@ -82,7 +82,7 @@ def run_rmhc(gens, iters, robot_filename, exper_dir, show=True):
 
     num_actuators = retrieve_actuator_count(robot_filename)
     genome = np.random.rand(num_actuators * 2)
-    best_fitness = run_simulation(iters, genome, robot_filename, show)
+    best_fitness = run_simulation(iters, genome, robot_filename, corners, show)
 
     print("Starting fitness:", best_fitness)
     fitness_by_gen = np.array([])  #array of fitness
@@ -98,7 +98,7 @@ def run_rmhc(gens, iters, robot_filename, exper_dir, show=True):
             for x in mutated_genome
         ])
 
-        new_fitness = run_simulation(iters, mutated_genome, robot_filename, show)
+        new_fitness = run_simulation(iters, mutated_genome, robot_filename, corners, show)
 
         fitness_by_gen = np.append(fitness_by_gen, new_fitness)
 
@@ -112,7 +112,7 @@ def run_rmhc(gens, iters, robot_filename, exper_dir, show=True):
 
     # Show fittest genome
     print("Final fitness", best_fitness)
-    run_simulation(iters * 5, genome, robot_filename, fittest=True)
+    run_simulation(iters * 5, genome, robot_filename, corners, fittest=True)
     plot_scores(fitness_by_gen, best_fitness_by_gen, gens, robot_filename, exper_dir)
 
     return (genome, best_fitness)
@@ -121,6 +121,7 @@ def run_rmhc(gens, iters, robot_filename, exper_dir, show=True):
 def run_simulation(iters,
                    genome,
                    robot_filename,
+                   corners,
                    show=True,
                    fittest=False):  #if fittest, then track action
     """
@@ -173,6 +174,18 @@ def run_simulation(iters,
 
         # Get mean of robot point masses
         com_1 = np.mean(pos_1, 1)
+
+
+        # CORNERS TELEMETRY STUFF
+        # SNN SQUAD, YOUR DATA IS HERE
+        # CHANGE THE PRINT TO BE WHATEVER YOUR STUFF NEEDS!
+        
+        distances = get_all_distances(pos_1, corners)
+        print("Corners dists at iter " + str(i) + " :\n" + str(distances) +"\n")
+
+        # and also probably mess with the genome stuff or something idk
+        # /CORNERS TELEMETRY STUFF
+
 
         # Compute the action vector by averaging the avg x & y
         # coordinates and multiplying this scalar by the genome
@@ -253,7 +266,7 @@ def plot_action(action_arrays, robot_filename, exper_dir):
 
     #Save voxel data for later examination
     df = pd.DataFrame(voxels_list)
-    df.to_excel(os.path.join(exper_dir, plottitle + '.xlsx'), index=False)
+    df.to_csv(os.path.join(exper_dir, plottitle + '.csv'), index=False)
 
     #plot individual voxels
     for i in range(len(voxels_list)):  #I USE i!!!!!
@@ -313,7 +326,7 @@ def plot_scores(fit_func_scores, fit_func_scores_best, gen_number, robot_filenam
 
     #save scores for later 
     df = pd.DataFrame((fit_func_scores,fit_func_scores_best))
-    df.to_excel(os.path.join(exper_dir, plottitle + '.xlsx'), index=False)
+    df.to_csv(os.path.join(exper_dir, plottitle + '.csv'), index=False)
 
 
 def find_corners(robot_filename):
@@ -370,9 +383,9 @@ def find_pm_index(xy_coords, x_target, y_target):
     Finds the index of the point mass at the given x and y coords.
 
     Parameters:
-            xy_coords (ndarray): array containg all of the point mass coords
-            x_target (int): x coord of desired point mass.
-            y_target (int): y coord of desired point mass
+        xy_coords (ndarray): array containg all of the point mass coords.
+        x_target (int): x coord of desired point mass.
+        y_target (int): y coord of desired point mass
 
     Returns:
         int index in xy_coords of the point mass with the desired x and y coords
@@ -382,6 +395,34 @@ def find_pm_index(xy_coords, x_target, y_target):
             return i
     raise Exception("No point mass with target coords.") 
 
+
+def get_all_distances(xy_coords, corners):
+    '''
+    Gets all of the distances between all corners.
+    Excludes 0s (distance from corner to itself) and repeats. 
+
+    Parameters:
+        xy_coords (ndarray): array containg all of the point mass coords.
+        corners (ndarray): An array of corner objects.
+
+    Returns:
+        A 1D ndarray of floats, the distances between the corners. 
+        Array should be of len (n-1)!, where n is the len of corners
+        (that is, the number of corners in corners)
+
+    '''
+
+    all_distances = []
+
+    # Nested for loops?!
+    # BARF!
+    for i in range(len(corners)): #use i to avoid inserting duplicate
+        c_distances = corners[i].get_corner_distances(xy_coords, corners)
+        #print(str(corners[i]) + " to all: " + str(c_distances))
+        for distance in c_distances[i+1:]: #excludes 0s and pre-existing values
+            all_distances.append(distance)
+
+    return np.array(all_distances)
 
 
 if __name__ == "__main__":
@@ -396,3 +437,5 @@ if __name__ == "__main__":
 
     exper_dir = os.path.join('score_plots', args.robot_filename[:-5] + " " + time.asctime())
     genome, best_fitness = run_rmhc(args.gens, args.iters, args.robot_filename, exper_dir, show=False)
+
+    # python run_1_arg_corners.py bestbot.json
