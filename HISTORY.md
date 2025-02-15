@@ -13,7 +13,19 @@ Feb 11th | By Abhay Kashyap
 - Script reshapes the flat array into an array of shape (NUM_SNN * PARAMS_PER_SNN) 
 and then returns a list of dictionaries explicitly separating weights and biases of each SNN
 
+### 
+Thurs. Feb 13th | Luodi Wang | SNN output to evogym through .json file
+- Saving the output into a json file from a mock (random) input
+- Deleted unused files: node.py, layers.py, net.py
+
 ### Command Line Args Improvements
 February 13th, 2025 | By James Gaskell & Thomas Breimer
 - Added proper named command line arguments for all scripts
 - Improved implementation with argparse
+
+
+### John's SNN Code
+February 13th, 2025 | By Atharv Tekurkar
+- Removed unecessay elements
+- Fixed the functions that are giving errors
+- Added unit tests for the functions

@@ -58,12 +58,10 @@ def unpack_cmaes_output(cmaes_out):
 
     # Reshape the flat vector to a 2D array: each row corresponds to one SNN.
     reshaped = flat_vector.reshape((NUM_SNN, PARAMS_PER_SNN))
-    print(f"reshaped array: {reshaped}")
     
     # For each SNN, split the parameters into weights and biases.
     snn_parameters = {}
     for snn_idx, params_per_snn in enumerate(reshaped):
-        print(f"params_per_snn: {params_per_snn}")
         hidden_params = []
         current_node = 0
         for _ in range(HIDDEN_SIZE):
