@@ -92,7 +92,7 @@ def run_rmhc(gens, iters, robot_filename, exper_dir, show=True):
 
     num_actuators = retrieve_actuator_count(robot_filename)
     genome = np.random.rand(num_actuators * 2)
-    best_fitness = run_simulation(iters, genome, robot_filename, 
+    best_fitness = run_simulation(iters, genome, robot_filename,
                                   corners, exper_dir, show)
 
     print("Starting fitness:", best_fitness)
@@ -109,7 +109,7 @@ def run_rmhc(gens, iters, robot_filename, exper_dir, show=True):
             for x in mutated_genome
         ])
 
-        new_fitness = run_simulation(iters, mutated_genome, robot_filename, 
+        new_fitness = run_simulation(iters, mutated_genome, robot_filename,
                                      corners, exper_dir, show)
 
         fitness_by_gen = np.append(fitness_by_gen, new_fitness)
