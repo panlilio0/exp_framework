@@ -1,3 +1,7 @@
+"""
+Module for handling CMA-ES output for spiking neural networks.
+"""
+
 import numpy as np
 
 """
@@ -49,7 +53,7 @@ def unpack_cmaes_output(cmaes_out):
     Raises:
         ValueError: If the length of the CMA-ES output does not match the expected size.
     """
-
+    
     flat_vector = np.array(cmaes_out)  # np.array(pipeline.get_cmaes_out())
 
     if flat_vector.size != CMAES_OUT_SIZE:
