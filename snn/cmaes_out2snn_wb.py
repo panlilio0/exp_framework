@@ -93,8 +93,8 @@ if __name__ == '__main__':
             print("Testing unpack+set:", end='\n')
             for snn_id, params in snn_params.items():
                 print(f"SNN {snn_id} params: {params}")
-                snns[snn_id].hidden_layer.set_weights(*params['hidden_layer'])
-                snns[snn_id].output_layer.set_weights(*params['output_layer'])
+                snns[snn_id].hidden_layer.set_weights(params['hidden_layer'])
+                snns[snn_id].output_layer.set_weights(params['output_layer'])
                 print(f"SNN {snn_id}: ")
                 print(snns[snn_id].compute(np.random.randint(1, 15, INP_SIZE)))
                 print('\n')
