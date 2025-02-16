@@ -1,3 +1,7 @@
+"""
+Module for handling CMA-ES output for spiking neural networks.
+"""
+
 import numpy as np
 
 # CONSTANT
@@ -19,6 +23,14 @@ PARAMS_PER_SNN = NUM_WEIGHTS_PER_SNN + NUM_BIASES_PER_SNN
 #     N: "voxel N"
 # }
 
+def get_cmaes_out():
+    """
+    Mock function to simulate getting CMA-ES output.
+    
+    Returns:
+        np.ndarray: A random array simulating the CMA-ES output.
+    """
+    return np.random.rand(NUM_SNNS * PARAMS_PER_SNN)
 
 def get_expected_cmaes_size():
     """
@@ -43,12 +55,7 @@ def unpack_cmaes_output():
     Raises:
         ValueError: If the length of the CMA-ES output does not match the expected size.
     """
-    # Assume get_cmaes_out() is provided by another module.
-    # For example, one might import it like:
-    # from external_module import get_cmaes_out
-    flat_vector = np.array(
-        get_cmaes_out()
-    )  # Expected to return a flat array-like object. Function can be added or imported from evogym codebase once the team finishes building it.
+    flat_vector = np.array(get_cmaes_out())  # Use the mock function
 
     expected_size = get_expected_cmaes_size()
     if flat_vector.size != expected_size:
