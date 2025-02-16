@@ -34,3 +34,8 @@ February 13th, 2025 | By Atharv Tekurkar
 Feburary 15, 2025 | By Luodi Wang (partnered with Miguel Garduno on pylint)
 - `get-output-state()` method in the snn class from a py file
 - Within the SNN folder increased pylint score from 5.54/10 to 10/10 by 80.5%!
+
+
+Feb 16th | Abhay Kashyap
+- Made the `snn_parameters` dictionary elements compliant with the way SNN's `set_weights()` method works
+- Completed testing unpacking tests with dummy cmaes output and setting them to SNNs
