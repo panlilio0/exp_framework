@@ -29,3 +29,8 @@ February 13th, 2025 | By Atharv Tekurkar
 - Removed unecessay elements
 - Fixed the functions that are giving errors
 - Added unit tests for the functions
+
+
+Feb 16th | Abhay Kashyap
+- Made the `snn_parameters` dictionary elements compliant with the way SNN's `set_weights()` method works
+- Completed testing unpacking tests with dummy cmaes output and setting them to SNNs
