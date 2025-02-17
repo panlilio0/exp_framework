@@ -157,56 +157,8 @@ class SpikyNet:
             print(f"Node {node_index}: ", end="")
             output_node.print_weights()
 
-    def get_output_state(self, num_steps=100):
-        """
-        Run SNN with random inputs over multiple timesteps and return actuator values.
-        
-        Parameters:
-            num_steps (int): Number of simulation steps to run
-            
-        Returns:
-            dict: Contains 'continuous_actions' (scaled actuator values 0.6-1.6) 
-                  and 'duty_cycles' (raw firing frequencies)
-        """
-        all_outputs = []
-        for _ in range(num_steps):
-            inputs = [random.uniform(0, 1) for _ in range(5)]
-            outputs = self.compute(inputs)
-            all_outputs.append(outputs)
-            time.sleep(0.01)  # Simulate real-time behavior
-        duty_cycles = [neuron.duty_cycle() for neuron in self.output_layer.nodes]
-        scaled_actions = [(dc * 1.0) + 0.6 for dc in duty_cycles]
-        return {
-            "continuous_actions": scaled_actions,
-            "duty_cycles": duty_cycles
-        }
-
 # testing
 if __name__ == '__main__':
-    print("\n--- Testing get_output_state ---")
-    TEST_NET = SpikyNet(input_size=5, hidden_size=2, output_size=8)
-    TEST_WEIGHTS = [
-        0.1, 0.2, 0.3, 0.4, 0.5, 1.0,
-        0.5, 0.6, 0.7, 0.8, 0.9, 0.8,
-        1.0, 1.0, 0.7,
-        0.0, 0.0, 0.5,
-        0.5, 0.5, 0.8,
-        0.3, 0.3, 0.6,
-        0.7, 0.7, 0.4,
-        0.2, 0.2, 0.9,
-        0.8, 0.8, 0.3,
-        0.4, 0.4, 0.7
-    ]
-    TEST_NET.set_weights(TEST_WEIGHTS)
-    print("\nRunning get_output_state for 100 steps...")
-    OUTPUT_STATE = TEST_NET.get_output_state(num_steps=100)
-    print("\nDuty Cycles (raw firing frequencies):")
-    for node_idx, dc in enumerate(OUTPUT_STATE["duty_cycles"]):
-        print(f"Output Node {node_idx+1}: {dc:.3f}")
-    print("\nContinuous Actions (scaled to 0.6-1.6):")
-    for node_idx, action in enumerate(OUTPUT_STATE["continuous_actions"]):
-        print(f"Actuator {node_idx+1}: {action:.3f}")
-
     print("\n--- Testing SpikyNode ---")
     TEST_NODE = SpikyNode(5)
     print("Initial weights:")
