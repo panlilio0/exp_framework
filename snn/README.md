@@ -20,9 +20,18 @@ Add custom tests to the block of code at the end of the file, or create a separa
 
 ## Objectives
 
-Due Tuesday 02/11
-- [ ] Figure out how to unpack CMA-ES output into weights and biases of individual SNNs - Abhay
-- [ ] Build SNN - Atharv, Jonathan, Miguel
-- [ ] Build pipeline to get input values from and send output values to the evogym codebase - Luodi
-- [ ] Experiment with and test the SNN itself without evogym, then try checking if it works with the pipeline through manually sending custom values - Jonathan, Miguel
-- [ ] Compare results using input variations - decimal (actual values) vs binary vs spike-encoded vs normalized - TBD after SNN is built to compare actual results
+Due Tuesday 02/18
+- [ ] build working snn - atharv, jonathan, miguel
+    - [x] finish cleaning and implementing basic snn code - node, layer, network
+    - figure out how to connect this to the pipeline to get morphology 
+    information to get input size, output size, any other info needed
+    - [x] figure out how to return a float value for “voxel target length” 
+    instead of the 0/1 spike - `if out=0 then target length=0.6; if out=1 then target length=1.6`
+    - [ ] visualization of outputs and test results
+- [ ] finish unpacking script - abhay
+    - [x] transform flat output array into multi-dimensional arrays
+    - [x] split into weights & biases for each node for each voxel/snn
+    - [ ] test by setting it to dummy SNN and compute
+- [ ] pipeline to send and receive data to/from evogym/cmaes scripts - luodi, abhay
+    - [ ] extract morphology information from json file relevant to building and initalizing the snn
+    - [ ] communicate voxel distance values from evogym and cmaes output from cmaes script to snn, and snn output to evogym
