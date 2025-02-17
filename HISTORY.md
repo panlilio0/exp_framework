@@ -39,3 +39,9 @@ Feburary 15, 2025 | By Luodi Wang (partnered with Miguel Garduno on pylint)
 Feb 16th | Abhay Kashyap
 - Made the `snn_parameters` dictionary elements compliant with the way SNN's `set_weights()` method works
 - Completed testing unpacking tests with dummy cmaes output and setting them to SNNs
+
+### Refactoring 
+Feb 17th | Luodi Wang
+- Successfully completed robot configuration with its locations of corners from bestbot.json
+- Run inputs through the SNN
+- and we've now finally outputted actuator control values
