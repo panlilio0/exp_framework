@@ -45,3 +45,8 @@ Feb 17th | Luodi Wang
 - Successfully completed robot configuration with its locations of corners from bestbot.json
 - Run inputs through the SNN
 - and we've now finally outputted actuator control values
+
+
+Feb 17th | Abhay Kashyap
+- Merged all utility functions for SNN (eg. cmaes output => snn w&b; getting snn outputs, etc.) into one class
+- Updated SNN code to fix some duty cycle and firelog errors (duty cycle was always 0 as firelog was not getting updated because of threshold)
