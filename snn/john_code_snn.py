@@ -5,11 +5,12 @@ Module for simulating spiking neural networks (SNNs) with spiky neurons.
 import random
 import time
 
+
 # Constants
 SPIKE_DECAY = 0.1
 MAX_BIAS = 1
 MAX_FIRELOG_SIZE = 200
-FIRELOG_THRESHOLD = 30
+
 
 class SpikyNode:
     """
@@ -34,7 +35,7 @@ class SpikyNode:
         while len(self.firelog) > MAX_FIRELOG_SIZE:
             self.firelog.pop(0)
 
-        print(f"current level: {self.level}, bias: {self.get_bias()}")
+        # print(f"current level: {self.level}, bias: {self.get_bias()}")
         self.level = max(self.level - SPIKE_DECAY, 0.0)
 
         if (len(inputs) + 1) != len(self._weights):
@@ -43,14 +44,14 @@ class SpikyNode:
 
         weighted_sum = sum(inputs[i] * self._weights[i] for i in range(len(inputs)))
         self.level = max(self.level + weighted_sum, 0.0)
-        print(f"new level: {self.level}")
+        # print(f"new level: {self.level}")
 
         if self.level >= self.get_bias():
-            print("Fired --> activation level reset to 0.0\n")
+            # print("Fired --> activation level reset to 0.0\n")
             self.level = 0.0
             self.firelog.append(1)
             return 1.0
-        print("\n")
+        # print("\n")
         self.firelog.append(0)
         return 0.0
 
@@ -58,10 +59,7 @@ class SpikyNode:
         """Measures how frequently the neuron fires."""
         if len(self.firelog) == 0:
             return 0.0
-        fires = sum(self.firelog)
-        if len(self.firelog) > FIRELOG_THRESHOLD:
-            return fires / len(self.firelog)
-        return 0.0
+        return sum(self.firelog) / len(self.firelog)
 
     def set_weight(self, idx, val):
         """Sets a weight for a particular node."""
@@ -136,19 +134,12 @@ class SpikyNet:
 
     def set_weights(self, input_weights):
         """Assigns weights to the hidden and the output layer."""
-        weights_per_hidden_node = len(self.hidden_layer.nodes[0].weights)
-        total_hidden_node_weights = len(self.hidden_layer.nodes) * weights_per_hidden_node
-        weights_per_output_node = len(self.output_layer.nodes[0].weights)
-        total_output_node_weights = len(self.output_layer.nodes) * weights_per_output_node
-        if len(input_weights) == total_hidden_node_weights + total_output_node_weights:
-            self.hidden_layer.set_weights(input_weights[:total_hidden_node_weights])
-            self.output_layer.set_weights(input_weights[total_hidden_node_weights:])
-        else:
-            print("Total weight list size mismatch!")
+        self.hidden_layer.set_weights(input_weights['hidden_layer'])
+        self.output_layer.set_weights(input_weights['output_layer'])
 
     def print_structure(self):
         """Displays the network weights."""
-        print("\nHidden Layer:")
+        print("Hidden Layer:")
         for node_index, hidden_node in enumerate(self.hidden_layer.nodes):
             print(f"Node {node_index}: ", end="")
             hidden_node.print_weights()
@@ -156,6 +147,7 @@ class SpikyNet:
         for node_index, output_node in enumerate(self.output_layer.nodes):
             print(f"Node {node_index}: ", end="")
             output_node.print_weights()
+        print("\n")
 
 # testing
 if __name__ == '__main__':
