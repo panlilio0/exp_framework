@@ -133,8 +133,7 @@ def run(iters, genome, mode, vid_name=None):
         # amplitude and phase offset for a sin function at the
         # given time, and using this value for the first actuator,
         # and so on for all actuators
-        action = [sine_wave(sin_time, genome[j], genome[j+1], genome[j+2])
-                  for j in range(0, len(genome), 3)]
+        action = np.random.uniform(0.6, 1.6, len(genome))
 
         # Clip actuator target lengths to be between 0.6 and 1.6 to prevent buggy behavior
         action = np.clip(action, ACTUATOR_MIN_LEN, ACTUATOR_MAX_LEN)
