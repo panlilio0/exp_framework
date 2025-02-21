@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 from evogym import EvoWorld, EvoSim, EvoViewer
 from evogym import WorldObject
 from special_classes import corner as corn
+from special_classes import active_voxel as avo
 
 ROBOT_SPAWN_X = 3
 ROBOT_SPAWN_Y = 10
@@ -27,7 +28,7 @@ FRAME_CYCLE_LEN = 10
 MUTATE_RATE = 0.2
 
 ENV_FILENAME = "simple_environment_long.json"
-#ROBOT_FILENAME = "walkbot4billion.json"
+#ROBOT_FILENAME = "smallbot.json"
 #GENERATIONS = 1500
 
 #EXPER_DIR = 'score_plots/' + ROBOT_FILENAME[:-5] + " " + time.asctime(
@@ -60,27 +61,27 @@ def retrieve_actuator_count(robot_filename):
 
 def run_rmhc(gens, iters, robot_filename, exper_dir, show=True):
     """
-    Run a RMHC in evogym. 
+    Run a RMHC in evogym.
 
-    Fitness is defined as the sum of the distance that the 
+    Fitness is defined as the sum of the distance that the
     robot's center of mass moves in between each step of the simulation.
-    The robot morphology is predefined and imported from a json file. 
-    It has actuators. The robot's genome is a vector of scalars. 
-    At each time step, the x & y coordinates of the robot's center of mass 
-    are averaged and this scalar is multiplied by the genome vector. In a loop, 
-    for ten frames, this value is multiplied by the first len/2 values of the vector. 
-    For the next ten frames, they are multipled by the second len/2. These values are 
-    then clipped to between 0.6 and 1.6 and each represent an actuator target length 
-    for that simulation step. The genome is mutated by replacing a vector index with 
+    The robot morphology is predefined and imported from a json file.
+    It has actuators. The robot's genome is a vector of scalars.
+    At each time step, the x & y coordinates of the robot's center of mass
+    are averaged and this scalar is multiplied by the genome vector. In a loop,
+    for ten frames, this value is multiplied by the first len/2 values of the vector.
+    For the next ten frames, they are multipled by the second len/2. These values are
+    then clipped to between 0.6 and 1.6 and each represent an actuator target length
+    for that simulation step. The genome is mutated by replacing a vector index with
     a random float between 0 and 1 with a 20% probabillity for each index.
-    
+
     Parameters:
         gens (int): How many generations to run.
         iters (int): Iterations per generation.
         robot_filename (str): Location of robot json.
         exper_dir (str): Location of experiment directory.
         show (bool): If true, renders all simulations. If false, only renders the fittest robot.
-    
+
     Returns:
         (ndarray, fitness): The fittest genome the RMHC finds and its fitness.
     """
@@ -142,8 +143,8 @@ def run_simulation(iters,
 
     Parameters:
         iters (int): How many iterations to run.
-        genome (ndarray): The genome of the robot, which is an 
-        array of scalars from the robot's average position to the 
+        genome (ndarray): The genome of the robot, which is an
+        array of scalars from the robot's average position to the
         desired length of the muscles.
         robot_filename (str): Location of robot json.
         show (bool): Whether or not to display a simulation of the robot.
@@ -157,7 +158,7 @@ def run_simulation(iters,
     world = EvoWorld.from_json(os.path.join('world_data', ENV_FILENAME))
 
     # Add robot
-    robot = WorldObject.from_json(os.path.join('world_data',robot_filename))
+    robot = WorldObject.from_json(os.path.join('world_data', robot_filename))
 
     world.add_from_array(name='robot',
                          structure=robot.get_structure(),
@@ -167,6 +168,7 @@ def run_simulation(iters,
 
     #get actuators
     num_actuators = retrieve_actuator_count(robot_filename)
+    actuators = find_active_voxels()
 
     # Create simulation
     sim = EvoSim(world)
@@ -192,8 +194,11 @@ def run_simulation(iters,
         # CORNERS TELEMETRY STUFF
         # SNN SQUAD, YOUR DATA IS HERE
         # CHANGE THE PRINT TO BE WHATEVER YOUR STUFF NEEDS!
-        distances = get_all_distances(pos_1, corners)
-        print("Corners dists at iter " + str(i) + " :\n" + str(distances) +"\n")
+        all_distances = get_all_voxel_to_corner_distances(pos_1, actuators, corners)
+        print("Distances at iter " + str(i)+":")
+        for distances in all_distances:
+            print(str(distances))
+        print("")
         # and also probably mess with the genome stuff or something idk
         # /CORNERS TELEMETRY STUFF
 
@@ -344,6 +349,7 @@ def plot_scores(fit_func_scores, fit_func_scores_best, gen_number, robot_filenam
     df.to_csv(os.path.join(exper_dir, plottitle + '.csv'), index=False)
 
 
+# All of this corner stuff should be moved to a utils python file.
 def find_corners(robot_filename):
     '''
     Finds the corners, returns them in an array of four corner objects.
@@ -383,17 +389,17 @@ def find_corners(robot_filename):
     x_max = xy_coords[0].max()
     y_max = xy_coords[1].max()
 
-    top_right = corn.Corner(find_pm_index(xy_coords, x_max, y_max))
-    top_left = corn.Corner(find_pm_index(xy_coords, x_min, y_max))
-    bottom_right = corn.Corner(find_pm_index(xy_coords, x_max, y_min))
-    bottom_left = corn.Corner(find_pm_index(xy_coords, x_min, y_min))
+    top_right = corn.Corner(find_pm_index_corners(xy_coords, x_max, y_max))
+    top_left = corn.Corner(find_pm_index_corners(xy_coords, x_min, y_max))
+    bottom_right = corn.Corner(find_pm_index_corners(xy_coords, x_max, y_min))
+    bottom_left = corn.Corner(find_pm_index_corners(xy_coords, x_min, y_min))
 
     toreturn = np.array([top_right, top_left, bottom_right, bottom_left])
 
     return toreturn
 
 
-def find_pm_index(xy_coords, x_target, y_target):
+def find_pm_index_corners(xy_coords, x_target, y_target):
     '''
     Finds the index of the point mass at the given x and y coords.
 
@@ -411,31 +417,69 @@ def find_pm_index(xy_coords, x_target, y_target):
     raise ValueError("No point mass with target coords.")
 
 
-def get_all_distances(xy_coords, corners):
+# def get_all_distances(xy_coords, corners):
+#     '''
+#     Gets all of the distances between all corners.
+#     Excludes 0s (distance from corner to itself) and repeats.
+
+#     Parameters:
+#         xy_coords (ndarray): array containg all of the point mass coords.
+#         corners (ndarray): An array of corner objects.
+
+#     Returns:
+#         A 1D ndarray of floats, the distances between the corners.
+#         Array should be of len (n-1)th triangular number, where n is the len of corners
+#         (that is, the number of corners in corners)
+
+#     '''
+
+#     all_distances = []
+
+#     # Nested for loops?!
+#     # BARF!
+#     for i in range(len(corners)): #use i to avoid inserting duplicate
+#         c_distances = corners[i].get_corner_distances(xy_coords, corners)
+#         #print(str(corners[i]) + " to all: " + str(c_distances))
+#         for distance in c_distances[i+1:]: #excludes 0s and pre-existing values
+#             all_distances.append(distance)
+
+#     return np.array(all_distances)
+
+def find_active_voxels():
     '''
-    Gets all of the distances between all corners.
-    Excludes 0s (distance from corner to itself) and repeats. 
+    PLACEHOLDER FUNCTION!
+    Will eventually have proper args and implementation.
+    Gets the active voxels, packs them up in the actuator class,
+    and returns them in an ndarray.
+    '''
+
+    voxel1 = avo.Actuator(0, 0, 3, (1, 3, 4, 5))
+    voxel2 = avo.Actuator(0, 0, 3, (6, 7, 8, 9))
+    voxel3 = avo.Actuator(0, 0, 4, (2, 3, 12, 13))
+    voxel4 = avo.Actuator(0, 0, 4, (9, 11, 14, 15))
+
+    return np.array([voxel1, voxel2, voxel3, voxel4])
+
+def get_all_voxel_to_corner_distances(xy_coords, a_voxels, corners):
+    '''
+    Finds the distances from each actuator's center of mass
+    to each of the four corners of the robot.
 
     Parameters:
         xy_coords (ndarray): array containg all of the point mass coords.
+        a_voxels (ndarray): An array of actuator objects.
         corners (ndarray): An array of corner objects.
 
     Returns:
-        A 1D ndarray of floats, the distances between the corners. 
-        Array should be of len (n-1)th triangular number, where n is the len of corners
-        (that is, the number of corners in corners)
-
+        ndarray of ndarrays of floats. Each inner array holds the distances
+        from an actuator's center of mass to each of the four corners of the robot.
     '''
 
     all_distances = []
 
-    # Nested for loops?!
-    # BARF!
-    for i in range(len(corners)): #use i to avoid inserting duplicate
-        c_distances = corners[i].get_corner_distances(xy_coords, corners)
-        #print(str(corners[i]) + " to all: " + str(c_distances))
-        for distance in c_distances[i+1:]: #excludes 0s and pre-existing values
-            all_distances.append(distance)
+    for actu in a_voxels:
+        distances = actu.get_distances_to_corners(xy_coords, corners)
+        all_distances.append(distances)
 
     return np.array(all_distances)
 
@@ -444,8 +488,6 @@ if __name__ == "__main__":
 
     #args
     parser = argparse.ArgumentParser(description="Arguments for simple experiment.")
-    parser.add_argument("robot_filename", type=str,
-                        help="The json file of the robot you want to run the experiment with.")
     parser.add_argument("--iters", default=100, type=int,
                         help="number of iterations per generation.")
     parser.add_argument("--gens", default=1500, type=int,
@@ -454,8 +496,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     exper_dir_out = os.path.join('score_plots',
-                             args.robot_filename[:-5] + " " + time.asctime())
+                             "smallbot.json"[:-5] + " " + time.asctime())
     genome_out, best_fitness_out = run_rmhc(args.gens,
-                                    args.iters, args.robot_filename, exper_dir_out, show=False)
+                                    args.iters, "smallbot.json", exper_dir_out, show=False)
+    # For the sake of this dumb hacky demo, I just hardcoded the robot file
+    # WITHOUT just making it a constant because of the changes I'd have to make
+    # and debug. I know this is wrong and I'm sorry, but I needed this done for the SNN
+    # folks like yesterday and I don't have time to do a proper constant.
 
-    # python run_1_arg_corners.py bestbot.json
+    # Maybe this is a sign to reexplore doing constants with argparse later.
+
+    # python run_1_centers.py
