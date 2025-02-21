@@ -7,6 +7,17 @@ import time
 import os
 import numpy as np
 from john_code_snn import SpikyNet
+import sysx
+
+# Add the morpho_demo directory to the Python path
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'morpho_demo'))
+
+from run_2 import (
+    NUM_ACTUATORS,
+    run_simulation,
+    ROBOT_SPAWN_X,
+    ROBOT_SPAWN_Y
+)
 
 # Constants for SNN configuration
 MIN_LENGTH = 0.6  # Minimum actuator length
@@ -70,47 +81,7 @@ class SNNRunner:
             output_size=self.OUTPUT_SIZE
         ) for _ in range(self.NUM_SNN)]
         return self.NUM_SNN, self.INP_SIZE
-    
-    # def find_corners(self):
-    #     """
-    #     Find corner voxels of the robot structure.
         
-    #     Returns:
-    #         list: Indices of corner voxels
-    #     """
-    #     x_coords = [idx % self.grid_width for idx in self.indices]
-    #     y_coords = [idx // self.grid_width for idx in self.indices]
-    #     min_x, max_x = min(x_coords), max(x_coords)
-    #     min_y, max_y = min(y_coords), max(y_coords)
-    #     corners = []
-    #     for i, (x, y) in enumerate(zip(x_coords, y_coords)):
-    #         if ((x == min_x and y == min_y) or
-    #             (x == min_x and y == max_y) or
-    #             (x == max_x and y == min_y) or
-    #             (x == max_x and y == max_y)):
-    #             corners.append(self.indices[i])
-    #     return sorted(corners)
-    
-    # def calculate_corner_distances(self):
-    #     """
-    #     Calculate normalized pairwise distances between robot corners.
-        
-    #     Returns:
-    #         list: Normalized distances to use as SNN input
-    #     """
-    #     corners = self.find_corners()
-    #     distances = []
-    #     for i, corner1 in enumerate(corners):
-    #         x1 = corner1 % self.grid_width
-    #         y1 = corner1 // self.grid_width
-    #         for corner2 in corners[i + 1:]:
-    #             x2 = corner2 % self.grid_width
-    #             y2 = corner2 // self.grid_width
-    #             dist = np.sqrt((x2 - x1)**2 + (y2 - y1)**2)
-    #             distances.append(dist)
-    #     max_dist = max(distances)
-    #     return [d/max_dist for d in distances]
-    
     def set_snn_weights(self, cmaes_out):
         """
         Retrieve the flat CMA-ES output and 
@@ -186,6 +157,51 @@ class SNNRunner:
         with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(output_state, f, indent=2)
 
+    def get_inputs(self, sim):
+        """
+        Get input values from the simulation state for the SNN.
+        
+        Args:
+            sim (EvoSim): The current simulation instance from evogym
+            
+        Returns:
+            list: List of normalized inputs for the SNN based on actuator positions
+        """
+        # Get position of all robot voxels
+        positions = sim.object_pos_at_time(sim.get_time(), "robot")
+        
+        # Adjust positions relative to spawn point
+        positions[0, :] -= ROBOT_SPAWN_X  # Adjust x coordinates
+        positions[1, :] -= ROBOT_SPAWN_Y  # Adjust y coordinates
+        
+        # Get distances between actuators
+        actuator_positions = []
+        for i in range(NUM_ACTUATORS):
+            actuator_pos = positions[:, i]  # Get x,y position for actuator i
+            actuator_positions.append(actuator_pos)
+            
+        return self.calculate_distances(actuator_positions)
+    
+    def calculate_distances(self, actuator_positions):
+        """Helper method to calculate normalized distances between actuators."""
+        inputs = []
+        for i in range(NUM_ACTUATORS):
+            distances = []
+            for j in range(NUM_ACTUATORS):
+                if i != j:
+                    x1, y1 = actuator_positions[i]
+                    x2, y2 = actuator_positions[j]
+                    dist = np.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+                    distances.append(dist)
+            
+            # Normalize distances
+            if distances:
+                max_dist = max(distances)
+                normalized_distances = [d/max_dist if max_dist > 0 else 0 for d in distances]
+                inputs.append(normalized_distances)
+        
+        return inputs
+
 
 def main():
     """Main function to demonstrate SNN output generation."""
@@ -194,14 +210,20 @@ def main():
         # Load robot configuration and initialize SNN
         num_actuators, input_size = runner.load_robot_config()
         print(f"Initialized SNN with {input_size} inputs")
+        
         # Generate random weights for testing
         print(f"params per snn: {runner.PARAMS_PER_SNN}")
         num_weights = runner.PARAMS_PER_SNN * num_actuators
         test_weights = np.random.rand(num_weights)
         runner.set_snn_weights(test_weights)
-        # Generate outputs
-        inputs = [np.random.uniform(0, 1, input_size) for _ in range(num_actuators)]
-        print("\nRunning get_output_state for 100 steps...")
+        
+        # Run the simulation using imported run_simulation function
+        sim = run_simulation()
+        
+        # Get inputs from the actual simulation
+        inputs = runner.get_inputs(sim)
+        
+        print("\nRunning get_output_state...")
         output_states = runner.get_output_state(inputs)
         for id, output_state in output_states.items():
             print("\nDuty cycle (raw firing frequencies):")
@@ -210,7 +232,8 @@ def main():
             print(f"\nTarget length (scaled to {MIN_LENGTH}-{MAX_LENGTH}):")
             for node_idx, action in enumerate(output_state["target_length"]):
                 print(f"Actuator {id+1}: {action:.3f}")
-            # Save output to JSON
+        
+        # Save output to JSON
         runner.save_output_state(output_states, "snn_outputs.json")
         print("\nSaved outputs to snn_outputs.json")
     except (FileNotFoundError, ValueError, KeyError) as e:
