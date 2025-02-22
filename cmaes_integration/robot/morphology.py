@@ -7,12 +7,8 @@ February 21st, 2025
 
 import os
 import numpy as np
-from evogym import EvoWorld, EvoSim, EvoViewer
 from evogym import WorldObject
 from actuator import Actuator
-
-POINTLESS_ROBOT_SPAWN_X = 0
-POINTLESS_ROBOT_SPAWN_Y = 0
 
 class Morpology:
     """
@@ -44,7 +40,7 @@ class Morpology:
         # Get robot structure
         robot = WorldObject.from_json(os.path.join('world_data', filename))
         return robot.get_structure()
-    
+
     def create_actuator_voxels(self, structure: np.ndarray) -> list:
         """
         Given a robot structure, creates vertices.
@@ -132,8 +128,5 @@ class Morpology:
 
             top_y -= 1
             left_x = 0
-            
-    
-if __name__ == "__main__":
-    morph = Morpology("speed_bot.json")
 
+        return actuators
