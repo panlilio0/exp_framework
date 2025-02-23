@@ -17,8 +17,7 @@ import csv
 import argparse
 from cmaes import CMA
 import numpy as np
-import run_simulation as sim
-
+from snn_sim.run_simulation import run
 
 def run_cma_es(mode, gens, sigma_val):
     """

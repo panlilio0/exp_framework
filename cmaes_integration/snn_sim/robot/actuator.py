@@ -2,18 +2,15 @@
 A class representing an active voxel in evogym. 
 
 Author: Matthew Meek
-Febraury 21st, 2025
 '''
 
 import math
 import numpy as np
-#from special_classes import corner as corn
 
 class Actuator:
     """
     A class reperesenting an actuator of an evogym robot.
     Could represent any voxel, really. But it was made for corners.
-
     ...
 
     Attributes
@@ -77,7 +74,7 @@ class Actuator:
             corners (ndarray): array containing all of the corner objects
 
         Returns:
-            An ndarray of floats with the distances from the to each corner. 
+            An list of floats with the distances to each corner. 
         '''
 
         local_x, local_y = self.get_center_of_mass(positions)
@@ -87,7 +84,7 @@ class Actuator:
         for corner in corners:
             other_x = positions[0][corner.index]
             other_y = positions[1][corner.index]
-            distance = math.sqrt((other_x-local_x) * (other_x-local_x) +
-                                 (other_y-local_y) * (other_y-local_y))
+            distance = math.sqrt((other_x-local_x)*(other_x-local_x) +
+                                 (other_y-local_y)*(other_y-local_y))
             distances.append(distance)
-        return np.array(distances)
+        return distances
