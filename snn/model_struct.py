@@ -3,7 +3,6 @@ Module for simulating spiking neural networks (SNNs) with spiky neurons.
 """
 
 import random
-import time
 
 
 # Constants

@@ -5,7 +5,7 @@ Module for running SNN outputs with proper input/output handling.
 import json
 import os
 import numpy as np
-from snn.model_struct import SpikyNet
+from model_struct import SpikyNet
 
 
 # Constants for SNN configuration
@@ -155,7 +155,7 @@ def main():
         runner.set_snn_weights(test_weights)
         # Generate outputs
         print("\nRunning get_output_state for 100 steps...")
-        output_states = runner.set_lengths(inputs)
+        output_states = runner.get_lengths(inputs)
         print(output_states)
         # runner.save_output_state(output_states, "snn_outputs.json")
         # print("\nSaved outputs to snn_outputs.json")
