@@ -50,3 +50,7 @@ Feb 17th | Luodi Wang
 Feb 17th | Abhay Kashyap
 - Merged all utility functions for SNN (eg. cmaes output => snn w&b; getting snn outputs, etc.) into one class
 - Updated SNN code to fix some duty cycle and firelog errors (duty cycle was always 0 as firelog was not getting updated because of threshold)
+
+Feb 23rd | Abhay Kashyap
+- Removed files that were not being used and renames some files to more appropriate names
+- Refactored `SNNRunner()` into `SNNController()` and the class simpler to use for simulation - removed redundant functions and converted some functions into private functions for abstraction.
