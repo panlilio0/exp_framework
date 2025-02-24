@@ -19,6 +19,10 @@ from cmaes import CMA
 import numpy as np
 from snn_sim.run_simulation import run
 
+SNN_INPUT_SHAPE = 36
+MEAN_ARRAY = [1.0] * 36
+NUM_ITERS = 100
+
 def run_cma_es(mode, gens, sigma_val):
     """
     Runs the cma_es algorithm on the robot locomotion problem,
@@ -40,10 +44,13 @@ def run_cma_es(mode, gens, sigma_val):
 
     csv_header = ['generation', 'best_fitness']
 
+    """
     for i in range(sim.NUM_ACTUATORS):
         csv_header = csv_header + [
             'frequency' + str(i), 'amplitude' + str(i), 'phase_offset' + str(i)
         ]
+
+    """
 
     with open("output.csv", "w", newline="") as file:
         writer = csv.writer(file)
@@ -51,17 +58,14 @@ def run_cma_es(mode, gens, sigma_val):
 
     # Init CMA
 
-    optimizer = CMA(mean=np.array(
-        [sim.AVG_FREQ, sim.AVG_AMP, sim.AVG_PHASE_OFFSET] * sim.NUM_ACTUATORS),
-                    sigma=sigma_val)
+    optimizer = CMA(mean=np.array(MEAN_ARRAY), sigma=sigma_val)
 
     for generation in range(gens):
         solutions = []
 
         for indv_num in range(optimizer.population_size):
             x = optimizer.ask()
-            fitness = sim.run(sim.NUM_ITERS, x, mode,
-                              str(generation) + "_" + str(indv_num))
+            fitness = run(NUM_ITERS, x, mode, str(generation) + "_" + str(indv_num))
             solutions.append((x, fitness))
 
         optimizer.tell(solutions)

@@ -11,8 +11,8 @@ import cv2
 import numpy as np
 from evogym import EvoWorld, EvoSim, EvoViewer
 from evogym import WorldObject
-from robot.morphology import Morphology
-from snn.SNNRunner import SNNRunner
+from snn_sim.robot.morphology import Morphology
+from snn_sim.snn.snn_controller import SNNController
 
 # Simulation constants
 ROBOT_SPAWN_X = 3
@@ -21,14 +21,14 @@ ACTUATOR_MIN_LEN = 0.6
 ACTUATOR_MAX_LEN = 1.6
 NUM_ITERS = 200
 FPS = 50
-MODE = "h" # "headless", "screen", or "video"
+MODE = "v" # "headless", "screen", or "video"
 
 NUM_ACTUATORS = 4
 FITNESS_OFFSET = 100
 
 # Files
 ENV_FILENAME = "simple_environment.json"
-ROBOT_FILENAME = "speed_bot.json"
+ROBOT_FILENAME = "smallbot.json"
 
 def create_video(source, fps=FPS, output_name='output'):
     """
@@ -82,11 +82,13 @@ def run(iters, genome, mode, vid_name=None):
     if mode in ["v", "b"]: #video or both
         os.makedirs("videos", exist_ok=True)
 
+    this_dir = os.path.dirname(os.path.realpath(__file__))
+
     # Create world
-    world = EvoWorld.from_json(os.path.join('robot', 'world_data', ENV_FILENAME))
+    world = EvoWorld.from_json(os.path.join(this_dir, 'robot', 'world_data', ENV_FILENAME))
 
     # Add robot
-    robot = WorldObject.from_json(os.path.join('robot', 'world_data', ROBOT_FILENAME))
+    robot = WorldObject.from_json(os.path.join(this_dir, 'robot', 'world_data', ROBOT_FILENAME))
 
     world.add_from_array(
         name='robot',
@@ -112,18 +114,21 @@ def run(iters, genome, mode, vid_name=None):
 
     morphology = Morphology(ROBOT_FILENAME)
 
-    snn_controller = SNNRunner(NUM_ACTUATORS)
+    file_path = os.path.dirname(os.path.abspath(__file__))
+    robot_file_path = os.path.join(file_path, 'robot', 'world_data', ROBOT_FILENAME)
+
+    snn_controller = SNNController(2, 2, 1, robot_config=robot_file_path)
     snn_controller.set_snn_weights(genome)
 
     for i in range(iters):
         # Get point mass locations
         raw_pm_pos = sim.object_pos_at_time(sim.get_time(), "robot")
 
-        # Transform to snn inputs
-        snn_inputs = morphology.get_corner_distances(raw_pm_pos)
+        # Get distances to the corners
+        corner_distances = morphology.get_corner_distances(raw_pm_pos)
 
         # Feed snn and get outputs
-        action = snn_controller.compute_all(snn_inputs)
+        action = snn_controller.get_lengths(corner_distances)
 
         # Clip actuator target lengths to be between 0.6 and 1.6 to prevent buggy behavior
         action = np.clip(action, ACTUATOR_MIN_LEN, ACTUATOR_MAX_LEN)
@@ -154,6 +159,3 @@ def run(iters, genome, mode, vid_name=None):
         create_video(video_frames, FPS, vid_name)
 
     return FITNESS_OFFSET - fitness # Turn into a minimization problem
-
-if __name__ == "__main__":
-    run(1000, np.array([1]*4*13), "v")

@@ -4,10 +4,12 @@ Module for simulating spiking neural networks (SNNs) with spiky neurons.
 
 import random
 
+
 # Constants
 SPIKE_DECAY = 0.1
 MAX_BIAS = 1
 MAX_FIRELOG_SIZE = 200
+
 
 class SpikyNode:
     """
@@ -131,7 +133,7 @@ class SpikyNet:
 
     def set_weights(self, input_weights):
         """Assigns weights to the hidden and the output layer."""
-        self.hidden_layer.set_weights(input_weights[0:])
+        self.hidden_layer.set_weights(input_weights['hidden_layer'])
         self.output_layer.set_weights(input_weights['output_layer'])
 
     def print_structure(self):

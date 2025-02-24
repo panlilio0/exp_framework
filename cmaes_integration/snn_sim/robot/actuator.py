@@ -1,7 +1,7 @@
 '''
 A class representing an active voxel in evogym. 
 
-Author: Matthew Meek
+Authors: Matthew Meek, Thomas Breimer
 '''
 
 import math
@@ -47,7 +47,7 @@ class Actuator:
             positions (ndarray): array containg all of the point mass coords
 
         Returns:
-            A pair of ints. The x and y coords of the voxel's center of mass. 
+            A tuple of ints. The x and y coords of the voxel's center of mass. 
         '''
 
         x_locs = [positions[0][self.pmis[0]],
@@ -63,28 +63,27 @@ class Actuator:
         x_center = sum(x_locs) / 4
         y_center = sum(y_locs) / 4
 
-        return x_center, y_center
+        return (x_center, y_center)
 
-    def get_distances_to_corners(self, positions, corners):
+    def get_distances_to_corners(self, positions, top_left_corner_index, bottom_right_corner_index):
         '''
         Gets distances to the corners and returns them.
 
         Parameters:
             positions (ndarray): array containg all of the point mass coords
-            corners (ndarray): array containing all of the corner objects
+            top_left_corner_index: index of top left corner point mass.
+            bottom_right_corner_index: index of bottom right corner point mass.
 
         Returns:
-            An list of floats with the distances to each corner. 
+            A tuple of the distance to the top right and bottom left point mass.
         '''
 
-        local_x, local_y = self.get_center_of_mass(positions)
+        local_pos = self.get_center_of_mass(positions)
 
-        distances = []
+        top_left_pos = (positions[0][top_left_corner_index], positions[1][top_left_corner_index])
+        top_left_distance = math.dist(local_pos, top_left_pos)
 
-        for corner in corners:
-            other_x = positions[0][corner.index]
-            other_y = positions[1][corner.index]
-            distance = math.sqrt((other_x-local_x)*(other_x-local_x) +
-                                 (other_y-local_y)*(other_y-local_y))
-            distances.append(distance)
-        return distances
+        bottom_right_pos = (positions[0][top_left_corner_index], positions[1][top_left_corner_index])
+        bottom_right_distance = math.dist(local_pos, bottom_right_pos)
+
+        return (top_left_distance, bottom_right_distance)
