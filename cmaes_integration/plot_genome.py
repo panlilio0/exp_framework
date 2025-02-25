@@ -22,11 +22,11 @@ parser.add_argument(
 parser.add_argument('--xaxis',
                     type=str,
                     help='what genome element to go on the x-axis',
-                    default="frequency0")
+                    default="weight0")
 parser.add_argument('--yaxis',
                     type=str,
                     help='what genome element to go on the y-axis',
-                    default="amplitude0")
+                    default="weight1")
 
 args = parser.parse_args()
 
@@ -35,7 +35,7 @@ x_axis_name = args.xaxis
 y_axis_name = args.yaxis
 
 this_dir = pathlib.Path(__file__).parent.resolve()
-path = os.path.join(this_dir, filename)
+path = os.path.join(this_dir, "data", filename)
 df = pd.read_csv(path)
 
 # Extract relevant columns

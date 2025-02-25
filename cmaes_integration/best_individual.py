@@ -5,14 +5,15 @@ Author: James Gaskell
 February 6th, 2025
 """
 
+import os
+import argparse
 import pandas
-import run_simulation
+from snn_sim.run_simulation import run
 
-ITERS = 200
-FILENAME = "output.csv"
+ITERS = 1000
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-
-def visualize_best():
+def visualize_best(filename):
     """
     Look at output.csv and continuously run best individual.
     Assumes csv names are their best achieved fitnesses
@@ -20,13 +21,24 @@ def visualize_best():
     """
 
     while True:
-        df = pandas.read_csv(FILENAME)
+        path = os.path.join(ROOT_DIR, "data", filename)
+        df = pandas.read_csv(path)
         best_fitness = min(df["best_fitness"])
         row = df.loc[df['best_fitness'] == best_fitness]
         genome = row.values.tolist()[0][2:]
-        print(len(genome))
-        run_simulation.run(ITERS, genome, "screen")
+        run(ITERS, genome, "s")
 
 
 if __name__ == "__main__":
-    visualize_best()
+    parser = argparse.ArgumentParser(description='RL')
+    parser.add_argument('--file',
+                        type=str,
+                        default=None,
+                        help='csv file to run')
+    
+    args = parser.parse_args()
+
+    if args.file == None:
+        raise Exception('No csv file specified!')
+
+    visualize_best(args.file)
