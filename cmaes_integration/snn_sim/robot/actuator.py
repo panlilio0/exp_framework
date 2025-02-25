@@ -7,6 +7,10 @@ Authors: Matthew Meek, Thomas Breimer
 import math
 import numpy as np
 
+X_INDEX = 0
+Y_INDEX = 1
+
+
 class Actuator:
     """
     A class reperesenting an actuator of an evogym robot.
@@ -34,12 +38,12 @@ class Actuator:
         Gets distances to the given corners in the given pos array and returns them.
     """
 
-    def __init__(self, voxel_index_a, voxeltype, pmis):
-        self.voxel_index_a = voxel_index_a # location of voxel in action array (int)
-        self.voxeltype = voxeltype # type of voxel as stored in json (int)
-        self.pmis = pmis # pos_array indicies of voxel point-masses (ndarray of int)
+    def __init__(self, voxel_index_a: int, voxeltype: int, pmis: np.ndarray):
+        self.voxel_index_a = voxel_index_a  # location of voxel in action array (int)
+        self.voxeltype = voxeltype  # type of voxel as stored in json (int)
+        self.pmis = pmis  # pos_array indicies of voxel point-masses (ndarray of int)
 
-    def get_center_of_mass(self, positions):
+    def get_center_of_mass(self, positions: np.ndarray) -> tuple:
         '''
         Gets x and y coords of the voxel's center of mass.
 
@@ -47,25 +51,20 @@ class Actuator:
             positions (ndarray): array containg all of the point mass coords
 
         Returns:
-            A tuple of ints. The x and y coords of the voxel's center of mass. 
+            A tuple of ints. The x and y coords of the voxel's center of mass.
         '''
 
-        x_locs = [positions[0][self.pmis[0]],
-                  positions[0][self.pmis[1]],
-                  positions[0][self.pmis[2]],
-                  positions[0][self.pmis[3]]]
+        x_locs = [positions[0][pmi] for pmi in self.pmis]
+        y_locs = [positions[1][pmi] for pmi in self.pmis]
 
-        y_locs = [positions[1][self.pmis[0]],
-                  positions[1][self.pmis[1]],
-                  positions[1][self.pmis[2]],
-                  positions[1][self.pmis[3]]]
+        x_center = sum(x_locs) / len(self.pmis)
+        y_center = sum(y_locs) / len(self.pmis)
 
-        x_center = sum(x_locs) / 4
-        y_center = sum(y_locs) / 4
+        return x_center, y_center
 
-        return (x_center, y_center)
-
-    def get_distances_to_corners(self, positions, top_left_corner_index, bottom_right_corner_index):
+    def get_distances_to_corners(self, positions: np.ndarray,
+                                 top_left_corner_index: int,
+                                 bottom_right_corner_index: int) -> tuple:
         '''
         Gets distances to the corners and returns them.
 
@@ -80,10 +79,12 @@ class Actuator:
 
         local_pos = self.get_center_of_mass(positions)
 
-        top_left_pos = (positions[0][top_left_corner_index], positions[1][top_left_corner_index])
+        top_left_pos = (positions[X_INDEX][top_left_corner_index],
+                        positions[Y_INDEX][top_left_corner_index])
         top_left_distance = math.dist(local_pos, top_left_pos)
 
-        bottom_right_pos = (positions[0][top_left_corner_index], positions[1][top_left_corner_index])
+        bottom_right_pos = (positions[X_INDEX][bottom_right_corner_index],
+                            positions[Y_INDEX][bottom_right_corner_index])
         bottom_right_distance = math.dist(local_pos, bottom_right_pos)
 
         return (top_left_distance, bottom_right_distance)

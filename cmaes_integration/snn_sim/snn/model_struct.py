@@ -4,7 +4,6 @@ Module for simulating spiking neural networks (SNNs) with spiky neurons.
 
 import random
 
-
 # Constants
 SPIKE_DECAY = 0.1
 MAX_BIAS = 1
@@ -17,7 +16,8 @@ class SpikyNode:
     """
 
     def __init__(self, size):
-        self._weights = []  # a list of weights and a bias (last item in the list)
+        self._weights = [
+        ]  # a list of weights and a bias (last item in the list)
         self.level = 0.0  # activation level
         self.firelog = []  # tracks whether the neuron fired (1) or not (0)
         self.init(size)
@@ -38,10 +38,12 @@ class SpikyNode:
         self.level = max(self.level - SPIKE_DECAY, 0.0)
 
         if (len(inputs) + 1) != len(self._weights):
-            print(f"Error: {len(inputs)} inputs vs {len(self._weights)} weights")
+            print(
+                f"Error: {len(inputs)} inputs vs {len(self._weights)} weights")
             return 0.0
 
-        weighted_sum = sum(inputs[i] * self._weights[i] for i in range(len(inputs)))
+        weighted_sum = sum(inputs[i] * self._weights[i]
+                           for i in range(len(inputs)))
         self.level = max(self.level + weighted_sum, 0.0)
         # print(f"new level: {self.level}")
 
@@ -91,6 +93,7 @@ class SpikyNode:
         """Get the weights of the neuron."""
         return self._weights
 
+
 class SpikyLayer:
     """
     Collection of multiple neurons (SpikyNodes).
@@ -116,6 +119,7 @@ class SpikyLayer:
     def duty_cycles(self):
         """Returns the duty cycles for the neurons in the layer."""
         return [node.duty_cycle() for node in self.nodes]
+
 
 class SpikyNet:
     """
@@ -147,6 +151,7 @@ class SpikyNet:
             print(f"Node {node_index}: ", end="")
             output_node.print_weights()
         print("\n")
+
 
 # testing
 if __name__ == '__main__':
@@ -195,11 +200,8 @@ if __name__ == '__main__':
     print("SpikyNet output:", TEST_NET_OUTPUT)
     print("\nSetting weights manually")
     TEST_NET_WEIGHTS = [
-        0.1, 0.2, 0.3, 0.4, 1.0,
-        0.5, 0.6, 0.7, 0.8, 0.9,
-        1.0, 1.0, 0.7,
-        0.0, 0.0, 0.5,
-        0.5, 0.5, 0.8
+        0.1, 0.2, 0.3, 0.4, 1.0, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.0, 0.7, 0.0,
+        0.0, 0.5, 0.5, 0.5, 0.8
     ]
     TEST_NET.set_weights(TEST_NET_WEIGHTS)
     print("Updated weights:")

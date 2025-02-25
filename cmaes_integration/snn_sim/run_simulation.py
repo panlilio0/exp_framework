@@ -16,14 +16,13 @@ from snn_sim.snn.snn_controller import SNNController
 
 # Simulation constants
 ROBOT_SPAWN_X = 3
-ROBOT_SPAWN_Y = 10
+ROBOT_SPAWN_Y = 1
 ACTUATOR_MIN_LEN = 0.6
 ACTUATOR_MAX_LEN = 1.6
 NUM_ITERS = 200
 FPS = 50
 MODE = "v" # "headless", "screen", or "video"
 
-NUM_ACTUATORS = 4
 FITNESS_OFFSET = 100
 
 # Files
@@ -105,8 +104,6 @@ def run(iters, genome, mode, vid_name=None):
     viewer = EvoViewer(sim)
     viewer.track_objects('robot')
 
-    fitness = 0
-
     video_frames = []
 
     # Get position of all robot point masses
@@ -120,7 +117,7 @@ def run(iters, genome, mode, vid_name=None):
     snn_controller = SNNController(2, 2, 1, robot_config=robot_file_path)
     snn_controller.set_snn_weights(genome)
 
-    for i in range(iters):
+    for _ in range(iters):
         # Get point mass locations
         raw_pm_pos = sim.object_pos_at_time(sim.get_time(), "robot")
 
@@ -150,7 +147,7 @@ def run(iters, genome, mode, vid_name=None):
 
     viewer.close()
 
-    # Get robot point mass posiion position afer sim has run
+    # Get robot point mass position position afer sim has run
     final_raw_pm_pos = sim.object_pos_at_time(sim.get_time(), "robot")
 
     fitness = np.mean(init_raw_pm_pos, 1)[0] - np.mean(final_raw_pm_pos, 1)[0]

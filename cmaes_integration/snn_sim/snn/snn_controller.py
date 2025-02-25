@@ -7,18 +7,23 @@ import os
 import numpy as np
 from snn_sim.snn.model_struct import SpikyNet
 
-
 # Constants for SNN configuration
 MIN_LENGTH = 0.6  # Minimum actuator length
 MAX_LENGTH = 1.6  # Maximum actuator length
 _current_file = os.path.abspath(__file__)
 _project_root = os.path.dirname(os.path.dirname(_current_file))
-ROBOT_DATA_PATH = os.path.join(_project_root, "morpho_demo", "world_data", "bestbot.json")
+ROBOT_DATA_PATH = os.path.join(_project_root, "morpho_demo", "world_data",
+                               "bestbot.json")
 
 
 class SNNController:
     """Class to handle SNN input/output processing."""
-    def __init__(self, inp_size, hidden_size, output_size, robot_config=ROBOT_DATA_PATH):
+
+    def __init__(self,
+                 inp_size,
+                 hidden_size,
+                 output_size,
+                 robot_config=ROBOT_DATA_PATH):
         """Initialize with None - will set sizes after loading robot data."""
         self.snns = []
         self.num_snn = 0  # Number of spiking neural networks (actuators)
@@ -38,7 +43,8 @@ class SNNController:
             tuple: (num_actuators, input_size) - Network dimensions
         """
         if not os.path.exists(robot_path):
-            raise FileNotFoundError(f"Robot configuration file not found: {robot_path}")
+            raise FileNotFoundError(
+                f"Robot configuration file not found: {robot_path}")
         with open(robot_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
         # Extract robot data
@@ -47,11 +53,11 @@ class SNNController:
         # Count actuators (types 3 and 4)
         self.num_snn = sum(1 for t in robot_data["types"] if t in [3, 4])
         # Initialize SNN with proper dimensions
-        self.snns = [SpikyNet(
-            input_size=self.inp_size,
-            hidden_size=self.hidden_size,
-            output_size=self.output_size
-        ) for _ in range(self.num_snn)]
+        self.snns = [
+            SpikyNet(input_size=self.inp_size,
+                     hidden_size=self.hidden_size,
+                     output_size=self.output_size) for _ in range(self.num_snn)
+        ]
 
     def set_snn_weights(self, cmaes_out):
         """
@@ -77,7 +83,8 @@ class SNNController:
 
         if flat_vector.size != (self.num_snn * params_per_snn):
             raise ValueError(f"Expected CMA-ES output vector of size \
-                             {(self.num_snn * params_per_snn)}, got {flat_vector.size}.")
+                             {(self.num_snn * params_per_snn)}, got {flat_vector.size}."
+                             )
 
         # Reshape the flat vector to a 2D array: each row corresponds to one SNN.
         reshaped = flat_vector.reshape((self.num_snn, params_per_snn))
@@ -111,11 +118,12 @@ class SNNController:
             snn.compute(inputs[snn_id])
             duty_cycle = snn.output_layer.duty_cycles()
             scale_factor = MAX_LENGTH - MIN_LENGTH
-            scaled_actions = [(dc * scale_factor) + MIN_LENGTH for dc in duty_cycle]
+            scaled_actions = [(dc * scale_factor) + MIN_LENGTH
+                              for dc in duty_cycle]
             outputs[snn_id] = {
                 "target_length": scaled_actions,
                 "duty_cycle": duty_cycle
-                }
+            }
         return outputs
 
     def get_lengths(self, inputs):
@@ -127,7 +135,7 @@ class SNNController:
         for _, item in out.items():
             lengths.append(item['target_length'])
         return lengths
-    
+
     def get_input_size(self):
         return self.inp_size
 
@@ -141,6 +149,7 @@ def calc_param_num(inp_size, hidden_size, out_size):
     params_per_snn = params_per_hidden_layer + params_per_output_layer
     return params_per_snn
 
+
 def main():
     """Main function to demonstrate SNN output generation."""
     runner = SNNController(inp_size=7, hidden_size=3, output_size=1)
@@ -151,7 +160,8 @@ def main():
         print(f"Initialized SNN with {inp_size} inputs")
         # Generate random weights for testing
         print(f"params per snn: {calc_param_num(inp_size, 3, 1)}")
-        num_weights = calc_param_num(inp_size, runner.hidden_size, runner.output_size) * num_snn
+        num_weights = calc_param_num(inp_size, runner.hidden_size,
+                                     runner.output_size) * num_snn
         test_weights = np.random.rand(num_weights)
         inputs = [np.random.random(inp_size) for _ in range(num_snn)]
         print(f"inputs: {inputs}")
@@ -164,6 +174,7 @@ def main():
         # print("\nSaved outputs to snn_outputs.json")
     except (FileNotFoundError, ValueError, KeyError) as e:
         print(f"Error: {str(e)}")
+
 
 if __name__ == '__main__':
     main()

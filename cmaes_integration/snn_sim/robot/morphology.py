@@ -7,12 +7,13 @@ February 21st, 2025
 
 import os
 import numpy as np
-from evogym import EvoWorld, EvoSim, EvoViewer, WorldObject
+from evogym import WorldObject
 from snn_sim.robot.actuator import Actuator
 
 ROBOT_SPAWN_X = 0
 ROBOT_SPAWN_Y = 10
 ENV_FILENAME = "simple_environment.json"
+
 
 class Morphology:
     """
@@ -26,8 +27,10 @@ class Morphology:
         Parameters:
             filename (str): Filename of the robot .json file.
         """
-        
-        self.robot_filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "world_data", filename)
+
+        self.robot_filepath = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), "world_data",
+            filename)
         self.structure = self.get_structure(self.robot_filepath)
         self.actuators = self.create_actuator_voxels(self.structure)
 
@@ -77,9 +80,9 @@ class Morphology:
 
         # Dimensions of the robot
         height = len(structure)
-        length = len(structure[0])
+        #length = len(structure[0])
 
-        # Will be the coordinates of the top left point mass of ther current voxel. 
+        # Will be the coordinates of the top left point mass of ther current voxel.
         top_y = height
         left_x = 0
 
@@ -89,7 +92,7 @@ class Morphology:
 
         for row in structure:
             for voxel_type in row:
-                if not voxel_type == 0: # Don't add empty voxels
+                if not voxel_type == 0:  # Don't add empty voxels
 
                     right_x = left_x + 1
                     bottom_y = top_y - 1
@@ -97,7 +100,8 @@ class Morphology:
                     # Check if top left point mass already in point_masses
                     if (left_x, top_y) in self.point_masses:
                         # If so, find index will be the index of where it already is in the array
-                        top_left_index = self.point_masses.index((left_x, top_y))
+                        top_left_index = self.point_masses.index(
+                            (left_x, top_y))
                     else:
                         # Else, we make a new point mass position
                         top_left_index = len(self.point_masses)
@@ -105,29 +109,37 @@ class Morphology:
 
                     # Repeat for top right point mass
                     if (right_x, top_y) in self.point_masses:
-                        top_right_index = self.point_masses.index((right_x, top_y))
+                        top_right_index = self.point_masses.index(
+                            (right_x, top_y))
                     else:
                         top_right_index = len(self.point_masses)
                         self.point_masses.append((right_x, top_y))
 
                     # And for bottom left point mass
                     if (left_x, bottom_y) in self.point_masses:
-                        bottom_left_index = self.point_masses.index((left_x, bottom_y))
+                        bottom_left_index = self.point_masses.index(
+                            (left_x, bottom_y))
                     else:
                         bottom_left_index = len(self.point_masses)
                         self.point_masses.append((left_x, bottom_y))
 
                     # And finally bottom right
                     if (right_x, bottom_y) in self.point_masses:
-                        bottom_right_index = self.point_masses.index((right_x, bottom_y))
+                        bottom_right_index = self.point_masses.index(
+                            (right_x, bottom_y))
                     else:
                         bottom_right_index = len(self.point_masses)
                         self.point_masses.append((right_x, bottom_y))
 
-                    # Voxel types 3 and 4 are actuators. Dont' want to add voxel if its not an actuator
+                    # Voxel types 3 and 4 are actuators.
+                    # Don't want to add voxel if its not an actuator
                     if voxel_type in [3, 4]:
-                        pmis = np.array([top_left_index, top_right_index, bottom_left_index, bottom_right_index])
-                        actuator_obj = Actuator(actuator_action_index, voxel_type, pmis) 
+                        pmis = np.array([
+                            top_left_index, top_right_index, bottom_left_index,
+                            bottom_right_index
+                        ])
+                        actuator_obj = Actuator(actuator_action_index,
+                                                voxel_type, pmis)
                         actuators.append(actuator_obj)
                         actuator_action_index += 1
 
@@ -159,8 +171,9 @@ class Morphology:
         actuator_distances = []
 
         for actuator in self.actuators:
-            actuator_distances.append(actuator.get_distances_to_corners(pm_pos,
-                                                                        self.top_left_corner_index,
-                                                                        self.bottom_right_corner_index))
+            actuator_distances.append(
+                actuator.get_distances_to_corners(
+                    pm_pos, self.top_left_corner_index,
+                    self.bottom_right_corner_index))
 
         return actuator_distances
