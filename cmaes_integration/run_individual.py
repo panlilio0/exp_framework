@@ -4,8 +4,7 @@ Takes one command line arg "--gen" corresponding to generation number.
 Takes another command line arg "--mode" which displays the simulation in different ways.
 "--mode s" makes the simulation output to the screen, replacing it with "--mode v" saves 
 each simulation as a video in `./videos`. "-mode b" shows on screen and saves a video.
-
-Example: `python3 run_individual.py --gen 1 --mode s`
+Must also specify --filename for csv file.
 
 Author: Thomas Breimer
 January 29th, 2025
@@ -14,7 +13,6 @@ January 29th, 2025
 import os
 import argparse
 import pathlib
-import datetime
 import pandas as pd
 from snn_sim.run_simulation import run
 

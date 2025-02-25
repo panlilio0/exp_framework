@@ -1,7 +1,6 @@
 """
 Plot genome values on the x and y axis and color based on fitness.
-Takes three command line arguments: csv filename, x-axis name, y-axis name.
-Example: `python3 plot_genome.py --filename output.csv --xaxis frequency0 --yaxis amplitude0`
+Takes three command line arguments: --filename, --x-axis name, --y-axis.
 
 Author: Thomas Breimer
 January 29th, 2025

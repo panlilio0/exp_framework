@@ -24,7 +24,7 @@ from snn_sim.run_simulation import run
 
 SNN_INPUT_SHAPE = 36
 MEAN_ARRAY = [1.0] * SNN_INPUT_SHAPE
-NUM_ITERS = 50
+NUM_ITERS = 500
 
 VERBOSE = False
 
@@ -82,7 +82,7 @@ def run_cma_es(mode, gens, sigma_val):
 
         if VERBOSE:
             print([i[1] for i in solutions])
-            
+
         print("Generation", generation, "Best Fitness:", best_fitness)
 
         # Add a new row to output.csv file with cols: generation#, fitness, and genome
