@@ -34,7 +34,7 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 DATE_TIME = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
 
 
-def retrieve_actuator_count(robot_filename):
+def retrieve_actuator_count():
     '''
     Retrieves the number of actuator voxels the given robot has.
 
@@ -122,7 +122,7 @@ def run_simulation(iters,
         # coordinates and multiplying this scalar by the genome
 
         action = np.full(
-                        shape=retrieve_actuator_count(ROBOT_FILENAME),
+                        shape=retrieve_actuator_count(),
                         fill_value=1.6,
                         dtype=np.float64
                         )
@@ -247,7 +247,7 @@ def record_distances(distances):
         distances (ndarray): The distances between the corners.
     '''
 
-    with open(Path(os.path.join(ROOT_DIR, "distance_outputs/" + DATE_TIME + ".csv")), "a", newline="") as file:
+    with open(Path(os.path.join(ROOT_DIR, "distance_outputs/" + str(retrieve_actuator_count()) + "_acts_" + DATE_TIME + ".csv")), "a", newline="") as file:
             writer = csv.writer(file)
             writer.writerow(distances)
 
@@ -260,7 +260,7 @@ def make_output_file():
     Path(os.path.join(ROOT_DIR, "distance_outputs")).mkdir(parents=True, exist_ok=True)
     csv_header = ['TR-TL', 'TR-BR', 'TR-BL', 'TL-BR', 'TL-BL', 'BR-BL']
 
-    csv_name = DATE_TIME + ".csv"
+    csv_name = str(retrieve_actuator_count()) + "_acts_" + DATE_TIME + ".csv"
     csv_path = os.path.join(ROOT_DIR, "distance_outputs", csv_name)
 
     with open(csv_path, "w", newline="") as file:
