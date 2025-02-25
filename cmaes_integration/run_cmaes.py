@@ -14,14 +14,19 @@ February 4th, 2025
 """
 
 import csv
+import os
 import argparse
+from datetime import datetime
+from pathlib import Path
 from cmaes import CMA
 import numpy as np
 from snn_sim.run_simulation import run
 
 SNN_INPUT_SHAPE = 36
-MEAN_ARRAY = [1.0] * 36
-NUM_ITERS = 100
+MEAN_ARRAY = [1.0] * SNN_INPUT_SHAPE
+NUM_ITERS = 1000
+
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def run_cma_es(mode, gens, sigma_val):
     """
@@ -41,23 +46,19 @@ def run_cma_es(mode, gens, sigma_val):
     """
 
     # Generate output.csv file
-
     csv_header = ['generation', 'best_fitness']
+    csv_header.extend([f"weight{i}" for i in range(SNN_INPUT_SHAPE)])
 
-    """
-    for i in range(sim.NUM_ACTUATORS):
-        csv_header = csv_header + [
-            'frequency' + str(i), 'amplitude' + str(i), 'phase_offset' + str(i)
-        ]
+    Path(os.path.join(ROOT_DIR, "data")).mkdir(parents=True, exist_ok=True)
 
-    """
+    csv_name = datetime.now().strftime('%Y-%m-%d_%H:%M:%S') + ".csv"
+    csv_path = os.path.join(ROOT_DIR, "data", csv_name)
 
-    with open("output.csv", "w", newline="") as file:
+    with open(csv_path, "w", newline="") as file:
         writer = csv.writer(file)
         writer.writerow(csv_header)
 
     # Init CMA
-
     optimizer = CMA(mean=np.array(MEAN_ARRAY), sigma=sigma_val)
 
     for generation in range(gens):
@@ -75,7 +76,7 @@ def run_cma_es(mode, gens, sigma_val):
         # Add a new row to output.csv file with cols: generation#, fitness, and genome
         new_row = [generation, solutions[0][1]] + solutions[0][0].tolist()
 
-        with open("output.csv", "a", newline="") as file:
+        with open(csv_path, "a", newline="") as file:
             writer = csv.writer(file)
             writer.writerow(new_row)
 
