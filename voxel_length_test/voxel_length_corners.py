@@ -3,36 +3,38 @@ Simple RMHC of walking robot from scratch in evogym
 
 Author: Thomas Breimer, Matthew Meek
 January 22nd, 2025
+
+Edited By: James Gaskell
+February 25th, 2025
 """
 
 import os
 import argparse
 import json
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 from evogym import EvoWorld, EvoSim, EvoViewer
 from evogym import WorldObject
 from special_classes import corner as corn
+from pathlib import Path
+from datetime import datetime
+import csv
 
-ROBOT_SPAWN_X = 3
-ROBOT_SPAWN_Y = 10
+ROBOT_SPAWN_X = 2
+ROBOT_SPAWN_Y = 1
 ACTUATOR_MIN_LEN = 0.6
 ACTUATOR_MAX_LEN = 1.6
 FRAME_CYCLE_LEN = 10
-#NUM_ACTUATORS = 8  #8 for walkbot4billion
-#NUM_ITERS = 100
 MUTATE_RATE = 0.2
 
 ENV_FILENAME = "simple_environment_long.json"
 ROBOT_FILENAME = "single_voxel.json"
-#GENERATIONS = 1500
 
-#EXPER_DIR = 'score_plots/' + ROBOT_FILENAME[:-5] + " " + time.asctime(
-#)  #directory generated for a single run of the program. Stores outputs.
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+DATE_TIME = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
 
 
-def retrieve_actuator_count(robot_filename):
+def retrieve_actuator_count():
     '''
     Retrieves the number of actuator voxels the given robot has.
 
@@ -88,9 +90,6 @@ def run_simulation(iters,
                          y=ROBOT_SPAWN_Y,
                          connections=robot.get_connections())
 
-    #get actuators
-    num_actuators = retrieve_actuator_count(ROBOT_FILENAME)
-
     # Create simulation
     sim = EvoSim(world)
     sim.reset()
@@ -99,17 +98,10 @@ def run_simulation(iters,
     viewer = EvoViewer(sim)
     viewer.track_objects('robot')
 
-    fitness = 0
-
-    action_list = []
-
     for i in range(iters):
 
         # Get position of all robot point masses
         pos_1 = sim.object_pos_at_time(sim.get_time(), "robot")
-
-        # Get mean of robot point masses
-        com_1 = np.mean(pos_1, 1)
 
 
         # CORNERS TELEMETRY STUFF
@@ -117,149 +109,42 @@ def run_simulation(iters,
         # CHANGE THE PRINT TO BE WHATEVER YOUR STUFF NEEDS!
         distances = get_all_distances(pos_1, corners)
 
-        if i < 10:
-            print("Corners dists at iter " + str(i) + " :\n" + str(distances) +"\n")
+        # Plot the corner distances to record when the robot stops expanding/contracting
+        record_distances(distances)
+
+        # if i < 10:
+            # print("Corners dists at iter " + str(i) + " :\n" + str(distances) +"\n")
         # and also probably mess with the genome stuff or something idk
         # /CORNERS TELEMETRY STUFF
 
 
         # Compute the action vector by averaging the avg x & y
         # coordinates and multiplying this scalar by the genome
-        action = [1.6]
+
+        action = np.full(
+                        shape=retrieve_actuator_count(),
+                        fill_value=1.6,
+                        dtype=np.float64
+                        )
 
         # Clip actuator target lengths to be between 0.6 and 1.6 to prevent buggy behavior
         action = np.clip(action, ACTUATOR_MIN_LEN, ACTUATOR_MAX_LEN)
 
         # Set robot action to the action vector. Each actuator corresponds to a vector
         # index and will try to expand/contract to that value
-        sim.set_action('robot', action)
+        if i == 0:
+            sim.set_action('robot', action)
 
         # Execute step
         sim.step()
 
-        #action tracking for fittest
-        if fittest:
-            print(action)
-            action_list.append(action)
-
         # Get robot position after the step
-        pos_2 = sim.object_pos_at_time(sim.get_time(), "robot")
-
-        # Compute reward, how far the robot moved in that time step
-        com_2 = np.mean(pos_2, 1)
-        reward = com_2[0] - com_1[0]
-        fitness += reward
-
         if show:
             viewer.render('screen', verbose=True)
     viewer.close()
 
-"""
 
-def plot_action(action_arrays, robot_filename, exper_dir):
-    '''
-    Plots the voxel action arrays at each step of a simulation
-
-    Parameters:
-        action_arrays (ndarray): Contains more ndarrays, one for each action array.
-        One action array per simulator step.
-        robot_filename (str): Location of robot json.
-        exper_dir (str): Location of experiment directory. 
-
-    Returns:
-        Several matplotlib plot outputs to a directory.
-        One with all actuator voxels and then one per voxel.
-        Also outputs an excel spreadsheet of all of the actuators' actions. 
-    '''
-
-    stepcount_array = np.arange(1, len(action_arrays) + 1, 1)
-    plottitle = robot_filename + " actions"
-    plt.title(plottitle)
-    plt.ylabel("target length")
-    plt.xlabel("steps")
-
-    voxels_list = []
-    for i in range(len(action_arrays[0])):  #for each voxel
-        voxel_action = np.array([])
-        for j in range(len(action_arrays)):  #for each step
-            voxel_action = np.append(
-                voxel_action, action_arrays[j]
-                [i])  #I use both i and j, so this is okay, right?
-        voxels_list.append(voxel_action)
-        plt.plot(stepcount_array, voxel_action, label="voxel: " + str(i))
-
-    plt.legend(loc='upper center')
-    plt.savefig(os.path.join(exper_dir, plottitle + '.png'))
-    plt.close()
-
-    #Save voxel data for later examination
-    df = pd.DataFrame(voxels_list)
-    df.to_csv(os.path.join(exper_dir, plottitle + '.csv'), index=False)
-
-    #plot individual voxels
-    for i in range(len(voxels_list)):  #I USE i!!!!!
-        plot_voxel(stepcount_array, voxels_list[i], i, robot_filename, exper_dir)
-
-"""
-def plot_voxel(stepcount_array, voxel_action, voxel_num, robot_filename, exper_dir):
-    '''
-    Plots the voxel action arrays at each step of a simulation
-
-    Parameters:
-        stepcount_array (ndarray): An array with the number of steps from 1 to n. 
-        voxel_action (ndarray): An array with the actuator's actions at each step. 
-        voxel_num: The actuator number. Used to differentiate this actuator from the others.
-        robot_filename (str): Location of robot json.
-        exper_dir (str): Location of experiment directory.
-
-    Returns:
-        A matplotlib plot output to a directory.
-        Plot shows the actuator's action over the course of the simulation.
-    '''
-    plottitle = robot_filename + " voxel: " + str(voxel_num)
-    plt.title(plottitle)
-    plt.ylabel("target length")
-    plt.xlabel("steps")
-    plt.plot(stepcount_array, voxel_action, label="voxel: " + str(voxel_num))
-    plt.legend(loc='upper center')
-    plt.savefig(os.path.join(exper_dir, plottitle + '.png'))
-    plt.close()
-
-def plot_scores(fit_func_scores, fit_func_scores_best, gen_number, robot_filename, exper_dir):
-    '''
-    Plots the scores of the robot on the fitness function.
-    Plots both each generation and the best by "x" generation.
-
-    Parameters:
-        fit_func_scores (ndarray): Contains the scores of each generation.
-        fit_func_scores_best (ndarray): Contains the best scores at or before each generation.
-        gen_number (int): the number of generations in this simulation.
-        robot_filename (str): Location of robot json.
-        exper_dir (str): Location of experiment directory.
-
-    Returns:
-        A matplotlib plot output to a directory.
-        Plot shows the fitness function score over the generations.
-    '''
-
-    #make plot
-    gen_array = np.arange(1, gen_number + 1, 1)
-    plottitle = robot_filename + " scores"
-    plt.title(plottitle)
-    plt.ylabel("scores")
-    plt.xlabel("generations")
-    plt.plot(gen_array, fit_func_scores, label="at gen")
-    plt.plot(gen_array, fit_func_scores_best, label="best by gen")
-    plt.legend(loc='upper center')
-    plt.savefig(os.path.join(exper_dir, plottitle + '.png'))
-    plt.close()
-
-    #save scores for later
-    df = pd.DataFrame((fit_func_scores,fit_func_scores_best))
-    df.to_csv(os.path.join(exper_dir, plottitle + '.csv'), index=False)
-
-
-def find_corners(robot_filename):
+def find_corners():
     '''
     Finds the corners, returns them in an array of four corner objects.
 
@@ -272,7 +157,7 @@ def find_corners(robot_filename):
         robot_filename (string): name of the json file the robot lives in.
 
     Returns:
-        An ndarray of four corner objects. Each represents an outer corner.
+        An ndarray of four corner objects. Each respresents an outer corner.
     '''
     # Stupid little hack but it works like magic.
     # We create a 0-time "simulation" to get coords for point masses.
@@ -354,6 +239,34 @@ def get_all_distances(xy_coords, corners):
 
     return np.array(all_distances)
 
+def record_distances(distances):
+    '''
+    Records the distances between the corners in a csv file.
+    
+    Parameters: 
+        distances (ndarray): The distances between the corners.
+    '''
+
+    with open(Path(os.path.join(ROOT_DIR, "distance_outputs/" + str(retrieve_actuator_count()) + "_acts_" + DATE_TIME + ".csv")), "a", newline="") as file:
+            writer = csv.writer(file)
+            writer.writerow(distances)
+
+def make_output_file():
+    '''
+    Makes the output file for the corner distances.
+    Appends the header to the csv file
+    '''
+
+    Path(os.path.join(ROOT_DIR, "distance_outputs")).mkdir(parents=True, exist_ok=True)
+    csv_header = ['TR-TL', 'TR-BR', 'TR-BL', 'TL-BR', 'TL-BL', 'BR-BL']
+
+    csv_name = str(retrieve_actuator_count()) + "_acts_" + DATE_TIME + ".csv"
+    csv_path = os.path.join(ROOT_DIR, "distance_outputs", csv_name)
+
+    with open(csv_path, "w", newline="") as file:
+        writer = csv.writer(file)
+        writer.writerow(csv_header)
+
 
 if __name__ == "__main__":
 
@@ -368,7 +281,9 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     
-    corners = find_corners(ROBOT_FILENAME)    
+    corners = find_corners()
+
+    make_output_file() 
+
     run_simulation(args.iters, corners, fittest=True)
 
-    # python run_1_arg_corners.py bestbot.json
