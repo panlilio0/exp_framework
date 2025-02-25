@@ -7,18 +7,32 @@ runs cma-es for 50 generations
 in headless mode with a sigma of 2. Replacing "--mode h" with "--mode s" makes the simulation 
 output to the screen, and replacing it with "--mode v" saves each simulation 
 as a video in `./videos`. 
-"-mode b" shows on screen and saves a video.
+"--mode b" shows on screen and saves a video.
 
 Authors: Thomas Breimer, James Gaskell
 February 4th, 2025
 """
 
 import csv
+import os
 import argparse
+from datetime import datetime
+from pathlib import Path
 from cmaes import CMA
 import numpy as np
-import run_simulation as sim
+from snn_sim.run_simulation import run
 
+SNN_INPUT_SHAPE = 36
+MEAN_ARRAY = [1.0] * SNN_INPUT_SHAPE
+NUM_ITERS = 500
+
+VERBOSE = False
+
+GENOME_INDEX = 0
+FITNESS_INDEX = 1
+
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+DATE_TIME = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
 
 def run_cma_es(mode, gens, sigma_val):
     """
@@ -38,43 +52,52 @@ def run_cma_es(mode, gens, sigma_val):
     """
 
     # Generate output.csv file
-
     csv_header = ['generation', 'best_fitness']
+    csv_header.extend([f"weight{i}" for i in range(SNN_INPUT_SHAPE)])
 
-    for i in range(sim.NUM_ACTUATORS):
-        csv_header = csv_header + [
-            'frequency' + str(i), 'amplitude' + str(i), 'phase_offset' + str(i)
-        ]
+    Path(os.path.join(ROOT_DIR, "data")).mkdir(parents=True, exist_ok=True)
 
-    with open("output.csv", "w", newline="") as file:
+    csv_name = DATE_TIME + ".csv"
+    csv_path = os.path.join(ROOT_DIR, "data", csv_name)
+
+    with open(csv_path, "w", newline="") as file:
         writer = csv.writer(file)
         writer.writerow(csv_header)
 
     # Init CMA
-
-    optimizer = CMA(mean=np.array(
-        [sim.AVG_FREQ, sim.AVG_AMP, sim.AVG_PHASE_OFFSET] * sim.NUM_ACTUATORS),
-                    sigma=sigma_val)
+    optimizer = CMA(mean=np.array(MEAN_ARRAY), sigma=sigma_val)
 
     for generation in range(gens):
         solutions = []
 
         for indv_num in range(optimizer.population_size):
             x = optimizer.ask()
-            fitness = sim.run(sim.NUM_ITERS, x, mode,
-                              str(generation) + "_" + str(indv_num))
+            fitness = run(NUM_ITERS, x, "h")
             solutions.append((x, fitness))
 
+        best_fitness = solutions[0][FITNESS_INDEX]
+        best_genome = solutions[0][GENOME_INDEX]
+
         optimizer.tell(solutions)
-        print([i[1] for i in solutions])
-        print("Generation", generation, "Best Fitness:", solutions[0][1])
+
+        if VERBOSE:
+            print([i[1] for i in solutions])
+
+        print("Generation", generation, "Best Fitness:", best_fitness)
 
         # Add a new row to output.csv file with cols: generation#, fitness, and genome
-        new_row = [generation, solutions[0][1]] + solutions[0][0].tolist()
+        new_row = [generation, best_fitness] + best_genome.tolist()
 
-        with open("output.csv", "a", newline="") as file:
+        with open(csv_path, "a", newline="") as file:
             writer = csv.writer(file)
             writer.writerow(new_row)
+
+        # If --mode s, v, or b show/save best individual from generation
+        if mode in ["s", "b", "v"]:
+            vid_name = DATE_TIME + "_gen" + str(generation)
+            vid_path = os.path.join(ROOT_DIR, "videos", DATE_TIME)
+
+            run(NUM_ITERS, best_genome, mode, vid_name, vid_path)
 
 
 if __name__ == "__main__":

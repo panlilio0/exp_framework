@@ -8,6 +8,7 @@ Author: Thomas Breimer
 February 10th, 2025
 """
 
+import os
 import argparse
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -24,7 +25,7 @@ args = parser.parse_args()
 
 filename = args.filename
 
-df = pd.read_csv("output.csv")
+df = pd.read_csv(os.path.join("data", filename))
 
 plt.figure(figsize=(8, 5))
 plt.plot(np.array(df["generation"]),
