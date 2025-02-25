@@ -8,6 +8,7 @@ January 29th, 2025
 
 import os
 import cv2
+from pathlib import Path
 import numpy as np
 from evogym import EvoWorld, EvoSim, EvoViewer
 from evogym import WorldObject
@@ -28,22 +29,22 @@ FITNESS_OFFSET = 100
 # Files
 ENV_FILENAME = "simple_environment.json"
 ROBOT_FILENAME = "smallbot.json"
+THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 
-def create_video(source, fps=FPS, output_name='output'):
+def create_video(source, output_name, vid_path, fps=FPS):
     """
     Saves a video from a list of frames
 
     Parameters:
         source (list): List of cv2 frames.
-        fps (int): Frames per second of video to save.
         output_name (string): Filename of output video.
-
+        vid_path (string): Filepath of output video.
+        fps (int): Frames per second of video to save.
     """
-    current_directory = os.getcwd()
-    vid_path = os.path.join(current_directory, "videos", output_name + ".mp4")
-    out = cv2.VideoWriter(vid_path, cv2.VideoWriter_fourcc(*'mp4v'),
-                          fps, (source[0].shape[1], source[0].shape[0]))
 
+    Path(vid_path).mkdir(parents=True, exist_ok=True)
+    out = cv2.VideoWriter(os.path.join(vid_path, output_name + ".mp4"), cv2.VideoWriter_fourcc(*'mp4v'),
+                          fps, (source[0].shape[1], source[0].shape[0]))
     for frame in source:
         out.write(frame)
     out.release()
@@ -61,7 +62,7 @@ def group_list(flat_list: list, n: int) -> list:
     """
     return [list(flat_list[i:i+n]) for i in range(0, len(flat_list), n)]
 
-def run(iters, genome, mode, vid_name=None):
+def run(iters, genome, mode, vid_name=None, vid_path=None):
     """
     Runs a single simulation of a given genome.
 
@@ -74,20 +75,16 @@ def run(iters, genome, mode, vid_name=None):
                        "s" shows the simulation on screen as a window.
                        "b: shows the simulation on a window and saves a video.
         vid_name (string): If mode is "v" or "b", this is the name of the saved video.
+        vid_path (string): If mode is "v" or "b", this is the path the video will be saved.
     Returns:
         float: The fitness of the genome.
     """
 
-    if mode in ["v", "b"]: #video or both
-        os.makedirs("videos", exist_ok=True)
-
-    this_dir = os.path.dirname(os.path.realpath(__file__))
-
     # Create world
-    world = EvoWorld.from_json(os.path.join(this_dir, 'robot', 'world_data', ENV_FILENAME))
+    world = EvoWorld.from_json(os.path.join(THIS_DIR, 'robot', 'world_data', ENV_FILENAME))
 
     # Add robot
-    robot = WorldObject.from_json(os.path.join(this_dir, 'robot', 'world_data', ROBOT_FILENAME))
+    robot = WorldObject.from_json(os.path.join(THIS_DIR, 'robot', 'world_data', ROBOT_FILENAME))
 
     world.add_from_array(
         name='robot',
@@ -138,12 +135,12 @@ def run(iters, genome, mode, vid_name=None):
         sim.step()
 
         if mode == "v":
-            video_frames.append(viewer.render(verbose=True, mode="rgb_array"))
+            video_frames.append(viewer.render(verbose=False, mode="rgb_array"))
         elif mode == "s":
             viewer.render(verbose=True, mode="screen")
         elif mode == "b":
             viewer.render(verbose=True, mode="screen")
-            video_frames.append(viewer.render(verbose=True, mode="rgb_array"))
+            video_frames.append(viewer.render(verbose=False, mode="rgb_array"))
 
     viewer.close()
 
@@ -153,6 +150,6 @@ def run(iters, genome, mode, vid_name=None):
     fitness = np.mean(init_raw_pm_pos, 1)[0] - np.mean(final_raw_pm_pos, 1)[0]
 
     if mode in ["v", "b"]:
-        create_video(video_frames, FPS, vid_name)
+        create_video(video_frames, vid_name, vid_path, FPS)
 
     return FITNESS_OFFSET - fitness # Turn into a minimization problem
