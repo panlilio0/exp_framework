@@ -2,7 +2,7 @@
 Given a genome, runs a simulation of a walking robot in evogym, using an SNN controlled robot,
 providing a fitness score corresponding to how far the robot walked.
 
-Author: Thomas Breimer
+Author: Thomas Breimer, James Gaskell
 January 29th, 2025
 """
 
@@ -27,8 +27,8 @@ MODE = "v" # "headless", "screen", or "video"
 FITNESS_OFFSET = 100
 
 # Files
-ENV_FILENAME = "simple_environment.json"
-ROBOT_FILENAME = "smallbot.json"
+ENV_FILENAME = "big_platform.json"
+ROBOT_FILENAME = "small_bot.json"
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 
 def create_video(source, output_name, vid_path, fps=FPS):
