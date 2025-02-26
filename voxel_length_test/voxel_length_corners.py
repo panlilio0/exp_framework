@@ -1,5 +1,7 @@
 """
-Simple RMHC of walking robot from scratch in evogym
+Simple script to record the distances between corners for a given robot
+Allows the user to select a robot type
+Hard code to change the values of the action array. 0.6 for contraction, 1.6 for expansion
 
 Author: Thomas Breimer, Matthew Meek
 January 22nd, 2025
@@ -8,17 +10,19 @@ Edited By: James Gaskell
 February 25th, 2025
 """
 
+# pylint struggling to import evogym
+# pylint: disable = import-error
+
 import os
 import argparse
 import json
+import csv
+from pathlib import Path
+from datetime import datetime
 import numpy as np
-import matplotlib.pyplot as plt
 from evogym import EvoWorld, EvoSim, EvoViewer
 from evogym import WorldObject
 from special_classes import corner as corn
-from pathlib import Path
-from datetime import datetime
-import csv
 
 ROBOT_SPAWN_X = 2
 ROBOT_SPAWN_Y = 1
@@ -45,7 +49,7 @@ def retrieve_actuator_count():
         An int: the number of actuators in the robot.
     '''
     jsonpath = os.path.join(os.path.join(os.path.dirname(__file__), 'world_data/' + ROBOT_FILENAME))
-    jsonf = open(jsonpath)
+    jsonf = open(jsonpath, encoding='utf-8')
     data = json.load(jsonf)
     actuator_count = 0
     key_for_robot = list(data["objects"].keys())[0] # No, I'm not happy about it, either.
@@ -60,8 +64,7 @@ def retrieve_actuator_count():
 
 def run_simulation(iters,
                    corners,
-                   show=True,
-                   fittest=False):  #if fittest, then track action
+                   show=True):  #if fittest, then track action
     """
     Runs a single simulation of a given genome.
 
@@ -79,10 +82,14 @@ def run_simulation(iters,
     """
 
     # Create world
-    world = EvoWorld.from_json(os.path.join(os.path.dirname(__file__), 'world_data/' + ENV_FILENAME))
+    world = EvoWorld.from_json(os.path.join
+                                (os.path.dirname(__file__),
+                                'world_data/' + ENV_FILENAME))
 
     # Add robot
-    robot = WorldObject.from_json(os.path.join(os.path.dirname(__file__), 'world_data/' + ROBOT_FILENAME))
+    robot = WorldObject.from_json(os.path.join
+                                   (os.path.dirname(__file__),
+                                   'world_data/' + ROBOT_FILENAME))
 
     world.add_from_array(name='robot',
                          structure=robot.get_structure(),
@@ -121,9 +128,16 @@ def run_simulation(iters,
         # Compute the action vector by averaging the avg x & y
         # coordinates and multiplying this scalar by the genome
 
-        action = np.full(
+        if i < 20:
+            action = np.full(
                         shape=retrieve_actuator_count(),
                         fill_value=1.6,
+                        dtype=np.float64
+                        )
+        else:
+            action = np.full(
+                        shape=retrieve_actuator_count(),
+                        fill_value=0.6,
                         dtype=np.float64
                         )
 
@@ -132,8 +146,8 @@ def run_simulation(iters,
 
         # Set robot action to the action vector. Each actuator corresponds to a vector
         # index and will try to expand/contract to that value
-        if i == 0:
-            sim.set_action('robot', action)
+
+        sim.set_action('robot', action)
 
         # Execute step
         sim.step()
@@ -162,8 +176,14 @@ def find_corners():
     # Stupid little hack but it works like magic.
     # We create a 0-time "simulation" to get coords for point masses.
     # Using those, we can figure out the indicies for the corners.
-    world = EvoWorld.from_json(os.path.join(os.path.dirname(__file__), 'world_data/' + ENV_FILENAME))
-    robot = WorldObject.from_json(os.path.join(os.path.dirname(__file__), 'world_data/' + ROBOT_FILENAME))
+    world = EvoWorld.from_json(os.path.join
+                                (os.path.dirname(__file__),
+                                'world_data/' + ENV_FILENAME))
+
+    robot = WorldObject.from_json(os.path.join
+                                    (os.path.dirname(__file__),
+                                    'world_data/' + ROBOT_FILENAME))
+
     world.add_from_array(name='robot',
                          structure=robot.get_structure(),
                          x=ROBOT_SPAWN_X,
@@ -231,7 +251,7 @@ def get_all_distances(xy_coords, corners):
 
     # Nested for loops?!
     # BARF!
-    for i in range(len(corners)): #use i to avoid inserting duplicate
+    for i in range(len(corners9)): #use i to avoid inserting duplicate
         c_distances = corners[i].get_corner_distances(xy_coords, corners)
         #print(str(corners[i]) + " to all: " + str(c_distances))
         for distance in c_distances[i+1:]: #excludes 0s and pre-existing values
@@ -247,9 +267,14 @@ def record_distances(distances):
         distances (ndarray): The distances between the corners.
     '''
 
-    with open(Path(os.path.join(ROOT_DIR, "distance_outputs/" + str(retrieve_actuator_count()) + "_acts_" + DATE_TIME + ".csv")), "a", newline="") as file:
-            writer = csv.writer(file)
-            writer.writerow(distances)
+    with open(Path(os.path.join
+                (ROOT_DIR, "distance_outputs/" + str(retrieve_actuator_count()) + "_acts_" + DATE_TIME + ".csv")),
+                "a",
+                newline="",
+                encoding='utf-8') as file:
+
+        writer = csv.writer(file)
+        writer.writerow(distances)
 
 def make_output_file():
     '''
@@ -263,7 +288,7 @@ def make_output_file():
     csv_name = str(retrieve_actuator_count()) + "_acts_" + DATE_TIME + ".csv"
     csv_path = os.path.join(ROOT_DIR, "distance_outputs", csv_name)
 
-    with open(csv_path, "w", newline="") as file:
+    with open(csv_path, "w", newline="", encoding='utf-8') as file:
         writer = csv.writer(file)
         writer.writerow(csv_header)
 
@@ -280,10 +305,6 @@ if __name__ == "__main__":
                         help="number of generations.")
 
     args = parser.parse_args()
-    
     corners = find_corners()
-
-    make_output_file() 
-
-    run_simulation(args.iters, corners, fittest=True)
-
+    make_output_file()
+    run_simulation(args.iters, corners)
