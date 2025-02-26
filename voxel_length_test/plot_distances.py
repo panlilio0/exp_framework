@@ -9,6 +9,7 @@ import glob
 import pandas as pd
 import matplotlib.pyplot as plt
 from pathlib import Path
+from scipy.ndimage import gaussian_filter1d
 
 PARENTDIR = Path(__file__).parent.resolve()
 FILEFOLDER = "distance_outputs"
@@ -30,13 +31,27 @@ def plot_all(csv_filename):
 
     # get columns
     cols = df.columns.tolist()
+
+    # Test - can we see where there is action by plotting the differential?
+    # plot_differentials(df, cols, csv_filename)
+
     for col in cols:
         to_plot = list(df[col])
-        plt.plot(range(len(to_plot)), to_plot, label=col)
+        smoothed_data = gaussian_filter1d(to_plot, sigma=2) # Adjust sigma for smoothing strength
+        plt.plot(range(len(to_plot)), smoothed_data, label=col)
 
     plt.legend(loc='upper center')
     plt.savefig(os.path.join(folder_path, plottitle + '.png'))
     plt.close()
+
+def plot_differentials(df, cols, csv_filename):
+    pass
+
+    for col in cols:
+        to_plot = list(df[col])
+
+
+    pass
 
 def get_latest_file():
     """
