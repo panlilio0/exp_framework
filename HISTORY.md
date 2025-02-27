@@ -58,5 +58,11 @@ Feb 23rd | Abhay Kashyap
 Feb 24th | Thomas Breimer
 - Completed integration
 
+### SNN Firing Experiments
+Feb 25th | By James Gaskell & Matthew Meek
+- Added code to isolate a voxel and record the distances between robot corners
+- Output corner values for each time step to csv for analysis
+- Graphed expansion and contraction behaviors on a single voxel and large robot to determine SNN firing frequency
+
 Feb 27th | Thomas Breimer
 - cmaes bug fixes

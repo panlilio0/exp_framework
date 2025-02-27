@@ -19,7 +19,7 @@ from special_classes import corner as corn
 from special_classes import active_voxel as avo
 
 ROBOT_SPAWN_X = 3
-ROBOT_SPAWN_Y = 10
+ROBOT_SPAWN_Y = 3
 ACTUATOR_MIN_LEN = 0.6
 ACTUATOR_MAX_LEN = 1.6
 FRAME_CYCLE_LEN = 10
