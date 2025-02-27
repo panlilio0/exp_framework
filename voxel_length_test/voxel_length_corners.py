@@ -32,7 +32,7 @@ FRAME_CYCLE_LEN = 10
 MUTATE_RATE = 0.2
 
 ENV_FILENAME = "simple_environment_long.json"
-ROBOT_FILENAME = "single_voxel.json"
+ROBOT_FILENAME = "single_vertical_voxel.json"
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 DATE_TIME = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
@@ -142,7 +142,7 @@ def run_simulation(iters,
                         )
 
         # Clip actuator target lengths to be between 0.6 and 1.6 to prevent buggy behavior
-        action = np.clip(action, ACTUATOR_MIN_LEN, ACTUATOR_MAX_LEN)
+        # action = np.clip(action, ACTUATOR_MIN_LEN, ACTUATOR_MAX_LEN)
 
         # Set robot action to the action vector. Each actuator corresponds to a vector
         # index and will try to expand/contract to that value
@@ -251,7 +251,7 @@ def get_all_distances(xy_coords, corners):
 
     # Nested for loops?!
     # BARF!
-    for i in range(len(corners9)): #use i to avoid inserting duplicate
+    for i in range(len(corners)): #use i to avoid inserting duplicate
         c_distances = corners[i].get_corner_distances(xy_coords, corners)
         #print(str(corners[i]) + " to all: " + str(c_distances))
         for distance in c_distances[i+1:]: #excludes 0s and pre-existing values
@@ -301,8 +301,6 @@ if __name__ == "__main__":
                         help="The json file of the robot you want to run the experiment with.")
     parser.add_argument("--iters", default=100, type=int,
                         help="number of iterations per generation.")
-    parser.add_argument("--gens", default=1500, type=int,
-                        help="number of generations.")
 
     args = parser.parse_args()
     corners = find_corners()

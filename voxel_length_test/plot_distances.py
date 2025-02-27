@@ -37,9 +37,15 @@ def plot_all(csv_filename):
 
     for col in cols:
         to_plot = list(df[col])
-        smoothed_data = gaussian_filter1d(to_plot, sigma=2) # Adjust sigma for smoothing strength
+        smoothed_data = gaussian_filter1d(to_plot, sigma=1) # Adjust sigma for smoothing strength
         plt.plot(range(len(to_plot)), smoothed_data, label=col)
 
+    #plt.axvline(x=19, color='b', linestyle=':', linewidth=2)
+    #plt.axvline(x=31, color='b', linestyle=':', linewidth=2)
+    #plt.arrow(x=19, y=1.8, dx=10.3, dy=0, 
+    #     width=0.01, head_width=0.05, head_length=2, 
+    #     fc='r', ec='r')
+    #plt.text(20, 1.7, "12 steps", fontsize=8, color='red')
     plt.legend(loc='upper center')
     plt.savefig(os.path.join(folder_path, plottitle + '.png'))
     plt.close()
