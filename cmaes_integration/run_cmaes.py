@@ -23,8 +23,8 @@ import numpy as np
 from snn_sim.run_simulation import run
 
 SNN_INPUT_SHAPE = 36
-MEAN_ARRAY = [1.0] * SNN_INPUT_SHAPE
-NUM_ITERS = 500
+MEAN_ARRAY = [0.0] * SNN_INPUT_SHAPE
+NUM_ITERS = 100
 
 VERBOSE = False
 
@@ -75,13 +75,16 @@ def run_cma_es(mode, gens, sigma_val):
             fitness = run(NUM_ITERS, x, "h")
             solutions.append((x, fitness))
 
-        best_fitness = solutions[0][FITNESS_INDEX]
-        best_genome = solutions[0][GENOME_INDEX]
-
         optimizer.tell(solutions)
 
+        sorted_solutions = solutions[:]
+        sorted_solutions.sort(key=lambda x: x[1])
+
+        best_fitness = sorted_solutions[0][FITNESS_INDEX]
+        best_genome = sorted_solutions[0][GENOME_INDEX]
+
         if VERBOSE:
-            print([i[1] for i in solutions])
+            print([i[1] for i in sorted_solutions])
 
         print("Generation", generation, "Best Fitness:", best_fitness)
 
@@ -111,8 +114,8 @@ if __name__ == "__main__":
                         help='number of generations to run',
                         default=100)
     parser.add_argument('--sigma',
-                        type=int,
-                        default=2,
+                        type=float,
+                        default=1,
                         help='sigma value for cma-es')
     args = parser.parse_args()
 

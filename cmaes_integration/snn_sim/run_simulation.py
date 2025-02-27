@@ -147,7 +147,7 @@ def run(iters, genome, mode, vid_name=None, vid_path=None):
     # Get robot point mass position position afer sim has run
     final_raw_pm_pos = sim.object_pos_at_time(sim.get_time(), "robot")
 
-    fitness = np.mean(init_raw_pm_pos, 1)[0] - np.mean(final_raw_pm_pos, 1)[0]
+    fitness = np.mean(final_raw_pm_pos[0]) - np.mean(init_raw_pm_pos[0])
 
     if mode in ["v", "b"]:
         create_video(video_frames, vid_name, vid_path, FPS)
