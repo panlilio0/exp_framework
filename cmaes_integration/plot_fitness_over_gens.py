@@ -29,7 +29,7 @@ df = pd.read_csv(os.path.join("data", filename))
 
 plt.figure(figsize=(8, 5))
 plt.plot(np.array(df["generation"]),
-         np.array(df["best_fitness"]),
+         np.array(df["best_so_far"]),
          marker='o',
          linestyle='-',
          color='b',

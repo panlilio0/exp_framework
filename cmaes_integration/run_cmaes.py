@@ -20,10 +20,10 @@ from datetime import datetime
 from pathlib import Path
 from cmaes import CMA
 import numpy as np
-from snn_sim.run_simulation import run
+from snn_sim import run_simulation
 
 SNN_INPUT_SHAPE = 36
-MEAN_ARRAY = [1.0] * SNN_INPUT_SHAPE
+MEAN_ARRAY = [0.0] * SNN_INPUT_SHAPE
 NUM_ITERS = 500
 
 VERBOSE = False
@@ -52,7 +52,7 @@ def run_cma_es(mode, gens, sigma_val):
     """
 
     # Generate output.csv file
-    csv_header = ['generation', 'best_fitness']
+    csv_header = ['generation', 'best_fitness', "best_so_far"]
     csv_header.extend([f"weight{i}" for i in range(SNN_INPUT_SHAPE)])
 
     Path(os.path.join(ROOT_DIR, "data")).mkdir(parents=True, exist_ok=True)
@@ -67,26 +67,35 @@ def run_cma_es(mode, gens, sigma_val):
     # Init CMA
     optimizer = CMA(mean=np.array(MEAN_ARRAY), sigma=sigma_val)
 
+    best_fitness_so_far = run_simulation.FITNESS_OFFSET
+
     for generation in range(gens):
         solutions = []
 
         for indv_num in range(optimizer.population_size):
             x = optimizer.ask()
-            fitness = run(NUM_ITERS, x, "h")
+            fitness = run_simulation.run(NUM_ITERS, x, "h")
             solutions.append((x, fitness))
-
-        best_fitness = solutions[0][FITNESS_INDEX]
-        best_genome = solutions[0][GENOME_INDEX]
 
         optimizer.tell(solutions)
 
+        sorted_solutions = solutions[:]
+        sorted_solutions.sort(key=lambda x: x[1])
+
+        best_fitness = sorted_solutions[0][FITNESS_INDEX]
+        best_genome = sorted_solutions[0][GENOME_INDEX]
+
+        if best_fitness < best_fitness_so_far:
+            print("Found new best! Old:", best_fitness_so_far, "New:", best_fitness)
+            best_fitness_so_far = best_fitness
+
         if VERBOSE:
-            print([i[1] for i in solutions])
+            print([i[1] for i in sorted_solutions])
 
         print("Generation", generation, "Best Fitness:", best_fitness)
 
         # Add a new row to output.csv file with cols: generation#, fitness, and genome
-        new_row = [generation, best_fitness] + best_genome.tolist()
+        new_row = [generation, best_fitness, best_fitness_so_far] + best_genome.tolist()
 
         with open(csv_path, "a", newline="") as file:
             writer = csv.writer(file)
@@ -97,7 +106,7 @@ def run_cma_es(mode, gens, sigma_val):
             vid_name = DATE_TIME + "_gen" + str(generation)
             vid_path = os.path.join(ROOT_DIR, "videos", DATE_TIME)
 
-            run(NUM_ITERS, best_genome, mode, vid_name, vid_path)
+            run_simulation.run(NUM_ITERS, best_genome, mode, vid_name, vid_path)
 
 
 if __name__ == "__main__":
@@ -111,8 +120,8 @@ if __name__ == "__main__":
                         help='number of generations to run',
                         default=100)
     parser.add_argument('--sigma',
-                        type=int,
-                        default=2,
+                        type=float,
+                        default=1,
                         help='sigma value for cma-es')
     args = parser.parse_args()
 

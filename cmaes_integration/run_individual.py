@@ -17,7 +17,7 @@ import pandas as pd
 from snn_sim.run_simulation import run
 
 ITERS = 1000
-GENOME_START_INDEX = 2
+GENOME_START_INDEX = 3
 
 def run_indvididual(generation, mode, filename):
     """
