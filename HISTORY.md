@@ -54,3 +54,9 @@ Feb 17th | Abhay Kashyap
 Feb 23rd | Abhay Kashyap
 - Removed files that were not being used and renames some files to more appropriate names
 - Refactored `SNNRunner()` into `SNNController()` and the class simpler to use for simulation - removed redundant functions and converted some functions into private functions for abstraction.
+
+Feb 24th | Thomas Breimer
+- Completed integration
+
+Feb 27th | Thomas Breimer
+- cmaes bug fixes
