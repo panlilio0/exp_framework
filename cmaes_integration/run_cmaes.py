@@ -24,7 +24,7 @@ from snn_sim import run_simulation
 
 SNN_INPUT_SHAPE = 36
 MEAN_ARRAY = [0.0] * SNN_INPUT_SHAPE
-NUM_ITERS = 100
+NUM_ITERS = 500
 
 VERBOSE = False
 
@@ -86,7 +86,7 @@ def run_cma_es(mode, gens, sigma_val):
         best_genome = sorted_solutions[0][GENOME_INDEX]
 
         if best_fitness < best_fitness_so_far:
-            print("Found new best fitness! Old:", best_fitness_so_far, "New:", best_fitness)
+            print("Found new best! Old:", best_fitness_so_far, "New:", best_fitness)
             best_fitness_so_far = best_fitness
 
         if VERBOSE:

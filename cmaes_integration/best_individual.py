@@ -25,7 +25,7 @@ def visualize_best(filename):
         df = pandas.read_csv(path)
         best_fitness = min(df["best_fitness"])
         row = df.loc[df['best_fitness'] == best_fitness]
-        genome = row.values.tolist()[0][2:]
+        genome = row.values.tolist()[0][3:]
         run(ITERS, genome, "s")
 
 
