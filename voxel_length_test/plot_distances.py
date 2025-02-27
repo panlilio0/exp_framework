@@ -5,8 +5,8 @@ plotting csv files for james.
 import os
 import argparse
 import glob
-#import numpy as np
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 from scipy.ndimage import gaussian_filter1d
@@ -33,7 +33,7 @@ def plot_all(csv_filename):
     cols = df.columns.tolist()
 
     # Test - can we see where there is action by plotting the differential?
-    # plot_differentials(df, cols, csv_filename)
+    # plot_differentials(df, cols)
 
     for col in cols:
         to_plot = list(df[col])
@@ -44,14 +44,19 @@ def plot_all(csv_filename):
     plt.savefig(os.path.join(folder_path, plottitle + '.png'))
     plt.close()
 
-def plot_differentials(df, cols, csv_filename):
-    pass
-
+def plot_differentials(df, cols):
     for col in cols:
-        to_plot = list(df[col])
-
-
-    pass
+        y = list(df[col])
+        x = np.linspace(0, len(y), len(y))
+        dy_dx = np.diff(y) / np.diff(x)
+        x_mid = (x[:-1] + x[1:]) / 2
+        smoothed_data = gaussian_filter1d(dy_dx, sigma=2) # Adjust sigma for smoothing strength
+        plt.plot(x_mid, smoothed_data, label="Derivative of " + col)
+    plt.xlabel('x')
+    plt.ylabel('y')
+    plt.title('Numerical Differentiation of Discrete Data')
+    plt.legend()
+    plt.show()
 
 def get_latest_file():
     """
