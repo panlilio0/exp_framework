@@ -8,7 +8,7 @@ February 6th, 2025
 import os
 import argparse
 import pandas
-from snn_sim.run_simulation import run
+from rsnn_sim.run_sim_rsnn import run
 
 ITERS = 1000
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
