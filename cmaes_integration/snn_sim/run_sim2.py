@@ -33,7 +33,7 @@ FITNESS_OFFSET = 100
 
 # Files
 ENV_FILENAME = "big_platform.json"
-ROBOT_FILENAME = "small_bot.json"
+ROBOT_FILENAME = "bestbot.json"
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 
 def create_video(source, output_name, vid_path, fps=FPS):
@@ -120,7 +120,7 @@ def run(iters, genome, mode, vid_name=None, vid_path=None):
     file_path = os.path.dirname(os.path.abspath(__file__))
     robot_file_path = os.path.join(file_path, 'robot', 'world_data', ROBOT_FILENAME)
 
-    snn_controller = SNNController(2, 2, 1, robot_config=robot_file_path)
+    snn_controller = SNNController(4, 4, 1, robot_config=robot_file_path)
     snn_controller.set_snn_weights(genome)
 
     # put all the point masses (pm_coords) into pairs of x, y coordinates
@@ -129,28 +129,28 @@ def run(iters, genome, mode, vid_name=None, vid_path=None):
     # creates a dictionary that maps each pm_pair to its index
     # used later to convert from coords to their indices
     point_index_map = {coord: idx for idx, coord in enumerate(pm_pairs)}
-    print(point_index_map)
+    # print(point_index_map)
 
     # iterate through the pm coord pairs and group the indices based on y coord
     grouped_coords = defaultdict(list)
     for idx, (_, y) in enumerate(pm_pairs):
         grouped_coords[y].append(idx)  # Append index instead of (x, y)
-    print(grouped_coords)
+    # print(grouped_coords)
 
     for _ in range(iters):
         # Get point mass locations
         raw_pm_pos = sim.object_pos_at_time(sim.get_time(), "robot")
-        print(raw_pm_pos)
+        # print(raw_pm_pos)
 
         # maps pms to active voxels and corners
         voxels, corners = morphology.map_pm_to_active_voxels(raw_pm_pos, grouped_coords, robot)
 
-        print (voxels)
-        print (corners)
+        # print (voxels)
+        # print (corners)
 
         # Get distances to the corners
         corner_distances = morphology.get_corner_distances(raw_pm_pos)
-        print(corner_distances)
+        # print(corner_distances)
 
         # Feed snn and get outputs
         action = snn_controller.get_lengths(corner_distances)
