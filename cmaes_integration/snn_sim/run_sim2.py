@@ -6,13 +6,17 @@ Author: Thomas Breimer, James Gaskell, Guy Tallent
 January 29th, 2025
 """
 
+# pylint struggling to import evogym
+# pylint: disable = import-error
+# pylint: disable = no-member
+
 import os
-import cv2
 from pathlib import Path
+from collections import defaultdict
+import cv2
 import numpy as np
 from evogym import EvoWorld, EvoSim, EvoViewer
 from evogym import WorldObject
-from collections import defaultdict
 from snn_sim.robot.morph2 import Morphology
 from snn_sim.snn.snn_controller import SNNController
 
@@ -44,8 +48,12 @@ def create_video(source, output_name, vid_path, fps=FPS):
     """
 
     Path(vid_path).mkdir(parents=True, exist_ok=True)
-    out = cv2.VideoWriter(os.path.join(vid_path, output_name + ".mp4"), cv2.VideoWriter_fourcc(*'mp4v'),
-                          fps, (source[0].shape[1], source[0].shape[0]))
+    out = cv2.VideoWriter(os.path.join(vid_path, output_name + ".mp4"),
+                           cv2.VideoWriter_fourcc(*'mp4v'),
+                           fps,
+                           (source[0].shape[1],
+                            source[0].shape[0]))
+
     for frame in source:
         out.write(frame)
     out.release()
@@ -118,14 +126,14 @@ def run(iters, genome, mode, vid_name=None, vid_path=None):
     # put all the point masses (pm_coords) into pairs of x, y coordinates
     pm_pairs = list(zip(init_raw_pm_pos[0], init_raw_pm_pos[1]))
 
-    # creates a dictionary that maps each pm_pair to its index 
+    # creates a dictionary that maps each pm_pair to its index
     # used later to convert from coords to their indices
     point_index_map = {coord: idx for idx, coord in enumerate(pm_pairs)}
     print(point_index_map)
 
     # iterate through the pm coord pairs and group the indices based on y coord
     grouped_coords = defaultdict(list)
-    for idx, (x, y) in enumerate(pm_pairs):
+    for idx, (_, y) in enumerate(pm_pairs):
         grouped_coords[y].append(idx)  # Append index instead of (x, y)
     print(grouped_coords)
 
