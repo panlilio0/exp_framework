@@ -66,3 +66,6 @@ Feb 25th | By James Gaskell & Matthew Meek
 
 Feb 27th | Thomas Breimer
 - cmaes bug fixes
+
+Mar 4th | Thomas Breimer
+- Added bestbot.json to snn-sim
