@@ -68,7 +68,7 @@ def run_cma_es(mode, gens, sigma_val):
     
 
     # Init CMA
-    optimizer = CMA(mean=np.array(MEAN_ARRAY), sigma=sigma_val)
+    optimizer = CMA(mean=np.array(MEAN_ARRAY), sigma=sigma_val, population_size=50)
 
     best_fitness_so_far = run_sim_rsnn.FITNESS_OFFSET
 
@@ -91,6 +91,8 @@ def run_cma_es(mode, gens, sigma_val):
         if best_fitness < best_fitness_so_far:
             print("Found new best! Old:", best_fitness_so_far, "New:", best_fitness)
             best_fitness_so_far = best_fitness
+            sigma_val *= 0.98 # Sigma decay
+            print("sigma now: " + str(sigma_val))
 
         if VERBOSE:
             print([i[1] for i in sorted_solutions])
@@ -126,7 +128,7 @@ if __name__ == "__main__":
                         default=1000)
     parser.add_argument('--sigma',
                         type=float,
-                        default=3,
+                        default=5,
                         help='sigma value for cma-es')
     args = parser.parse_args()
 

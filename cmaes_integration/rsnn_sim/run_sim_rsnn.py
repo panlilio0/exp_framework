@@ -29,7 +29,7 @@ NUM_ITERS = 200
 FPS = 50
 MODE = "v" # "headless", "screen", or "video"
 
-FITNESS_OFFSET = 100
+FITNESS_OFFSET = 10
 SNN_CONTEXT_LENGTH = 5 # Number of previous actions to consider in Neural Network
 
 # Files
@@ -159,15 +159,17 @@ def run(iters, genome, mode, vid_name=None, vid_path=None):
             # Feed snn and get outputs
             action = snn_controller.get_lengths(corner_distances, prev_action)
 
+            # Clip actuator target lengths to be between 0.6 and 1.6 to prevent buggy behavior
+            action = np.clip(action, ACTUATOR_MIN_LEN, ACTUATOR_MAX_LEN)
+
             if len(prev_action) < SNN_CONTEXT_LENGTH:
+                action = 1/action
                 prev_action.append(action)
             elif len(prev_action) == SNN_CONTEXT_LENGTH:
+                action = 1/action
                 prev_action.pop(0)
                 prev_action.append(action)
         
-
-            # Clip actuator target lengths to be between 0.6 and 1.6 to prevent buggy behavior
-            action = np.clip(action, ACTUATOR_MIN_LEN, ACTUATOR_MAX_LEN)
 
             # Set robot action to the action vector. Each actuator corresponds to a vector
             # index and will try to expand/contract to that value
@@ -190,6 +192,9 @@ def run(iters, genome, mode, vid_name=None, vid_path=None):
     final_raw_pm_pos = sim.object_pos_at_time(sim.get_time(), "robot")
 
     fitness = np.mean(final_raw_pm_pos, 1)[0] - np.mean(init_raw_pm_pos, 1)[0]
+    
+    if np.mean(init_raw_pm_pos, 1)[1] - np.mean(final_raw_pm_pos, 1)[1] < 0:
+        fitness = 0
 
     if mode in ["v", "b"]:
         create_video(video_frames, vid_name, vid_path, FPS)
