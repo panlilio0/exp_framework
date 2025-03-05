@@ -22,7 +22,7 @@ from cmaes import CMA
 import numpy as np
 from snn_sim import run_simulation
 
-SNN_INPUT_SHAPE = 36
+SNN_INPUT_SHAPE = 72
 MEAN_ARRAY = [0.0] * SNN_INPUT_SHAPE
 NUM_ITERS = 500
 
