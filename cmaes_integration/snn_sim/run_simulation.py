@@ -28,7 +28,7 @@ FITNESS_OFFSET = 100
 
 # Files
 ENV_FILENAME = "big_platform.json"
-ROBOT_FILENAME = "small_bot.json"
+ROBOT_FILENAME = "bestbot.json"
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 
 def create_video(source, output_name, vid_path, fps=FPS):
