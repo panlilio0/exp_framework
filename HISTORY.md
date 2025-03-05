@@ -69,3 +69,4 @@ Feb 27th | Thomas Breimer
 
 Mar 4th | Thomas Breimer
 - Added bestbot.json to snn-sim
+- Chnaged run_cmaes.py to use bestbot.json
