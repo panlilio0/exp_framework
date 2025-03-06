@@ -75,3 +75,6 @@ Mar 5th | Abhay Kashyap
 - Created a log to track the frequency of target lengths obtained from SNN
 - Added notebook showing a simple visualization of this frequency
 - Added code to normalize inputs for better SNN computations
+
+March 6th | Thomas Breimer
+- added run_experiment.py
