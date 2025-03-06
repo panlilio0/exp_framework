@@ -7,14 +7,14 @@ January 29th, 2025
 """
 
 import os
-import cv2
+import itertools
 from pathlib import Path
+import cv2
 import numpy as np
 from evogym import EvoWorld, EvoSim, EvoViewer
 from evogym import WorldObject
 from snn_sim.robot.morphology import Morphology
 from snn_sim.snn.snn_controller import SNNController
-import itertools
 
 # Simulation constants
 ROBOT_SPAWN_X = 3
@@ -44,7 +44,8 @@ def create_video(source, output_name, vid_path, fps=FPS):
     """
 
     Path(vid_path).mkdir(parents=True, exist_ok=True)
-    out = cv2.VideoWriter(os.path.join(vid_path, output_name + ".mp4"), cv2.VideoWriter_fourcc(*'mp4v'),
+    out = cv2.VideoWriter(os.path.join(vid_path, output_name + ".mp4"),
+                          cv2.VideoWriter_fourcc(*'mp4v'),
                           fps, (source[0].shape[1], source[0].shape[0]))
     for frame in source:
         out.write(frame)
@@ -109,8 +110,8 @@ def run(iters, genome, mode, vid_name=None, vid_path=None):
 
     morphology = Morphology(ROBOT_FILENAME)
 
-    file_path = os.path.dirname(os.path.abspath(__file__))
-    robot_file_path = os.path.join(file_path, 'robot', 'world_data', ROBOT_FILENAME)
+    robot_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                   'robot', 'world_data', ROBOT_FILENAME)
 
     snn_controller = SNNController(2, 2, 1, robot_config=robot_file_path)
     snn_controller.set_snn_weights(genome)
@@ -146,10 +147,10 @@ def run(iters, genome, mode, vid_name=None, vid_path=None):
             viewer.render(verbose=True, mode="screen")
             video_frames.append(viewer.render(verbose=False, mode="rgb_array"))
 
-    logg = []
+    log_iter = []
     for x in log:
-        logg.append(list(itertools.chain.from_iterable(x)))
-    
+        log_iter.append(list(itertools.chain.from_iterable(x)))
+
     viewer.close()
 
     # Get robot point mass position position afer sim has run
@@ -160,4 +161,4 @@ def run(iters, genome, mode, vid_name=None, vid_path=None):
     if mode in ["v", "b"]:
         create_video(video_frames, vid_name, vid_path, FPS)
 
-    return FITNESS_OFFSET - fitness, logg # Turn into a minimization problem
+    return FITNESS_OFFSET - fitness, log_iter # Turn into a minimization problem

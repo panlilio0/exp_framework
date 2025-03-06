@@ -74,7 +74,7 @@ class SNNController:
         Raises:
             ValueError: If the length of the CMA-ES output does not match the expected size.
         """
-        
+
         params_per_hidden_layer = (self.inp_size + 1) * self.hidden_size
         params_per_output_layer = (self.hidden_size + 1) * self.output_size
         params_per_snn = params_per_hidden_layer + params_per_output_layer
@@ -101,7 +101,7 @@ class SNNController:
 
         for snn_id, params in snn_parameters.items():
             self.snns[snn_id].set_weights(params)
-    
+
     def _get_output_state(self, inputs):
         """
         Run SNN with inter-actuator distances as input over multiple timesteps.
@@ -112,14 +112,14 @@ class SNNController:
         Returns:
             dict: Contains 'continuous_actions' and 'duty_cycles'
         """
-        
+
         # Normalizing inputs between -1 and 1
         x_vals, y_vals = zip(*inputs)  # Unzips into two lists
-    
+
         # Find min and max for each component
         x_min, x_max = min(x_vals), max(x_vals)
         y_min, y_max = min(y_vals), max(y_vals)
-        
+
         # Normalize each component independently
         inputs = [
             (
@@ -127,7 +127,7 @@ class SNNController:
                 2 * (y - y_min) / (y_max - y_min) - 1   # Normalize y
             ) for x, y in inputs
         ]
-        
+
         outputs = {}
         for snn_id, snn in enumerate(self.snns):
             duty_cycle = snn.compute(inputs[snn_id])
@@ -150,9 +150,6 @@ class SNNController:
         for _, item in out.items():
             lengths.append(item['target_length'])
         return lengths
-
-    def get_input_size(self):
-        return self.inp_size
 
 
 def calc_param_num(inp_size, hidden_size, out_size):

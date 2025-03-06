@@ -16,10 +16,10 @@ class SpikyNode:
     """
 
     def __init__(self, size):
-        self._weights = []  # a list of weights and a bias (last item in the list)
+        # a list of weights and a bias (last item in the list)
+        self._weights = np.random.uniform(-1, 1, (size+1))
         self.level = 0.0  # activation level
         self.firelog = []  # tracks whether the neuron fired (1) or not (0)
-        
 
     def compute(self, inputs):
         """Compute the neuron's output based on inputs."""
@@ -30,7 +30,8 @@ class SpikyNode:
         self.level *= (1 - SPIKE_DECAY)
 
         if (len(inputs) + 1) != len(self._weights):
-            print(f"Error: {len(inputs)} inputs vs {len(self._weights)} weights; weights: {self._weights}")
+            print(f"Error: {len(inputs)} inputs vs {len(self._weights)} \
+                  weights; weights: {self._weights}")
             return 0.0
 
         weighted_sum = sum(inputs[i] * self._weights[i]
@@ -67,7 +68,7 @@ class SpikyNode:
 
     def set_weights(self, input_weights):
         """Allows to set the neuron's weights."""
-        if self._weights and len(input_weights) != len(self._weights):
+        if len(input_weights) != len(self._weights):
             print("Weight size mismatch in node")
         else:
             self._weights = input_weights.copy()

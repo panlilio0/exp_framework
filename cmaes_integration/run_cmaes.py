@@ -13,18 +13,15 @@ Authors: Thomas Breimer, James Gaskell
 February 4th, 2025
 """
 
-import csv
 import os
 import argparse
 from datetime import datetime
 from pathlib import Path
+from collections import Counter
+import pandas as pd
 from cmaes import CMA
 import numpy as np
 from snn_sim import run_simulation
-from collections import Counter
-import pandas as pd
-import matplotlib.pyplot as plt
-import itertools
 
 
 SNN_INPUT_SHAPE = 72
@@ -63,12 +60,9 @@ def run_cma_es(mode, gens, sigma_val):
     Path(os.path.join(ROOT_DIR, "data")).mkdir(parents=True, exist_ok=True)
     Path(os.path.join(ROOT_DIR, "action_log", f"{DATE_TIME}")).mkdir(parents=True, exist_ok=True)
 
-    csv_name = DATE_TIME + ".csv"
-    csv_path = os.path.join(ROOT_DIR, "data", csv_name)
+    csv_path = os.path.join(ROOT_DIR, "data", f"{DATE_TIME}.csv")
 
-    with open(csv_path, "w", newline="") as file:
-        writer = csv.writer(file)
-        writer.writerow(csv_header)
+    pd.DataFrame(columns=csv_header).to_csv(csv_path, index=False)
 
     # Init CMA
     optimizer = CMA(mean=np.array(MEAN_ARRAY), sigma=sigma_val)
@@ -78,11 +72,11 @@ def run_cma_es(mode, gens, sigma_val):
     for generation in range(gens):
         solutions = []
 
-        for indv_num in range(optimizer.population_size):
+        for _ in range(optimizer.population_size):
             x = optimizer.ask()
             fitness, log = run_simulation.run(NUM_ITERS, x, "h")
             solutions.append((x, fitness))
-        
+
         log = np.array(log).T
         log_csv = pd.DataFrame()
         for i, x in enumerate(log):
@@ -90,38 +84,39 @@ def run_cma_es(mode, gens, sigma_val):
             print(f"Firing freq SNN {i}: {z}")
             temp = pd.DataFrame(z.values(), index=z.keys(), columns=[i])
             log_csv = pd.concat([log_csv, temp], axis=1).sort_index()
-        log_csv.to_csv(os.path.join(ROOT_DIR, "action_log", f"{DATE_TIME}", f"gen_{generation}.csv"), index=True)
+        log_csv.to_csv(os.path.join(ROOT_DIR, "action_log", f"{DATE_TIME}", \
+                                    f"gen_{generation}.csv"), index=True)
 
         optimizer.tell(solutions)
 
-        sorted_solutions = solutions[:]
-        sorted_solutions.sort(key=lambda x: x[1])
+        sorted_solutions = sorted(solutions, key=lambda x: x[FITNESS_INDEX])
 
-        best_fitness = sorted_solutions[0][FITNESS_INDEX]
-        best_genome = sorted_solutions[0][GENOME_INDEX]
+        best_sol = sorted_solutions[0]
 
-        if best_fitness < best_fitness_so_far:
-            print("Found new best! Old:", best_fitness_so_far, "New:", best_fitness)
-            best_fitness_so_far = best_fitness
+        if best_sol[FITNESS_INDEX] < best_fitness_so_far:
+            print("Found new best! Old:", best_fitness_so_far, "New:", best_sol[FITNESS_INDEX])
+            best_fitness_so_far = best_sol[FITNESS_INDEX]
 
         if VERBOSE:
             print([i[1] for i in sorted_solutions])
 
-        print("Generation", generation, "Best Fitness:", best_fitness)
+        print("Generation", generation, "Best Fitness:", best_sol[FITNESS_INDEX])
 
         # Add a new row to output.csv file with cols: generation#, fitness, and genome
-        new_row = [generation, best_fitness, best_fitness_so_far] + best_genome.tolist()
+        new_row = [generation, best_sol[FITNESS_INDEX], best_fitness_so_far] + \
+            best_sol[GENOME_INDEX].tolist()
 
-        with open(csv_path, "a", newline="") as file:
-            writer = csv.writer(file)
-            writer.writerow(new_row)
+        new_row_df = pd.DataFrame([new_row], columns=csv_header)
+
+        # Append the new row to the CSV file using pandas in append mode (no header this time).
+        new_row_df.to_csv(csv_path, mode='a', index=False, header=False)
 
         # If --mode s, v, or b show/save best individual from generation
         if mode in ["s", "b", "v"]:
             vid_name = DATE_TIME + "_gen" + str(generation)
             vid_path = os.path.join(ROOT_DIR, "videos", DATE_TIME)
 
-            run_simulation.run(NUM_ITERS, best_genome, mode, vid_name, vid_path)
+            run_simulation.run(NUM_ITERS, best_sol[GENOME_INDEX], mode, vid_name, vid_path)
 
 
 if __name__ == "__main__":
