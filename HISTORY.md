@@ -71,6 +71,9 @@ Mar 4th | Thomas Breimer
 - Added bestbot.json to snn-sim
 - Chnaged run_cmaes.py to use bestbot.json
 
+Mar 4th | Guy Tallent
+- added run_cmaes2, run_sim2, morph2, actuator2. This maps the point massess to each voxel and allows you to get the distance from each of the active voxels to all four corners of the robot
+
 Mar 5th | Abhay Kashyap
 - Created a log to track the frequency of target lengths obtained from SNN
 - Added notebook showing a simple visualization of this frequency
