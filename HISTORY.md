@@ -88,3 +88,9 @@ Mar 5th | James Gaskell
 
 March 6th | Thomas Breimer
 - added run_experiment.py
+
+### Adding Ring Buffer
+March 06th | Atharv Tekurkar
+- Added ring buffer
+- Implemented it for firelog in the snn structure
+- Removed duplicate snn files that were in cmaes_integration

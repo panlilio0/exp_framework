@@ -1,51 +1,65 @@
-"""module for ring buffer data structure"""
-import numpy as np
+"""
+Module for ring buffer implementation.
+"""
 
-#constants
-DEFAULT_SIZE = 50
+import numpy as np
 
 
 class RingBuffer:
-    """class representing ring buffer"""
+    """ Implements a partially-full buffer. """
 
-    def __init__(self, size=DEFAULT_SIZE):
-        self.size = size
-        self.data = np.array
+    def __init__(self, buffsize):
+        self.buffsize = buffsize
+        self.data = np.empty(
+            buffsize,
+            dtype=object)  # Numpy array of 'buffsize' with None values
+        self.currpos = 0  # Position where the next element should be added
+        self.is_full = False  # Flag to indicate if the buffer is full
 
-    class __FullBuffer:
-        def add(self, x):
-            """add element, overwrite old element"""
-            self.data[self.position] = x
-            self.position = (self.position +1) % self.size
-        
-        def get(self):
-            """returns list of elements in correct order"""
-            return self.data[self.position:]+self.data[:self.position]
-
-    def add(self, x):
-        """add elem to end of buffer"""
-        np.append(self.data, x)
-        if np.size(self.data) == self.size:
-            self.position = 0
-            self.__class__ = self.__FullBuffer
+    def add(self, value):
+        """ Add an element at the end of the buffer. """
+        self.data[self.currpos] = value
+        self.currpos = (self.currpos + 1) % self.buffsize
+        if self.currpos == 0:
+            self.is_full = True
 
     def get(self):
-        return self.data
+        """ Return a list of elements from the oldest to the newest without None values """
+        if self.is_full:
+            return np.concatenate(
+                (self.data[self.currpos:], self.data[:self.currpos]))
+        return self.data[:self.currpos]
 
-# Testing
 
+# testing
 if __name__ == '__main__':
 
-    rb = RingBuffer(10)
-    rb.add(4)
-    rb.add(5)
-    rb.add(10)
-    rb.add(7)
-    print(rb.__class__, rb.get())
+    # Creating ring buffer
+    x = RingBuffer(10)
 
+    # Adding first 4 elements
+    x.add(5)
+    x.add(10)
+    x.add(4)
+    x.add(7)
+
+    # Displaying class info and buffer data
+    print(x.__class__, x.get())
+
+    # Creating fictitious sampling data list
     data = [1, 11, 6, 8, 9, 3, 12, 2]
-    for value in data[:6]:
-        rb.add(value)
-    print (rb.__class__, rb.get())
 
-    print ('')
+    # Adding elements until buffer is full
+    for value in data[:6]:
+        x.add(value)
+
+    # Displaying class info and buffer data
+    print(x.__class__, x.get())
+
+    # Adding data simulating a data acquisition scenario
+    print('')
+    print(f'Mean value = {np.mean(x.get()):0.1f}   |  ', x.get())
+    for value in data[6:]:
+        print(f"Adding {value}")
+        x.add(value)
+        print(f'Mean value = {np.mean(x.get()):0.1f}   |  ', x.get())

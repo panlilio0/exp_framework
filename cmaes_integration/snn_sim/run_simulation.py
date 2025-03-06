@@ -7,6 +7,7 @@ January 29th, 2025
 """
 
 import os
+import sys
 import itertools
 from pathlib import Path
 import cv2
@@ -15,6 +16,8 @@ from evogym import EvoWorld, EvoSim, EvoViewer
 from evogym import WorldObject
 from snn_sim.robot.morphology import Morphology
 from snn_sim.snn.snn_controller import SNNController
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 # Simulation constants
 ROBOT_SPAWN_X = 3
