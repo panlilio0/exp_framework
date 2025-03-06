@@ -74,6 +74,9 @@ Mar 4th | Thomas Breimer
 Mar 4th | Guy Tallent
 - added run_cmaes2, run_sim2, morph2, actuator2. This maps the point massess to each voxel and allows you to get the distance from each of the active voxels to all four corners of the robot
 
+Mar 4th | Jonathan Fischman
+- ring buffer implementation
+
 Mar 5th | Abhay Kashyap
 - Created a log to track the frequency of target lengths obtained from SNN
 - Added notebook showing a simple visualization of this frequency
