@@ -76,5 +76,9 @@ Mar 5th | Abhay Kashyap
 - Added notebook showing a simple visualization of this frequency
 - Added code to normalize inputs for better SNN computations
 
+Mar 5th | James Gaskell
+- Created best_individual_latest.py which runs the best fitness from the most recent experiment or a specified gen number. Can be changed based on snn type
+- Implemented RSNN on new branch using CMA-ES taking into account n previous actuator values for each voxel
+
 March 6th | Thomas Breimer
 - added run_experiment.py
