@@ -6,9 +6,9 @@ February 6th, 2025
 """
 
 import os
+import time
 import argparse
 import pandas
-import time
 from snn_sim.run_simulation import run
 
 ITERS = 500
@@ -47,10 +47,10 @@ if __name__ == "__main__":
                         type=str,
                         default=None,
                         help='csv file to run')
-    
+
     args = parser.parse_args()
 
-    if args.file == None:
+    if args.file is None:
         raise Exception('No csv file specified!')
 
     visualize_best(args.file)
