@@ -66,3 +66,6 @@ Feb 25th | By James Gaskell & Matthew Meek
 
 Feb 27th | Thomas Breimer
 - cmaes bug fixes
+
+March 6th | Thomas Breimer
+- added run_experiment.py

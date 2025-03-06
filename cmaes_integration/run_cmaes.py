@@ -34,7 +34,7 @@ FITNESS_INDEX = 1
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 DATE_TIME = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
 
-def run_cma_es(mode, gens, sigma_val):
+def run(mode, gens, sigma_val):
     """
     Runs the cma_es algorithm on the robot locomotion problem,
     with sin-like robot actuators. Saves a csv file to ./output
@@ -59,6 +59,11 @@ def run_cma_es(mode, gens, sigma_val):
 
     csv_name = DATE_TIME + ".csv"
     csv_path = os.path.join(ROOT_DIR, "data", csv_name)
+
+    if os.path.exists("latest.csv"):
+        os.remove("latest.csv")
+
+    os.system("ln -s " + csv_path + " latest.csv")
 
     with open(csv_path, "w", newline="") as file:
         writer = csv.writer(file)
@@ -125,4 +130,4 @@ if __name__ == "__main__":
                         help='sigma value for cma-es')
     args = parser.parse_args()
 
-    run_cma_es(args.mode, args.gens, args.sigma)
+    run(args.mode, args.gens, args.sigma)
