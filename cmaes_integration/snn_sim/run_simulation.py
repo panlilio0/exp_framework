@@ -8,6 +8,9 @@ January 29th, 2025
 
 import os
 import sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+
 import itertools
 from pathlib import Path
 import cv2
@@ -15,9 +18,7 @@ import numpy as np
 from evogym import EvoWorld, EvoSim, EvoViewer
 from evogym import WorldObject
 from snn_sim.robot.morphology import Morphology
-from snn_sim.snn.snn_controller import SNNController
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+from snn.snn_controller import SNNController
 
 # Simulation constants
 ROBOT_SPAWN_X = 3
