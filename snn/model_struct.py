@@ -2,14 +2,13 @@
 Module for simulating spiking neural networks (SNNs) with spiky neurons.
 """
 
-import random
 import numpy as np
 from snn.ring_buffer import RingBuffer
 
 # Constants
 SPIKE_DECAY = 0.1
 MAX_BIAS = 1
-MAX_FIRELOG_SIZE = 50
+MAX_FIRELOG_SIZE = 200
 
 
 class SpikyNode:
@@ -18,49 +17,51 @@ class SpikyNode:
     """
 
     def __init__(self, size):
-        self._weights = []  # a list of weights and a bias (last item in the list)
-        self.level = 0.0  # activation level
-        self.firelog = RingBuffer(MAX_FIRELOG_SIZE) # tracks whether neuron fired (1) or not (0)
-        if size > 0:
-            self._weights = [random.uniform(-1, 1) for _ in range(size)]
-            self._weights.append(random.uniform(0, MAX_BIAS))
+        # a list of weights and a bias (last item in the list)
+        self._weights = np.random.uniform(-1, 1, (size + 1))
+        self.level = -np.inf  # activation level
+        self.firelog = RingBuffer(
+            MAX_FIRELOG_SIZE)  # tracks whether the neuron fired or not
+        self.levels_log = []
 
     def compute(self, inputs):
         """Compute the neuron's output based on inputs."""
 
-        # print(f"current level: {self.level}, bias: {self.get_bias()}")
-        self.level = max(self.level - SPIKE_DECAY, 0.0)
+        self.level *= (1 - SPIKE_DECAY)
 
         if (len(inputs) + 1) != len(self._weights):
-            print(
-                f"Error: {len(inputs)} inputs vs {len(self._weights)} weights")
+            print(f"Error: {len(inputs)} inputs vs {len(self._weights)} \
+                  weights; weights: {self._weights}")
             return 0.0
 
-        weighted_sum = sum(inputs[i] * self._weights[i] for i in range(len(inputs)))
-        self.level = max(self.level + weighted_sum, 0.0)
-        # print(f"new level: {self.level}")
+        weighted_sum = sum(inputs[i] * self._weights[i]
+                           for i in range(len(inputs)))
+
+        if self.level == -np.inf:
+            self.level = weighted_sum
+        else:
+            self.level += weighted_sum
+
+        self.levels_log.append(self.level)
 
         if self.level >= self.get_bias():
             # print("Fired --> activation level reset to 0.0\n")
-            self.level = 0.0
+            self.level = -np.inf
             self.firelog.add(1)
             return 1.0
         # print("\n")
         self.firelog.add(0)
         return 0.0
 
-    def duty_cycle(self):
+    def duty_cycle(self, window=100):
         """Measures how frequently the neuron fires."""
-        if len(self.firelog.get()) == 0:
+        if self.firelog.length() == 0:
             return 0.0
-        return np.mean(self.firelog.get())
-
-    def set_weight(self, idx, val):
-        """Sets a weight for a particular node."""
-        if 0 <= idx < len(self._weights):
-            self._weights[idx] = val
-        else:
-            print(f"Invalid weight index: {idx}")
+        if window is None or window > self.firelog.length():
+            window = self.firelog.length()
+        recent_fires = self.firelog.get()[-window:]
+        # Return an unrounded fraction so the mapping can be more precise.
+        return sum(recent_fires) / window
 
     def set_weights(self, input_weights):
         """Allows to set the neuron's weights."""
@@ -80,6 +81,10 @@ class SpikyNode:
     def print_weights(self):
         """Prints the combined list of weights and bias."""
         print(self._weights)
+
+    def get_levels_log(self):
+        """Return the list of the neuron's recent activation levels."""
+        return self.levels_log
 
     @property
     def weights(self):
@@ -109,9 +114,9 @@ class SpikyLayer:
             end = start + weights_per_node
             node.set_weights(input_weights[start:end])
 
-    def duty_cycles(self):
+    def duty_cycles(self, window=100):
         """Returns the duty cycles for the neurons in the layer."""
-        return [node.duty_cycle() for node in self.nodes]
+        return [node.duty_cycle(window) for node in self.nodes]
 
 
 class SpikyNet:
@@ -123,10 +128,11 @@ class SpikyNet:
         self.hidden_layer = SpikyLayer(hidden_size, input_size)
         self.output_layer = SpikyLayer(output_size, hidden_size)
 
-    def compute(self, inputs):
+    def compute(self, inputs, firelog_window=100):
         """Passes the input through the hidden layer."""
         hidden_output = self.hidden_layer.compute(inputs)
-        return self.output_layer.compute(hidden_output)
+        self.output_layer.compute(hidden_output)
+        return self.output_layer.duty_cycles(firelog_window)
 
     def set_weights(self, input_weights):
         """Assigns weights to the hidden and the output layer."""
@@ -144,61 +150,3 @@ class SpikyNet:
             print(f"Node {node_index}: ", end="")
             output_node.print_weights()
         print("\n")
-
-
-# testing
-if __name__ == '__main__':
-    print("\n--- Testing SpikyNode ---")
-    TEST_NODE = SpikyNode(5)
-    print("Initial weights:")
-    TEST_NODE.print_weights()
-
-    print("\nSetting weights manually")
-    TEST_NODE_WEIGHTS = [0.7, -0.4, 0.9, 0.0, -0.2, 0.8]
-    TEST_NODE.set_weights(TEST_NODE_WEIGHTS)
-    print("Updated weights:")
-    TEST_NODE.print_weights()
-
-    print("\nGetting '1' output for manual input")
-    TEST_OUTPUT = TEST_NODE.compute([1, 2, 3, 4, 5])
-    print("Output:", TEST_OUTPUT)
-
-    print("\nGetting '0' output for manual input")
-    TEST_NODE_WEIGHTS = [0.7, -0.4, -0.9, 0.0, -0.2, 0.8]
-    TEST_NODE.set_weights(TEST_NODE_WEIGHTS)
-    print("Updated weights:")
-    TEST_NODE.print_weights()
-    TEST_OUTPUT = TEST_NODE.compute([1, 2, 3, 4, 5])
-    print("Output:", TEST_OUTPUT)
-
-    print("\n--- Testing SpikyLayer ---")
-    TEST_LAYER = SpikyLayer(3, 4)
-    TEST_INPUTS = [1, 2, 3, 4]
-    LAYER_OUTPUTS = TEST_LAYER.compute(TEST_INPUTS)
-    print("SpikyLayer outputs:", LAYER_OUTPUTS)
-
-    print("\nSetting weights manually")
-    TEST_LAYER_WEIGHTS = [0.1 * idx for idx in range(15)]
-    TEST_LAYER.set_weights(TEST_LAYER_WEIGHTS)
-    print("Updated weights:")
-    for node_idx, current_node in enumerate(TEST_LAYER.nodes):
-        print(f"Node {node_idx} weights:", current_node.weights)
-
-    print("\n--- Testing SpikyNet ---")
-    TEST_NET = SpikyNet(4, 2, 3)
-    print("Original structure:")
-    TEST_NET.print_structure()
-    print("\nTesting computing")
-    TEST_NET_OUTPUT = TEST_NET.compute([1, 2, 3, 4])
-    print("SpikyNet output:", TEST_NET_OUTPUT)
-    print("\nSetting weights manually")
-    TEST_NET_WEIGHTS = [
-        0.1, 0.2, 0.3, 0.4, 1.0, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.0, 0.7, 0.0,
-        0.0, 0.5, 0.5, 0.5, 0.8
-    ]
-    TEST_NET.set_weights(TEST_NET_WEIGHTS)
-    print("Updated weights:")
-    TEST_NET.print_structure()
-    print("Getting output for the updated weights")
-    TEST_NET_OUTPUT = TEST_NET.compute([1, 2, 3, 4])
-    print("SpikyNet output:", TEST_NET_OUTPUT)

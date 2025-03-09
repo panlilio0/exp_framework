@@ -59,6 +59,7 @@ def run(mode, gens, sigma_val):
 
     Path(os.path.join(ROOT_DIR, "data")).mkdir(parents=True, exist_ok=True)
     Path(os.path.join(ROOT_DIR, "action_log", f"{DATE_TIME}")).mkdir(parents=True, exist_ok=True)
+    Path(os.path.join(ROOT_DIR, "levels_log", f"{DATE_TIME}")).mkdir(parents=True, exist_ok=True)
 
     csv_path = os.path.join(ROOT_DIR, "data", f"{DATE_TIME}.csv")
 
@@ -66,7 +67,7 @@ def run(mode, gens, sigma_val):
         os.remove("latest.csv")
 
     os.system("ln -s " + csv_path + " latest.csv")
-    
+
     pd.DataFrame(columns=csv_header).to_csv(csv_path, index=False)
 
     # Init CMA
@@ -75,22 +76,33 @@ def run(mode, gens, sigma_val):
     best_fitness_so_far = run_simulation.FITNESS_OFFSET
 
     for generation in range(gens):
+        Path(os.path.join(ROOT_DIR, "levels_log", f"{DATE_TIME}",
+                          f"gen_{generation}")).mkdir(parents=True, exist_ok=True)
         solutions = []
 
         for _ in range(optimizer.population_size):
             x = optimizer.ask()
-            fitness, log = run_simulation.run(NUM_ITERS, x, "h")
+            fitness, action_log, levels_log = run_simulation.run(NUM_ITERS, x, "h")
             solutions.append((x, fitness))
 
-        log = np.array(log).T
-        log_csv = pd.DataFrame()
-        for i, x in enumerate(log):
+        action_log = np.array(action_log).T
+        action_log_csv = pd.DataFrame()
+        for i, x in enumerate(action_log):
             z = dict(Counter(list(map(lambda y: round(y, 2), x))))
             print(f"Firing freq SNN {i}: {z}")
             temp = pd.DataFrame(z.values(), index=z.keys(), columns=[i])
-            log_csv = pd.concat([log_csv, temp], axis=1).sort_index()
-        log_csv.to_csv(os.path.join(ROOT_DIR, "action_log", f"{DATE_TIME}", \
+            action_log_csv = pd.concat([action_log_csv, temp], axis=1).sort_index()
+        action_log_csv.to_csv(os.path.join(ROOT_DIR, "action_log", f"{DATE_TIME}",
                                     f"gen_{generation}.csv"), index=True)
+
+        for i, x in levels_log.items():
+            levels_log_csv = pd.DataFrame()
+            for name, layer in x.items():
+                for node in layer:
+                    temp = pd.DataFrame(node, columns=[name])
+                    levels_log_csv = pd.concat([levels_log_csv, temp], axis=1).sort_index()
+                    levels_log_csv.to_csv(os.path.join(ROOT_DIR, "levels_log", f"{DATE_TIME}",
+                                            f"gen_{generation}", f"snn_{i}.csv"), index=True)
 
         optimizer.tell(solutions)
 

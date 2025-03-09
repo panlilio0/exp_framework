@@ -8,15 +8,15 @@ January 29th, 2025
 
 import os
 import sys
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
-
 import itertools
 from pathlib import Path
 import cv2
 import numpy as np
 from evogym import EvoWorld, EvoSim, EvoViewer
 from evogym import WorldObject
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+
 from snn_sim.robot.morphology import Morphology
 from snn.snn_controller import SNNController
 
@@ -120,7 +120,7 @@ def run(iters, genome, mode, vid_name=None, vid_path=None):
     snn_controller = SNNController(2, 2, 1, robot_config=robot_file_path)
     snn_controller.set_snn_weights(genome)
 
-    log = []
+    action_log = []
 
     for _ in range(iters):
         # Get point mass locations
@@ -134,7 +134,7 @@ def run(iters, genome, mode, vid_name=None, vid_path=None):
 
         # Clip actuator target lengths to be between 0.6 and 1.6 to prevent buggy behavior
         action = np.clip(action, ACTUATOR_MIN_LEN, ACTUATOR_MAX_LEN)
-        log.append(action)
+        action_log.append(action)
 
         # Set robot action to the action vector. Each actuator corresponds to a vector
         # index and will try to expand/contract to that value
@@ -151,9 +151,11 @@ def run(iters, genome, mode, vid_name=None, vid_path=None):
             viewer.render(verbose=True, mode="screen")
             video_frames.append(viewer.render(verbose=False, mode="rgb_array"))
 
-    log_iter = []
-    for x in log:
-        log_iter.append(list(itertools.chain.from_iterable(x)))
+    action_log_iter = []
+    for x in action_log:
+        action_log_iter.append(list(itertools.chain.from_iterable(x)))
+
+    levels_log = snn_controller.get_levels_log()
 
     viewer.close()
 
@@ -165,4 +167,4 @@ def run(iters, genome, mode, vid_name=None, vid_path=None):
     if mode in ["v", "b"]:
         create_video(video_frames, vid_name, vid_path, FPS)
 
-    return FITNESS_OFFSET - fitness, log_iter # Turn into a minimization problem
+    return FITNESS_OFFSET - fitness, action_log_iter, levels_log # Turn into a minimization problem
