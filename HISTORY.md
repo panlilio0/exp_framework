@@ -94,3 +94,7 @@ March 06th | Atharv Tekurkar
 - Added ring buffer
 - Implemented it for firelog in the snn structure
 - Removed duplicate snn files that were in cmaes_integration
+
+Mar 8th | Abhay Kashyap
+- Added length method to ring buffer and made `get()` return `n` elements instead of all if parameter passed
+- Added logging of the membrane potential (`level`) to visualize the data accumulation and spikes
