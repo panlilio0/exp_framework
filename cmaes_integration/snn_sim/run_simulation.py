@@ -8,15 +8,15 @@ January 29th, 2025
 
 import os
 import sys
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
-
 import itertools
 from pathlib import Path
 import cv2
 import numpy as np
 from evogym import EvoWorld, EvoSim, EvoViewer
 from evogym import WorldObject
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+
 from snn_sim.robot.morphology import Morphology
 from snn.snn_controller import SNNController
 
@@ -68,7 +68,7 @@ def group_list(flat_list: list, n: int) -> list:
     """
     return [list(flat_list[i:i+n]) for i in range(0, len(flat_list), n)]
 
-def run(iters, genome, mode, vid_name=None, vid_path=None, plot_firelog=False):
+def run(iters, genome, mode, vid_name=None, vid_path=None):
     """
     Runs a single simulation of a given genome.
 

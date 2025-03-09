@@ -67,7 +67,7 @@ def run(mode, gens, sigma_val):
         os.remove("latest.csv")
 
     os.system("ln -s " + csv_path + " latest.csv")
-    
+
     pd.DataFrame(columns=csv_header).to_csv(csv_path, index=False)
 
     # Init CMA
@@ -76,14 +76,15 @@ def run(mode, gens, sigma_val):
     best_fitness_so_far = run_simulation.FITNESS_OFFSET
 
     for generation in range(gens):
-        Path(os.path.join(ROOT_DIR, "levels_log", f"{DATE_TIME}", f"gen_{generation}")).mkdir(parents=True, exist_ok=True)
+        Path(os.path.join(ROOT_DIR, "levels_log", f"{DATE_TIME}",
+                          f"gen_{generation}")).mkdir(parents=True, exist_ok=True)
         solutions = []
 
         for _ in range(optimizer.population_size):
             x = optimizer.ask()
             fitness, action_log, levels_log = run_simulation.run(NUM_ITERS, x, "h")
             solutions.append((x, fitness))
-                
+
         action_log = np.array(action_log).T
         action_log_csv = pd.DataFrame()
         for i, x in enumerate(action_log):
@@ -93,7 +94,7 @@ def run(mode, gens, sigma_val):
             action_log_csv = pd.concat([action_log_csv, temp], axis=1).sort_index()
         action_log_csv.to_csv(os.path.join(ROOT_DIR, "action_log", f"{DATE_TIME}",
                                     f"gen_{generation}.csv"), index=True)
-        
+
         for i, x in levels_log.items():
             levels_log_csv = pd.DataFrame()
             for name, layer in x.items():

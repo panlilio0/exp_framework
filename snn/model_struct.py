@@ -18,9 +18,10 @@ class SpikyNode:
 
     def __init__(self, size):
         # a list of weights and a bias (last item in the list)
-        self._weights = np.random.uniform(-1, 1, (size+1))
+        self._weights = np.random.uniform(-1, 1, (size + 1))
         self.level = -np.inf  # activation level
-        self.firelog = RingBuffer(MAX_FIRELOG_SIZE)  # tracks whether the neuron fired or not
+        self.firelog = RingBuffer(
+            MAX_FIRELOG_SIZE)  # tracks whether the neuron fired or not
         self.levels_log = []
 
     def compute(self, inputs):

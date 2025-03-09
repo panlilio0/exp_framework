@@ -5,7 +5,7 @@ Module for running SNN outputs with proper input/output handling.
 import json
 import os
 import numpy as np
-from .model_struct import SpikyNet
+from snn.model_struct import SpikyNet
 
 # Constants for SNN configuration
 MIN_LENGTH = 0.6  # Minimum actuator length
@@ -19,7 +19,11 @@ ROBOT_DATA_PATH = os.path.join(_project_root, "morpho_demo", "world_data",
 class SNNController:
     """Class to handle SNN input/output processing."""
 
-    def __init__(self, inp_size, hidden_size, output_size, robot_config=ROBOT_DATA_PATH):
+    def __init__(self,
+                 inp_size,
+                 hidden_size,
+                 output_size,
+                 robot_config=ROBOT_DATA_PATH):
         """Initialize with None - will set sizes after loading robot data."""
         self.snns = []
         self.num_snn = 0  # Number of spiking neural networks (actuators)
@@ -120,7 +124,7 @@ class SNNController:
         inputs = [
             (
                 2 * (x - x_min) / (x_max - x_min) - 1,  # Normalize x
-                2 * (y - y_min) / (y_max - y_min) - 1   # Normalize y
+                2 * (y - y_min) / (y_max - y_min) - 1  # Normalize y
             ) for x, y in inputs
         ]
 
@@ -128,8 +132,10 @@ class SNNController:
         for snn_id, snn in enumerate(self.snns):
             duty_cycle = snn.compute(inputs[snn_id])
             # Map duty_cycle (assumed in [0,1]) to target length in [MIN_LENGTH, MAX_LENGTH]
-            scaled_actions = [MIN_LENGTH + dc * (MAX_LENGTH - MIN_LENGTH) 
-                              for dc in duty_cycle]
+            scaled_actions = [
+                MIN_LENGTH + dc * (MAX_LENGTH - MIN_LENGTH)
+                for dc in duty_cycle
+            ]
             outputs[snn_id] = {
                 "target_length": scaled_actions,
                 "duty_cycle": duty_cycle
@@ -146,7 +152,7 @@ class SNNController:
         for _, item in out.items():
             lengths.append(item['target_length'])
         return lengths
-    
+
     def get_out_layer_firelog(self):
         """
         Return a dictionary with the firelog for each node in the hidden and output
@@ -157,13 +163,24 @@ class SNNController:
                     {snn_id: {'hidden': [firelog_node_1, firelog_node_2, ...],
                               'output': [firelog_node_1, firelog_node_2, ...]}}
         """
-        return {i: {'hidden': [snn.hidden_layer.nodes[n].firelog for n in range(len(snn.hidden_layer.nodes))],
-                    'output': [snn.output_layer.nodes[n].firelog for n in range(len(snn.output_layer.nodes))]} 
-                    for i, snn in enumerate(self.snns)}
+        return {
+            i: {
+                'hidden': [
+                    snn.hidden_layer.nodes[n].firelog
+                    for n in range(len(snn.hidden_layer.nodes))
+                ],
+                'output': [
+                    snn.output_layer.nodes[n].firelog
+                    for n in range(len(snn.output_layer.nodes))
+                ]
+            }
+            for i, snn in enumerate(self.snns)
+        }
 
     def get_levels_log(self):
         """
-        Return a dictionary with the membrane potential levels log for each node in the hidden and output
+        Return a dictionary with the membrane potential levels 
+        log for each node in the hidden and output
         layers of each SNN in the controller.
         
         Returns:
@@ -171,6 +188,16 @@ class SNNController:
                     {snn_id: {'hidden': [levels_log_node_1, levels_log_node_2, ...],
                               'output': [levels_log_node_1, levels_log_node_2, ...]}}
         """
-        return {i: {'hidden': [snn.hidden_layer.nodes[n].get_levels_log() for n in range(len(snn.hidden_layer.nodes))],
-                    'output': [snn.output_layer.nodes[n].get_levels_log() for n in range(len(snn.output_layer.nodes))]} 
-                    for i, snn in enumerate(self.snns)}
+        return {
+            i: {
+                'hidden': [
+                    snn.hidden_layer.nodes[n].get_levels_log()
+                    for n in range(len(snn.hidden_layer.nodes))
+                ],
+                'output': [
+                    snn.output_layer.nodes[n].get_levels_log()
+                    for n in range(len(snn.output_layer.nodes))
+                ]
+            }
+            for i, snn in enumerate(self.snns)
+        }
