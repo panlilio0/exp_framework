@@ -122,25 +122,29 @@ def run(iters, genome, mode, vid_name=None, vid_path=None):
 
     action_log = []
 
-    for _ in range(iters):
-        # Get point mass locations
-        raw_pm_pos = sim.object_pos_at_time(sim.get_time(), "robot")
+    for i in range(iters):
+        if i % 12 == 0:
+            # Get point mass locations
+            raw_pm_pos = sim.object_pos_at_time(sim.get_time(), "robot")
 
-        # Get distances to the corners
-        corner_distances = morphology.get_corner_distances(raw_pm_pos)
+            # Get distances to the corners
+            corner_distances = morphology.get_corner_distances(raw_pm_pos)
 
-        # Feed snn and get outputs
-        action = snn_controller.get_lengths(corner_distances)
+            # Feed snn and get outputs
+            action = snn_controller.get_lengths(corner_distances)
 
-        # Clip actuator target lengths to be between 0.6 and 1.6 to prevent buggy behavior
-        action = np.clip(action, ACTUATOR_MIN_LEN, ACTUATOR_MAX_LEN)
-        action_log.append(action)
+            action = [[1.6] if x[0] > 1 else [0.6] for x in action]
+            #action = np.array(action)
 
-        # Set robot action to the action vector. Each actuator corresponds to a vector
-        # index and will try to expand/contract to that value
-        sim.set_action('robot', action)
+            # Clip actuator target lengths to be between 0.6 and 1.6 to prevent buggy behavior
+            action = np.clip(action, ACTUATOR_MIN_LEN, ACTUATOR_MAX_LEN)
+            action_log.append(action)
 
-        # Execute step
+            # Set robot action to the action vector. Each actuator corresponds to a vector
+            # index and will try to expand/contract to that value
+            sim.set_action('robot', action)
+
+            # Execute step
         sim.step()
 
         if mode == "v":
@@ -163,6 +167,12 @@ def run(iters, genome, mode, vid_name=None, vid_path=None):
     final_raw_pm_pos = sim.object_pos_at_time(sim.get_time(), "robot")
 
     fitness = np.mean(final_raw_pm_pos[0]) - np.mean(init_raw_pm_pos[0])
+
+    bottom_pos = final_raw_pm_pos[1][-4:]
+    for val in bottom_pos: # Fix falling over in fitness
+        if val > 1.6:
+            fitness = 0
+
 
     if mode in ["v", "b"]:
         create_video(video_frames, vid_name, vid_path, FPS)

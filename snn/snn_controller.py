@@ -133,7 +133,7 @@ class SNNController:
             duty_cycle = snn.compute(inputs[snn_id])
             # Map duty_cycle (assumed in [0,1]) to target length in [MIN_LENGTH, MAX_LENGTH]
             scaled_actions = [
-                MIN_LENGTH + dc * (MAX_LENGTH - MIN_LENGTH)
+                MIN_LENGTH + dc
                 for dc in duty_cycle
             ]
             outputs[snn_id] = {

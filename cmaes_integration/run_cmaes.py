@@ -15,6 +15,7 @@ February 4th, 2025
 
 import os
 import argparse
+import multiprocessing
 from datetime import datetime
 from pathlib import Path
 from collections import Counter
@@ -63,10 +64,10 @@ def run(mode, gens, sigma_val):
 
     csv_path = os.path.join(ROOT_DIR, "data", f"{DATE_TIME}.csv")
 
-    if os.path.exists("latest.csv"):
-        os.remove("latest.csv")
+    #if os.path.exists("latest.csv"):
+    #    os.remove("latest.csv")
 
-    os.system("ln -s " + csv_path + " latest.csv")
+    # os.system("ln -s " + csv_path + " latest.csv")
 
     pd.DataFrame(columns=csv_header).to_csv(csv_path, index=False)
 
@@ -89,7 +90,7 @@ def run(mode, gens, sigma_val):
         action_log_csv = pd.DataFrame()
         for i, x in enumerate(action_log):
             z = dict(Counter(list(map(lambda y: round(y, 2), x))))
-            print(f"Firing freq SNN {i}: {z}")
+            # print(f"Firing freq SNN {i}: {z}")
             temp = pd.DataFrame(z.values(), index=z.keys(), columns=[i])
             action_log_csv = pd.concat([action_log_csv, temp], axis=1).sort_index()
         action_log_csv.to_csv(os.path.join(ROOT_DIR, "action_log", f"{DATE_TIME}",
@@ -128,6 +129,9 @@ def run(mode, gens, sigma_val):
         # Append the new row to the CSV file using pandas in append mode (no header this time).
         new_row_df.to_csv(csv_path, mode='a', index=False, header=False)
 
+        if generation > 50 and best_fitness_so_far > 97:
+            return
+
         # If --mode s, v, or b show/save best individual from generation
         if mode in ["s", "b", "v"]:
             vid_name = DATE_TIME + "_gen" + str(generation)
@@ -135,21 +139,39 @@ def run(mode, gens, sigma_val):
 
             run_simulation.run(NUM_ITERS, best_sol[GENOME_INDEX], mode, vid_name, vid_path)
 
+def task(name, mode, gens, sigma):
+    """Worker function that runs the RL task."""
+    print(f"Thread {name}: starting")
+    run(mode, gens, sigma)
+    print(f"Thread {name}: finishing")
+    return name  # Return the thread name so it can be restarted
+
+def task_done(name):
+    """Callback function to restart a task when one finishes."""
+    print(f"Thread {name} finished, restarting...")
+    pool.apply_async(task, args=(name, args.mode, args.gens, args.sigma), callback=task_done)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='RL')
     parser.add_argument(
-        '--mode',  #headless, screen, video, both h, s, v, b
+        '--mode',  # headless, screen, video, both h, s, v, b
         help='mode for output. h-headless , s-screen, v-video, b-both',
         default="h")
     parser.add_argument('--gens',
                         type=int,
                         help='number of generations to run',
-                        default=100)
+                        default=500)
     parser.add_argument('--sigma',
                         type=float,
-                        default=1,
+                        default=3,
                         help='sigma value for cma-es')
     args = parser.parse_args()
 
-    run(args.mode, args.gens, args.sigma)
+    num_workers = multiprocessing.cpu_count()
+
+    with multiprocessing.Pool(processes=num_workers) as pool:
+        for name in ["A", "B", "C", "D", "E", "F", "G"]:
+            pool.apply_async(task, args=(name, args.mode, args.gens, args.sigma), callback=task_done)
+
+        pool.close()  # Prevents new tasks from being manually submitted
+        pool.join() 
