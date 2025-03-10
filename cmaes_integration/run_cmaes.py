@@ -140,16 +140,10 @@ def run(mode, gens, sigma_val):
             run_simulation.run(NUM_ITERS, best_sol[GENOME_INDEX], mode, vid_name, vid_path)
 
 def task(name, mode, gens, sigma):
-    """Worker function that runs the RL task."""
     print(f"Thread {name}: starting")
     run(mode, gens, sigma)
     print(f"Thread {name}: finishing")
     return name  # Return the thread name so it can be restarted
-
-def task_done(name):
-    """Callback function to restart a task when one finishes."""
-    print(f"Thread {name} finished, restarting...")
-    pool.apply_async(task, args=(name, args.mode, args.gens, args.sigma), callback=task_done)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='RL')
@@ -169,9 +163,11 @@ if __name__ == "__main__":
 
     num_workers = multiprocessing.cpu_count()
 
-    with multiprocessing.Pool(processes=num_workers) as pool:
-        for name in ["A", "B", "C", "D", "E", "F", "G"]:
-            pool.apply_async(task, args=(name, args.mode, args.gens, args.sigma), callback=task_done)
+    while True:
 
-        pool.close()  # Prevents new tasks from being manually submitted
-        pool.join() 
+        with multiprocessing.Pool(processes=num_workers) as pool:
+            for name in ["A", "B", "C", "D", "E", "F", "G"]:
+                pool.apply_async(task, args=(name, args.mode, args.gens, args.sigma))
+
+            pool.close()  # Prevents new tasks from being manually submitted
+            pool.join() 
