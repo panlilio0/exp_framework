@@ -132,12 +132,11 @@ class SNNController:
         for snn_id, snn in enumerate(self.snns):
             duty_cycle = snn.compute(inputs[snn_id])
             # Map duty_cycle (assumed in [0,1]) to target length in [MIN_LENGTH, MAX_LENGTH]
-            scaled_actions = [
-                MIN_LENGTH + dc
-                for dc in duty_cycle
+            actions = [
+                1.6 if duty_cycle[0] > 0.5 else 0.6
             ]
             outputs[snn_id] = {
-                "target_length": scaled_actions,
+                "target_length": actions,
                 "duty_cycle": duty_cycle
             }
 

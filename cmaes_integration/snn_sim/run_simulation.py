@@ -133,7 +133,7 @@ def run(iters, genome, mode, vid_name=None, vid_path=None):
             # Feed snn and get outputs
             action = snn_controller.get_lengths(corner_distances)
 
-            action = [[1.6] if x[0] > 1 else [0.6] for x in action]
+            # action = [[1.6] if x[0] > 1 else [0.6] for x in action]
             #action = np.array(action)
 
             # Clip actuator target lengths to be between 0.6 and 1.6 to prevent buggy behavior
@@ -172,6 +172,9 @@ def run(iters, genome, mode, vid_name=None, vid_path=None):
     for val in bottom_pos: # Fix falling over in fitness
         if val > 1.6:
             fitness = 0
+
+    # fitness = 0 if any(val > 1.6 for val in bottom_pos) else fitness # list comprehension version of above
+
 
 
     if mode in ["v", "b"]:

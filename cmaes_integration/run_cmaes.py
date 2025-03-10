@@ -72,7 +72,8 @@ def run(mode, gens, sigma_val):
     pd.DataFrame(columns=csv_header).to_csv(csv_path, index=False)
 
     # Init CMA
-    optimizer = CMA(mean=np.array(MEAN_ARRAY), sigma=sigma_val)
+    optimizer = CMA(mean=np.array(MEAN_ARRAY), sigma=sigma_val, population_size=25)
+    CMA.CMA_elitist = True
 
     best_fitness_so_far = run_simulation.FITNESS_OFFSET
 
@@ -157,7 +158,7 @@ if __name__ == "__main__":
                         default=500)
     parser.add_argument('--sigma',
                         type=float,
-                        default=3,
+                        default=0.2,
                         help='sigma value for cma-es')
     args = parser.parse_args()
 
@@ -166,7 +167,7 @@ if __name__ == "__main__":
     while True:
 
         with multiprocessing.Pool(processes=num_workers) as pool:
-            for name in ["A", "B", "C", "D", "E", "F", "G"]:
+            for name in ["A","B","C","D","E","F","G","H"]:
                 pool.apply_async(task, args=(name, args.mode, args.gens, args.sigma))
 
             pool.close()  # Prevents new tasks from being manually submitted

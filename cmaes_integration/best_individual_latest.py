@@ -37,6 +37,7 @@ def visualize_best(filename, mode, gen):
             row = df.loc[df['best_fitness'] == best_fitness]
             genome = row.values.tolist()[0][GENOME_START_INDEX:]
         if mode == "s":
+            print("fitness: " + str(row.values.tolist()[0][:GENOME_START_INDEX]))
             run(ITERS, genome, "s")
         elif mode == "v":
             run(ITERS, genome, "v", "cur_example", "videos")
