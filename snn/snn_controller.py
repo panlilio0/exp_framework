@@ -114,6 +114,7 @@ class SNNController:
         """
 
         # Normalizing inputs between -1 and 1
+        """
         x_vals, y_vals = zip(*inputs)  # Unzips into two lists
 
         # Find min and max for each component
@@ -127,6 +128,7 @@ class SNNController:
                 2 * (y - y_min) / (y_max - y_min) - 1  # Normalize y
             ) for x, y in inputs
         ]
+        """
 
         outputs = {}
         for snn_id, snn in enumerate(self.snns):

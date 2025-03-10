@@ -32,7 +32,7 @@ MODE = "v" # "headless", "screen", or "video"
 FITNESS_OFFSET = 100
 
 # Files
-ENV_FILENAME = "big_platform.json"
+ENV_FILENAME = "bigger_platform.json"
 ROBOT_FILENAME = "bestbot.json"
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 
@@ -95,8 +95,8 @@ def run(iters, genome, mode, vid_name=None, vid_path=None):
     world.add_from_array(
         name='robot',
         structure=robot.get_structure(),
-        x=ROBOT_SPAWN_X,
-        y=ROBOT_SPAWN_Y,
+        x=ROBOT_SPAWN_X + 1,
+        y=ROBOT_SPAWN_Y + 1,
         connections=robot.get_connections())
 
     # Create simulation
@@ -127,11 +127,27 @@ def run(iters, genome, mode, vid_name=None, vid_path=None):
             # Get point mass locations
             raw_pm_pos = sim.object_pos_at_time(sim.get_time(), "robot")
 
+            if i == 0:
+                init_corner_distances = morphology.get_corner_distances(raw_pm_pos)
+
             # Get distances to the corners
             corner_distances = morphology.get_corner_distances(raw_pm_pos)
 
+            # Step 1: Divide by initial corner distances and subtract 1
+            corner_distances = np.array(corner_distances) / np.array(init_corner_distances) - 1
+
+            # Step 2: Find the min and max values of the corner distances
+            arr_min = np.min(corner_distances)
+            arr_max = np.max(corner_distances)
+
+            # Step 3: Normalize to range [0, 1]
+            if arr_max != arr_min:
+                normalized_arr = (corner_distances - arr_min) / (arr_max - arr_min)
+            else:
+                normalized_arr = np.zeros_like(corner_distances)
+
             # Feed snn and get outputs
-            action = snn_controller.get_lengths(corner_distances)
+            action = snn_controller.get_lengths(normalized_arr)
 
             # action = [[1.6] if x[0] > 1 else [0.6] for x in action]
             #action = np.array(action)
@@ -168,13 +184,11 @@ def run(iters, genome, mode, vid_name=None, vid_path=None):
 
     fitness = np.mean(final_raw_pm_pos[0]) - np.mean(init_raw_pm_pos[0])
 
-    bottom_pos = final_raw_pm_pos[1][-4:]
-    for val in bottom_pos: # Fix falling over in fitness
-        if val > 1.6:
-            fitness = 0
-
-    # fitness = 0 if any(val > 1.6 for val in bottom_pos) else fitness # list comprehension version of above
-
+    #bottom_pos = final_raw_pm_pos[1][-4:]
+    #for val in bottom_pos: # Fix falling over in fitness
+    #    if val > 1.6:
+    #        if not np.mean(final_raw_pm_pos[1]) - np.mean(init_raw_pm_pos[1]) > 0.6: # Checks if robot is airborne so we don't get rid of jumping bots
+    #            fitness = 0
 
 
     if mode in ["v", "b"]:
