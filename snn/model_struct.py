@@ -102,6 +102,9 @@ class SpikyLayer:
 
     def compute(self, inputs):
         """Feeds input to each node and returns their output."""
+        output = []
+        for node in self.nodes:
+            output.append(node.compute(inputs))
         return [node.compute(inputs) for node in self.nodes]
 
     def set_weights(self, input_weights):

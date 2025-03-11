@@ -74,7 +74,7 @@ def run(mode, gens, sigma_val):
     pd.DataFrame(columns=csv_header).to_csv(csv_path, index=False)
 
     # Init CMA
-    optimizer = CMA(mean=np.array(MEAN_ARRAY), sigma=sigma_val, population_size=25)
+    optimizer = CMA(mean=np.array(MEAN_ARRAY), sigma=sigma_val, population_size=50)
 
     best_fitness_so_far = run_simulation.FITNESS_OFFSET
 
@@ -159,7 +159,7 @@ if __name__ == "__main__":
                         default=500)
     parser.add_argument('--sigma',
                         type=float,
-                        default=0.5,
+                        default=1,
                         help='sigma value for cma-es')
     args = parser.parse_args()
 

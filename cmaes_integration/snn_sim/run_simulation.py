@@ -21,8 +21,8 @@ from snn_sim.robot.morphology import Morphology
 from snn.snn_controller import SNNController
 
 # Simulation constants
-ROBOT_SPAWN_X = 3
-ROBOT_SPAWN_Y = 1
+ROBOT_SPAWN_X = 2
+ROBOT_SPAWN_Y = 0
 ACTUATOR_MIN_LEN = 0.6
 ACTUATOR_MAX_LEN = 1.6
 NUM_ITERS = 1000
@@ -134,20 +134,23 @@ def run(iters, genome, mode, vid_name=None, vid_path=None):
             corner_distances = morphology.get_corner_distances(raw_pm_pos)
 
             # Step 1: Divide by initial corner distances and subtract 1
+            epsilon = 1e-10
             corner_distances = np.array(corner_distances) / np.array(init_corner_distances) - 1
+            corner_distances *= 1 / (np.array(init_corner_distances) + epsilon)
+            corner_distances *+ 2 * (corner_distances - np.min(corner_distances)) / ((np.max(corner_distances) - np.min(corner_distances)) + epsilon) - 1
 
             # Step 2: Find the min and max values of the corner distances
-            arr_min = np.min(corner_distances)
-            arr_max = np.max(corner_distances)
+            #arr_min = np.min(corner_distances)
+            #arr_max = np.max(corner_distances)
 
             # Step 3: Normalize to range [0, 1]
-            if arr_max != arr_min:
-                normalized_arr = (corner_distances - arr_min) / (arr_max - arr_min)
-            else:
-                normalized_arr = np.zeros_like(corner_distances)
+            #if arr_max != arr_min:
+            #    normalized_arr = (corner_distances - arr_min) / (arr_max - arr_min)
+            #else:
+            #    normalized_arr = np.zeros_like(corner_distances)
 
             # Feed snn and get outputs
-            action = snn_controller.get_lengths(normalized_arr)
+            action = snn_controller.get_lengths(corner_distances)
 
             # action = [[1.6] if x[0] > 1 else [0.6] for x in action]
             #action = np.array(action)
