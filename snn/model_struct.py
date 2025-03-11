@@ -32,7 +32,7 @@ class SpikyNode:
         if (len(inputs) + 1) != len(self._weights):
             print(f"Error: {len(inputs)} inputs vs {len(self._weights)} \
                   weights; weights: {self._weights}")
-            return 0.0
+            return 0.0, self.level
 
         weighted_sum = sum(inputs[i] * self._weights[i]
                            for i in range(len(inputs)))
@@ -48,10 +48,10 @@ class SpikyNode:
             # print("Fired --> activation level reset to 0.0\n")
             self.level = -np.inf
             self.firelog.add(1)
-            return 1.0
+            return 1.0, self.level
         # print("\n")
         self.firelog.add(0)
-        return 0.0
+        return 0.0, self.level
 
     def duty_cycle(self, window=100):
         """Measures how frequently the neuron fires."""
@@ -69,6 +69,8 @@ class SpikyNode:
             print("Weight size mismatch in node")
         else:
             self._weights = input_weights.copy()
+            self._weights[:-1] = list(map(lambda x: abs(x), self._weights[:-1]))
+            # self._weights = input_weights.copy()
 
     def set_bias(self, val):
         """Sets the neuron's bias."""
@@ -102,10 +104,13 @@ class SpikyLayer:
 
     def compute(self, inputs):
         """Feeds input to each node and returns their output."""
-        output = []
+        outputs = []
+        levels = []
         for node in self.nodes:
-            output.append(node.compute(inputs))
-        return [node.compute(inputs) for node in self.nodes]
+            output, level = node.compute(inputs)
+            outputs.append(output)
+            levels.append(level)
+        return outputs, levels
 
     def set_weights(self, input_weights):
         """Sets weights for all the neurons in the layer."""
@@ -133,9 +138,9 @@ class SpikyNet:
 
     def compute(self, inputs, firelog_window=100):
         """Passes the input through the hidden layer."""
-        hidden_output = self.hidden_layer.compute(inputs)
-        self.output_layer.compute(hidden_output)
-        return self.output_layer.duty_cycles(firelog_window)
+        hidden_output, hidden_levels = self.hidden_layer.compute(inputs)
+        output, levels = self.output_layer.compute(hidden_output)
+        return output, levels
 
     def set_weights(self, input_weights):
         """Assigns weights to the hidden and the output layer."""
