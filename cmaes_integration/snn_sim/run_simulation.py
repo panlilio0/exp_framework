@@ -137,7 +137,7 @@ def run(iters, genome, mode, vid_name=None, vid_path=None):
             epsilon = 1e-10
             corner_distances = np.array(corner_distances) / np.array(init_corner_distances) - 1
             corner_distances *= 1 / (np.array(init_corner_distances) + epsilon)
-            corner_distances *+ 2 * (corner_distances - np.min(corner_distances)) / ((np.max(corner_distances) - np.min(corner_distances)) + epsilon) - 1
+            corner_distances *= 2 * (corner_distances - np.min(corner_distances)) / ((np.max(corner_distances) - np.min(corner_distances)) + epsilon) - 1
 
             # Step 2: Find the min and max values of the corner distances
             #arr_min = np.min(corner_distances)
