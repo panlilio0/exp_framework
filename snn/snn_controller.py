@@ -114,6 +114,7 @@ class SNNController:
         """
 
         # Normalizing inputs between -1 and 1
+        """
         x_vals, y_vals = zip(*inputs)  # Unzips into two lists
 
         # Find min and max for each component
@@ -127,31 +128,33 @@ class SNNController:
                 2 * (y - y_min) / (y_max - y_min) - 1  # Normalize y
             ) for x, y in inputs
         ]
+        """
 
         outputs = {}
         for snn_id, snn in enumerate(self.snns):
-            duty_cycle = snn.compute(inputs[snn_id])
+            duty_cycle, levels = snn.compute(inputs[snn_id])
+            # print(duty_cycle)
             # Map duty_cycle (assumed in [0,1]) to target length in [MIN_LENGTH, MAX_LENGTH]
-            scaled_actions = [
-                MIN_LENGTH + dc * (MAX_LENGTH - MIN_LENGTH)
-                for dc in duty_cycle
+            actions = [
+                1.6 if duty_cycle[0] == 1 else 0.6
             ]
             outputs[snn_id] = {
-                "target_length": scaled_actions,
-                "duty_cycle": duty_cycle
+                "target_length": actions,
+                "duty_cycle": duty_cycle,
+                "levels": levels
             }
 
-        return outputs
+        return outputs, levels
 
     def get_lengths(self, inputs):
         """
         Returns a list of target lengths (action array)
         """
-        out = self._get_output_state(inputs)
+        out, levels = self._get_output_state(inputs)
         lengths = []
         for _, item in out.items():
             lengths.append(item['target_length'])
-        return lengths
+        return lengths, levels
 
     def get_out_layer_firelog(self):
         """

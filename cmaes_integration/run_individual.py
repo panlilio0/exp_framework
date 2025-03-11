@@ -14,7 +14,7 @@ import os
 import argparse
 import pathlib
 import pandas as pd
-from rsnn_sim.run_sim_rsnn import run
+from snn_sim.run_simulation import run
 
 ITERS = 1000
 GENOME_START_INDEX = 3

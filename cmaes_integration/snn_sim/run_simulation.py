@@ -10,6 +10,7 @@ import os
 import sys
 import itertools
 from pathlib import Path
+import time
 import cv2
 import numpy as np
 from evogym import EvoWorld, EvoSim, EvoViewer
@@ -21,8 +22,8 @@ from snn_sim.robot.morphology import Morphology
 from snn.snn_controller import SNNController
 
 # Simulation constants
-ROBOT_SPAWN_X = 3
-ROBOT_SPAWN_Y = 1
+ROBOT_SPAWN_X = 2
+ROBOT_SPAWN_Y = 0
 ACTUATOR_MIN_LEN = 0.6
 ACTUATOR_MAX_LEN = 1.6
 NUM_ITERS = 1000
@@ -32,7 +33,7 @@ MODE = "v" # "headless", "screen", or "video"
 FITNESS_OFFSET = 100
 
 # Files
-ENV_FILENAME = "big_platform.json"
+ENV_FILENAME = "bigger_platform.json"
 ROBOT_FILENAME = "bestbot.json"
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 
@@ -95,8 +96,8 @@ def run(iters, genome, mode, vid_name=None, vid_path=None):
     world.add_from_array(
         name='robot',
         structure=robot.get_structure(),
-        x=ROBOT_SPAWN_X,
-        y=ROBOT_SPAWN_Y,
+        x=ROBOT_SPAWN_X + 1,
+        y=ROBOT_SPAWN_Y + 1,
         connections=robot.get_connections())
 
     # Create simulation
@@ -122,25 +123,51 @@ def run(iters, genome, mode, vid_name=None, vid_path=None):
 
     action_log = []
 
-    for _ in range(iters):
-        # Get point mass locations
-        raw_pm_pos = sim.object_pos_at_time(sim.get_time(), "robot")
+    for i in range(iters):
+        if i % 12 == 0:
+            # Get point mass locations
+            raw_pm_pos = sim.object_pos_at_time(sim.get_time(), "robot")
 
-        # Get distances to the corners
-        corner_distances = morphology.get_corner_distances(raw_pm_pos)
+            if i == 0:
+                init_corner_distances = np.array(morphology.get_corner_distances(raw_pm_pos))
 
-        # Feed snn and get outputs
-        action = snn_controller.get_lengths(corner_distances)
+            # Get current corner distances
+            corner_distances = np.array(morphology.get_corner_distances(raw_pm_pos))
 
-        # Clip actuator target lengths to be between 0.6 and 1.6 to prevent buggy behavior
-        action = np.clip(action, ACTUATOR_MIN_LEN, ACTUATOR_MAX_LEN)
-        action_log.append(action)
+            epsilon = 1e-10  # Prevent division by zero
 
-        # Set robot action to the action vector. Each actuator corresponds to a vector
-        # index and will try to expand/contract to that value
-        sim.set_action('robot', action)
+            # Step 1: Compute the difference between current and initial corner distances
+            delta_distances = corner_distances - init_corner_distances
 
-        # Execute step
+            # Step 2: Scale the difference by the inverse of initial corner distances
+            scaled_differences = delta_distances / (init_corner_distances + epsilon)
+
+            # Step 3: Normalize scaled differences between [-1, 1]
+            arr_min = np.min(scaled_differences)
+            arr_max = np.max(scaled_differences)
+
+            if arr_max != arr_min:  # Avoid division by zero in normalization
+                normalized_distances = 2 * (scaled_differences - arr_min) / (arr_max - arr_min) - 1
+            else:
+                normalized_distances = np.zeros_like(scaled_differences)
+
+            # Use the normalized distances as input
+            action = snn_controller.get_lengths(corner_distances)
+
+            time.sleep(0.01)
+
+            # action = [[1.6] if x[0] > 1 else [0.6] for x in action]
+            #action = np.array(action)
+
+            # Clip actuator target lengths to be between 0.6 and 1.6 to prevent buggy behavior
+            action = np.clip(action[0], ACTUATOR_MIN_LEN, ACTUATOR_MAX_LEN)
+            action_log.append(action)
+
+            # Set robot action to the action vector. Each actuator corresponds to a vector
+            # index and will try to expand/contract to that value
+            sim.set_action('robot', action)
+
+            # Execute step
         sim.step()
 
         if mode == "v":
@@ -163,6 +190,13 @@ def run(iters, genome, mode, vid_name=None, vid_path=None):
     final_raw_pm_pos = sim.object_pos_at_time(sim.get_time(), "robot")
 
     fitness = np.mean(final_raw_pm_pos[0]) - np.mean(init_raw_pm_pos[0])
+
+    bottom_pos = final_raw_pm_pos[1][-4:]
+    for val in bottom_pos: # Fix falling over in fitness
+        if val > 1.6:
+            if not np.mean(final_raw_pm_pos[1]) - np.mean(init_raw_pm_pos[1]) > 0.6: # Checks if robot is airborne so we don't get rid of jumping bots
+                fitness = 0
+
 
     if mode in ["v", "b"]:
         create_video(video_frames, vid_name, vid_path, FPS)
