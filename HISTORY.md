@@ -98,3 +98,6 @@ March 06th | Atharv Tekurkar
 Mar 8th | Abhay Kashyap
 - Added length method to ring buffer and made `get()` return `n` elements instead of all if parameter passed
 - Added logging of the membrane potential (`level`) to visualize the data accumulation and spikes
+
+Mar 20th | Viet-Dung (Darren) Nguyen
+- Added implementation of latency tracking with 2 graphs of fitness over generation and velocity over simulation step
