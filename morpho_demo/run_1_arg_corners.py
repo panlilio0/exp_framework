@@ -27,7 +27,7 @@ FRAME_CYCLE_LEN = 10
 MUTATE_RATE = 0.2
 
 ENV_FILENAME = "simple_environment_long.json"
-#ROBOT_FILENAME = "walkbot4billion.json"
+ROBOT_FILENAME = "bestbot.json"
 #GENERATIONS = 1500
 
 #EXPER_DIR = 'score_plots/' + ROBOT_FILENAME[:-5] + " " + time.asctime(
