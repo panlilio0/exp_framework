@@ -25,19 +25,20 @@ ROBOT_SPAWN_Y = 10
 ACTUATOR_MIN_LEN = 0.6
 ACTUATOR_MAX_LEN = 1.6
 FRAME_CYCLE_LEN = 10
-NUM_ACTUATORS = 5  
-NUM_ITERS = 5000  
-MUTATE_RATE = 0.1  
+NUM_ACTUATORS = 5
+NUM_ITERS = 5000
+MUTATE_RATE = 0.1
 GENS = 1500
-STOPPING_THRESHOLD = 0.0005  
-NO_IMPROVEMENT_LIMIT = 500 
+STOPPING_THRESHOLD = 0.0005
+NO_IMPROVEMENT_LIMIT = 500
 
 ENV_FILE_NAME = "simple_environment_long.json"
 ROBOT_FILE_NAME = "walkbot4billion_reduced.json"
 EXPER_DIR = 'score_plots/' + ROBOT_FILE_NAME[:-5] + " " + time.asctime()
 
-# HARDCODED_ACTIONS = np.array([1.2, 1.4, 1.3, 1.5, 1.6] * 2) 
-HARDCODED_ACTIONS = np.array([1.5, 1.7, 1.6, 1.8, 1.9] * 2)  
+# HARDCODED_ACTIONS = np.array([1.2, 1.4, 1.3, 1.5, 1.6] * 2)
+HARDCODED_ACTIONS = np.array([1.5, 1.7, 1.6, 1.8, 1.9] * 2)
+
 
 def run_rmhc(gens, show=True):
     os.mkdir(EXPER_DIR)
@@ -51,7 +52,7 @@ def run_rmhc(gens, show=True):
     best_fitness, _, _ = run_simulation(iters, genome, show)
     print(f"Starting fitness: {best_fitness:.6f}")
 
-    no_improvement_count = 0  
+    no_improvement_count = 0
 
     for i in range(gens):
         mutated_genome = genome.copy()
@@ -60,16 +61,19 @@ def run_rmhc(gens, show=True):
             for x in mutated_genome
         ])
 
-        new_fitness, avg_velocity, latency = run_simulation(iters, mutated_genome, show)
+        new_fitness, avg_velocity, latency = run_simulation(
+            iters, mutated_genome, show)
 
         fitness_progress.append(new_fitness)
         generation_times.append(i)
 
         if new_fitness > best_fitness:
-            print(f"🟢 Found better fitness after {i} generations: {new_fitness:.6f}")
+            print(
+                f"🟢 Found better fitness after {i} generations: {new_fitness:.6f}"
+            )
             best_fitness = new_fitness
             genome = mutated_genome
-            no_improvement_count = 0  
+            no_improvement_count = 0
         else:
             no_improvement_count += 1
 
@@ -77,11 +81,15 @@ def run_rmhc(gens, show=True):
             print(f"⚡ Latency for generation {i}: {latency} simulation steps")
 
         if no_improvement_count >= NO_IMPROVEMENT_LIMIT:
-            print(f"🛑 Stopping early: No fitness improvement for {NO_IMPROVEMENT_LIMIT} generations")
+            print(
+                f"🛑 Stopping early: No fitness improvement for {NO_IMPROVEMENT_LIMIT} generations"
+            )
             break
 
         if avg_velocity < STOPPING_THRESHOLD:
-            print(f"🛑 Stopping early: Robot velocity is too low ({avg_velocity:.6f})")
+            print(
+                f"🛑 Stopping early: Robot velocity is too low ({avg_velocity:.6f})"
+            )
             break
 
     print(f"\nFinal fitness after {i+1} generations: {best_fitness:.6f}")
@@ -90,6 +98,7 @@ def run_rmhc(gens, show=True):
     run_simulation(NUM_ITERS * 5, genome, fittest=True)
 
     return genome, best_fitness
+
 
 def run_simulation(iters, genome, show=True, fittest=False):
     world = EvoWorld.from_json(os.path.join('world_data', ENV_FILE_NAME))
@@ -114,7 +123,7 @@ def run_simulation(iters, genome, show=True, fittest=False):
     latency_start = None
     latency_end = None
     latency_triggered = False
-    first_phase_captured = False  
+    first_phase_captured = False
 
     corners = find_corners(ROBOT_FILE_NAME)
 
@@ -129,7 +138,8 @@ def run_simulation(iters, genome, show=True, fittest=False):
 
         action = np.clip(action, ACTUATOR_MIN_LEN, ACTUATOR_MAX_LEN)
 
-        action = action[:NUM_ACTUATORS] if step % (FRAME_CYCLE_LEN * 2) < FRAME_CYCLE_LEN else action[NUM_ACTUATORS:]
+        action = action[:NUM_ACTUATORS] if step % (
+            FRAME_CYCLE_LEN * 2) < FRAME_CYCLE_LEN else action[NUM_ACTUATORS:]
         sim.set_action('robot', action)
         sim.step()
 
@@ -148,15 +158,15 @@ def run_simulation(iters, genome, show=True, fittest=False):
                 print(f"🟡 Initial fall impact detected at step {step}")
 
             if first_phase_captured and velocity < STOPPING_THRESHOLD and latency_start is None:
-                latency_start = step  
+                latency_start = step
                 print(f"🔴 First stop detected at step {step}")
             elif velocity > STOPPING_THRESHOLD and latency_start is not None and not latency_triggered:
-                latency_triggered = True  
+                latency_triggered = True
                 print(f"🟢 Robot restarted movement at step {step}")
             elif velocity < STOPPING_THRESHOLD and latency_triggered and latency_end is None:
-                latency_end = step  
+                latency_end = step
                 print(f"🔴 Second stop detected at step {step}")
-                break  
+                break
 
         prev_com = com_2
 
@@ -174,9 +184,14 @@ def run_simulation(iters, genome, show=True, fittest=False):
 
 def log_velocity_time(velocity_over_time):
     """Save velocity progression over simulation steps."""
-    df = pd.DataFrame({'Step': range(len(velocity_over_time)), 'Velocity': velocity_over_time})
+    df = pd.DataFrame({
+        'Step': range(len(velocity_over_time)),
+        'Velocity': velocity_over_time
+    })
     df.to_csv(os.path.join(EXPER_DIR, "velocity_time_log.csv"), index=False)
-    plt.plot(range(len(velocity_over_time)), velocity_over_time, label="Velocity Over Steps")
+    plt.plot(range(len(velocity_over_time)),
+             velocity_over_time,
+             label="Velocity Over Steps")
     plt.xlabel("Simulation Step")
     plt.ylabel("Velocity")
     plt.legend()
@@ -186,9 +201,14 @@ def log_velocity_time(velocity_over_time):
 
 def log_fitness_progress(fitness_progress, generation_times):
     """Save fitness progress over generations."""
-    df = pd.DataFrame({'Generation': generation_times, 'Fitness': fitness_progress})
+    df = pd.DataFrame({
+        'Generation': generation_times,
+        'Fitness': fitness_progress
+    })
     df.to_csv(os.path.join(EXPER_DIR, "fitness_progress_log.csv"), index=False)
-    plt.plot(generation_times, fitness_progress, label="Fitness Over Generations")
+    plt.plot(generation_times,
+             fitness_progress,
+             label="Fitness Over Generations")
     plt.xlabel("Generation")
     plt.ylabel("Fitness")
     plt.legend()
