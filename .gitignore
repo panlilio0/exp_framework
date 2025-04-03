@@ -144,6 +144,8 @@ videos
 action_log
 levels_log
 
+latest.csv
+
 # backup dir
 backup_*
 

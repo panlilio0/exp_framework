@@ -3,8 +3,8 @@ Runs the latest experiment. Also launches best_individual.py to show the best in
 and plots fitness over generations after the run is over.
 
 Whether to show the simulation or save as video, number of generations, sigma can be passed as
-command line arguments. Example: `python3 run_cmaes.py --gens 50 --sigma 2 --mode h` 
-runs cma-es for 50 generationsin headless mode with a sigma of 2. Replacing "--mode h" with 
+command line arguments. Example: `python3 run_experiment.py --gens 50 --sigma 2 --mode h` 
+runs cma-es for 50 generations in headless mode with a sigma of 2. Replacing "--mode h" with 
 "--mode s" makes the simulation output to the screen, and replacing it with "--mode v" saves 
 each simulation as a video in `./videos`.  "--mode b" shows on screen and saves a video.
 

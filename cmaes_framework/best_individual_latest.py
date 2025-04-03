@@ -25,13 +25,19 @@ def visualize_best(filename="latest.csv"):
         filename (str): Filename of csv to look at. Defaults to latest.csv.
     """
 
+    path = os.path.join(ROOT_DIR, filename)
+
     while True:
-        path = os.path.join(ROOT_DIR, filename)
-        df = pandas.read_csv(path)
+        try:
+            df = pandas.read_csv(path)
 
-        best_fitness = min(df["best_fitness"])
-        row = df.loc[df['best_fitness'] == best_fitness]
-        genome = row.values.tolist()[0][GENOME_START_INDEX:]
+            best_fitness = min(df["best_fitness"])
+            row = df.loc[df['best_fitness'] == best_fitness]
+            genome = row.values.tolist()[0][GENOME_START_INDEX:]
 
-        run(ITERS, genome, "s")
+            run(ITERS, genome, "s")
+        except:
+            pass
+
+        
     
