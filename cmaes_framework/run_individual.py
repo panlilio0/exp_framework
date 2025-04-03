@@ -18,7 +18,7 @@ from snn_sim.run_simulation import run
 
 ITERS = 1000
 GENOME_START_INDEX = 3
-1
+
 def run_indvididual(generation, mode, filename):
     """
     Run an individual from a csv file.
@@ -28,17 +28,20 @@ def run_indvididual(generation, mode, filename):
         mode (string): Tells whether to show simulation, save it to
                        video, or both. "screen" renders the video to the screen. "video" saves a
                        video to the "./videos" folder. "both" does both of these things.
-        filename (string): CSV file to look at. Should be in /data directory.
+        filename (string): CSV file to look at. Should be in cmaes_framework/data directory.
     """
 
-    if mode == "video" or mode == "both":
+    # Make video directory if we're making a video.
+    if mode in ["v", "b"]:
         os.makedirs("videos", exist_ok=True)
 
+    # Read genome from csv file
     this_dir = pathlib.Path(__file__).parent.resolve()
     df = pd.read_csv(os.path.join(this_dir, os.path.join("data", filename)))
     row = df.loc[(df['generation']==generation)]
     genome = row.values.tolist()[0][GENOME_START_INDEX:]
 
+    # Generate video name using times
     vid_name = filename + "_gen" + str(generation)
     vid_path = os.path.join(this_dir, "videos")
 

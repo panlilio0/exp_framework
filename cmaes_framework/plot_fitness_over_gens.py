@@ -55,4 +55,4 @@ if __name__ == "__main__":
 
     filename = args.filename
 
-    plot(file)
+    plot(filename)
