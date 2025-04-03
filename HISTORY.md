@@ -1,7 +1,7 @@
 # History
 
 ### Framework Improvements
-February 10th, 2025 | By Thomas Breimer | PR approved by Thomas Breimer 
+February 10th, 2025 | By Thomas Breimer | PR approved by Thomas Breimer
 - Can save simulations as videos
 - Can decide to run in headless, video, window modes from terminal
 - Can run individuals
@@ -10,7 +10,7 @@ February 10th, 2025 | By Thomas Breimer | PR approved by Thomas Breimer
 
 Feb 11th | By Abhay Kashyap
 - Added script to transform CMA-ES output to SNN weights and biases
-- Script reshapes the flat array into an array of shape (NUM_SNN * PARAMS_PER_SNN) 
+- Script reshapes the flat array into an array of shape (NUM_SNN * PARAMS_PER_SNN)
 and then returns a list of dictionaries explicitly separating weights and biases of each SNN
 
 ### Introducing snn to evogym pipeline
@@ -40,7 +40,7 @@ Feb 16th | Abhay Kashyap
 - Made the `snn_parameters` dictionary elements compliant with the way SNN's `set_weights()` method works
 - Completed testing unpacking tests with dummy cmaes output and setting them to SNNs
 
-### Refactoring 
+### Refactoring
 Feb 17th | Luodi Wang
 - Successfully completed robot configuration with its locations of corners from bestbot.json
 - Run inputs through the SNN
@@ -101,3 +101,9 @@ Mar 8th | Abhay Kashyap
 
 Mar 20th | Viet-Dung (Darren) Nguyen
 - Added implementation of latency tracking with 2 graphs of fitness over generation and velocity over simulation step
+
+### Ozempic TWO
+April 3rd | Matthew Meek & Thomas Breimer
+- Removed folders with legacy code. `voxel_length_test`, `rmhc_sim`, `cmaes_demo`, `morpho_demo`.
+- Ozempic-ed `cmaes_integration`: removed all code non-essential for it to run. 
+- Renamed `cmaes_integration` to `cmaes_framework`.
