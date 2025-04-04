@@ -8,6 +8,7 @@ April 3rd, 2025
 import os
 from pathlib import Path
 import pandas
+import time
 from snn_sim.run_simulation import run
 
 ITERS = 1000
@@ -25,10 +26,12 @@ def visualize_best(filename="latest.csv"):
         filename (str): Filename of csv to look at. Defaults to latest.csv.
     """
 
+    time.sleep(10)
+    
     path = os.path.join(ROOT_DIR, filename)
 
     while True:
-        try:
+        if os.path.exists(path):
             df = pandas.read_csv(path)
 
             best_fitness = min(df["best_fitness"])
@@ -36,8 +39,6 @@ def visualize_best(filename="latest.csv"):
             genome = row.values.tolist()[0][GENOME_START_INDEX:]
 
             run(ITERS, genome, "s")
-        except:
-            pass
 
         
     
