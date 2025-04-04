@@ -1,27 +1,22 @@
 # exp-framework
 
-Implementation of an experimental framework for evolving SNN-controlled robots in evogym.
+This repository offers a basic development framework for running cma-es experiments, a basis for morphological experiments, and an SNN implementation.
 
-## Example commands
+## CMA-ES-Integration
 
-See example_commands.md for examples on how to run everything.
+The current experimental framework, integrated with CMA-ES. [Link](https://github.com/Union-College-Computer-Science/exp_framework/tree/main/cmaes_integration)
 
-## `run_cmaes.py`
+## CMA-ES Demo
 
-Runs cma-es with an closed loop SNN-controlled robot. Creates and output csv file in /data and updates it continuously with the best individual from each generation. Whether to show the simulation or save as video, number of generations, sigma can be passed as command line arguments. Example: `python3 run_cmaes.py --mode h --gens 50 --sigma 2` runs cma-es for 50 generations in headless mode with a sigma of 2. Replacing "--mode h" with "--mode s" shows the best individual from each generation, and replacing it with "--mode v" saves the best individual from each generation as a video in `./videos` "--mode b" shows on screen and saves a video.
+A simple cma-es demo and potential experimental framework. [Link](https://github.com/Union-College-Computer-Science/exp_framework/tree/main/cmaes_demo)
 
-## `best_individual.py`
+## Morphology
 
-Once `run_cmaes.py` is running, `python3 best_individual.py --file CSV_FILE_NAME.csv` can be run simultaneously, which plays the best found individual so far in a loop from the specified csv file.
+A series of morpological experiments, complete with graphing. [Link](https://github.com/Union-College-Computer-Science/exp_framework/tree/main/morpho_demo)
 
-## `run_individual.py` 
+## SNN
 
-Runs a single individual from its genome in an output csv file. Takes `--generation GEN_NUM` `--mode MODE_CHAR` command line args.
+A spike neural network (SNN) implementation in python. [Link](https://github.com/Union-College-Computer-Science/exp_framework/tree/main/snn)
 
-## `plot_genome.py`
 
-Plots genome values on the x and y axis and color based on fitness. Takes three command line arguments: --filename, --x-axis, --y-axis. This is intended to show the relationship between two genome values and how it affects fitness.
-
-## `plot_fitness_over_gens.py`
-
-Given a csv file as a command line argument, plot fitness over generations.
+ 
