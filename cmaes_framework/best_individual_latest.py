@@ -14,7 +14,7 @@ from snn_sim.run_simulation import run
 ITERS = 1000
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-PARENTDIR = Path(__file__).parent.resolve()
+PARENTDIR = Path(__file__).parent.parent.resolve()
 GENOME_START_INDEX = 3
 FILEFOLDER = "data"
 
@@ -26,9 +26,11 @@ def visualize_best(filename="latest.csv"):
         filename (str): Filename of csv to look at. Defaults to latest.csv.
     """
 
-    time.sleep(10)
-    
-    path = os.path.join(ROOT_DIR, filename)
+    #time.sleep(10)
+
+
+    print(PARENTDIR)
+    path = os.path.join(PARENTDIR, filename)
 
     while True:
         if os.path.exists(path):
@@ -39,6 +41,9 @@ def visualize_best(filename="latest.csv"):
             genome = row.values.tolist()[0][GENOME_START_INDEX:]
 
             run(ITERS, genome, "s")
+
+if __name__ == "__main__":
+    visualize_best()
 
         
     
