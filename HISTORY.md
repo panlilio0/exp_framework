@@ -115,3 +115,4 @@ April 3rd | Thomas Breimer
 
 ### SNN Visualizations
 - Created feature branch to investigate SNN firing and levels
+- Forked repository and switched to SNN branch
