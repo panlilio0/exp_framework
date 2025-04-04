@@ -21,6 +21,17 @@ import pandas as pd
 from cmaes import CMA
 import numpy as np
 from snn_sim import run_simulation
+import os
+import sys
+
+def is_windows():
+    """
+    Checks if the operating system is Windows.
+
+    Returns:
+        bool: True if the OS is Windows, False otherwise.
+    """
+    return os.name == 'nt' or sys.platform.startswith('win')
 
 # Shape of the genome
 SNN_INPUT_SHAPE = 72
@@ -38,7 +49,7 @@ GENOME_INDEX = 0
 FITNESS_INDEX = 1
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-DATE_TIME = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+DATE_TIME = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
 def run(mode, gens, sigma_val):
     """
@@ -66,10 +77,13 @@ def run(mode, gens, sigma_val):
     csv_path = os.path.join(ROOT_DIR, "data", f"{DATE_TIME}.csv")
 
     # Set up latest.csv symlink
-    if os.path.exists("latest.csv"):
-        os.remove("latest.csv")
+    if os.path.exists(os.path.join("cmaes_framework", "latest.csv")):
+        os.remove(os.path.join("cmaes_framework", "latest.csv"))
 
-    os.system("ln -s " + csv_path + " latest.csv")
+    if is_windows():
+        os.symlink(csv_path, os.path.join("cmaes_framework", "latest.csv"))
+    else:
+        os.system("ln -s " + csv_path + " latest.csv")
 
     pd.DataFrame(columns=csv_header).to_csv(csv_path, index=False)
 
