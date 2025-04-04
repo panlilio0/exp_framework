@@ -1,5 +1,16 @@
 # Example commands
 
+## Run experiment
+
+Run experiment, continuously showing best individual so far in a window.
+`python3 run_experiment.py --gens 50 --sigma 2 --mode s`
+
+Run experiment, outputing the best individual from each generation as a video.
+`python3 run_experiment.py --gens 50 --sigma 2 --mode v`
+
+Run experiment, operating in headless mode
+`python3 run_experiment.py --gens 50 --sigma 2 --mode h`
+
 ## Run cmaes
 
 Run cmaes, outputing simulation to a window

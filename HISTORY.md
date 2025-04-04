@@ -107,3 +107,4 @@ April 3rd | Matthew Meek & Thomas Breimer
 - Removed folders with legacy code. `voxel_length_test`, `rmhc_sim`, `cmaes_demo`, `morpho_demo`.
 - Ozempic-ed `cmaes_integration`: removed all code non-essential for it to run. 
 - Renamed `cmaes_integration` to `cmaes_framework`.
+- Reverted framework to old version circa week 9 Winter 2025
