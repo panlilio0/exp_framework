@@ -116,3 +116,6 @@ April 3rd | Thomas Breimer
 ### SNN Visualizations
 - Created feature branch to investigate SNN firing and levels
 - Forked repository and switched to SNN branch
+
+April 6th | Hades Panlilio
+- Adjusted weights and neruon resets
