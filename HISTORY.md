@@ -1,7 +1,7 @@
 # History
 
 ### Framework Improvements
-February 10th, 2025 | By Thomas Breimer | PR approved by Thomas Breimer 
+February 10th, 2025 | By Thomas Breimer | PR approved by Thomas Breimer
 - Can save simulations as videos
 - Can decide to run in headless, video, window modes from terminal
 - Can run individuals
@@ -10,7 +10,7 @@ February 10th, 2025 | By Thomas Breimer | PR approved by Thomas Breimer
 
 Feb 11th | By Abhay Kashyap
 - Added script to transform CMA-ES output to SNN weights and biases
-- Script reshapes the flat array into an array of shape (NUM_SNN * PARAMS_PER_SNN) 
+- Script reshapes the flat array into an array of shape (NUM_SNN * PARAMS_PER_SNN)
 and then returns a list of dictionaries explicitly separating weights and biases of each SNN
 
 ### Introducing snn to evogym pipeline
@@ -40,7 +40,7 @@ Feb 16th | Abhay Kashyap
 - Made the `snn_parameters` dictionary elements compliant with the way SNN's `set_weights()` method works
 - Completed testing unpacking tests with dummy cmaes output and setting them to SNNs
 
-### Refactoring 
+### Refactoring
 Feb 17th | Luodi Wang
 - Successfully completed robot configuration with its locations of corners from bestbot.json
 - Run inputs through the SNN
@@ -54,3 +54,68 @@ Feb 17th | Abhay Kashyap
 Feb 23rd | Abhay Kashyap
 - Removed files that were not being used and renames some files to more appropriate names
 - Refactored `SNNRunner()` into `SNNController()` and the class simpler to use for simulation - removed redundant functions and converted some functions into private functions for abstraction.
+
+Feb 24th | Thomas Breimer
+- Completed integration
+
+### SNN Firing Experiments
+Feb 25th | By James Gaskell & Matthew Meek
+- Added code to isolate a voxel and record the distances between robot corners
+- Output corner values for each time step to csv for analysis
+- Graphed expansion and contraction behaviors on a single voxel and large robot to determine SNN firing frequency
+
+Feb 27th | Thomas Breimer
+- cmaes bug fixes
+
+Mar 4th | Thomas Breimer
+- Added bestbot.json to snn-sim
+- Chnaged run_cmaes.py to use bestbot.json
+
+Mar 4th | Guy Tallent
+- added run_cmaes2, run_sim2, morph2, actuator2. This maps the point massess to each voxel and allows you to get the distance from each of the active voxels to all four corners of the robot
+
+Mar 4th | Jonathan Fischman
+- ring buffer implementation
+
+Mar 5th | Abhay Kashyap
+- Created a log to track the frequency of target lengths obtained from SNN
+- Added notebook showing a simple visualization of this frequency
+- Added code to normalize inputs for better SNN computations
+
+Mar 5th | James Gaskell
+- Created best_individual_latest.py which runs the best fitness from the most recent experiment or a specified gen number. Can be changed based on snn type
+- Implemented RSNN on new branch using CMA-ES taking into account n previous actuator values for each voxel
+
+March 6th | Thomas Breimer
+- added run_experiment.py
+
+### Adding Ring Buffer
+March 06th | Atharv Tekurkar
+- Added ring buffer
+- Implemented it for firelog in the snn structure
+- Removed duplicate snn files that were in cmaes_integration
+
+Mar 8th | Abhay Kashyap
+- Added length method to ring buffer and made `get()` return `n` elements instead of all if parameter passed
+- Added logging of the membrane potential (`level`) to visualize the data accumulation and spikes
+
+Mar 20th | Viet-Dung (Darren) Nguyen
+- Added implementation of latency tracking with 2 graphs of fitness over generation and velocity over simulation step
+
+### Ozempic TWO
+April 3rd | Matthew Meek & Thomas Breimer
+- Removed folders with legacy code. `voxel_length_test`, `rmhc_sim`, `cmaes_demo`, `morpho_demo`.
+- Ozempic-ed `cmaes_integration`: removed all code non-essential for it to run. 
+- Renamed `cmaes_integration` to `cmaes_framework`.
+- Reverted framework to old version circa week 9 Winter 2025
+
+### Windows
+April 3rd | Thomas Breimer
+- Changed csv file naming for Windows compat 
+
+### SNN Visualizations
+- Created feature branch to investigate SNN firing and levels
+- Forked repository and switched to SNN branch
+
+April 6th | Hades Panlilio
+- Adjusted weights and neruon resets

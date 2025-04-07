@@ -141,6 +141,10 @@ evogym_venv
 
 data
 videos
+action_log
+levels_log
+
+latest.csv
 
 # backup dir
 backup_*
