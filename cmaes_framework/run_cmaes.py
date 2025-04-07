@@ -90,7 +90,7 @@ def run(mode, gens, sigma_val):
     # Init CMA
     optimizer = CMA(mean=np.array(MEAN_ARRAY), sigma=sigma_val, population_size=12)
 
-    best_fitness_so_far = run_simulation.FITNESS_OFFSET
+    best_fitness_so_far, _, _ = run_simulation.FITNESS_OFFSET
 
     # Run generations
     for generation in range(gens):
@@ -99,7 +99,7 @@ def run(mode, gens, sigma_val):
         # Run individuals
         for _ in range(optimizer.population_size):
             x = optimizer.ask() # Ask cmaes for a genome
-            fitness = run_simulation.run(NUM_ITERS, x, "h") # get fitness
+            fitness, _, _ = run_simulation.run(NUM_ITERS, x, "h") # get fitness
             solutions.append((x, fitness))
 
         optimizer.tell(solutions) # Tell cmaes about population

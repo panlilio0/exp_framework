@@ -152,17 +152,21 @@ class SNNController:
                 "duty_cycles": duty_cycles
             }
 
-        return outputs, levels
+        return outputs
 
     def get_lengths(self, inputs):
         """
         Returns a list of target lengths (action array)
         """
-        out, levels = self._get_output_state(inputs)
+        out = self._get_output_state(inputs)
         lengths = []
+        spikes = []
+        levels = []
         for _, item in out.items():
             lengths.append(item['target_length'])
-        return lengths, levels
+            spikes.append(item['outputs'])
+            levels.append(item['levels'])
+        return lengths, spikes, levels
 
     def get_out_layer_firelog(self):
         """

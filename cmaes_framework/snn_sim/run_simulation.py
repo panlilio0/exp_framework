@@ -118,6 +118,9 @@ def run(iters, genome, mode, vid_name=None, vid_path=None):
     snn_controller = SNNController(2, 2, 1, robot_config=robot_file_path)
     snn_controller.set_snn_weights(genome)
 
+    spike_trains = []
+    levels_log = []
+
     for i in range(iters):
 
         # Get point mass locations
@@ -127,10 +130,13 @@ def run(iters, genome, mode, vid_name=None, vid_path=None):
         corner_distances = np.array(morphology.get_corner_distances(raw_pm_pos))
 
         # Use the normalized distances as input
-        action = snn_controller.get_lengths(corner_distances)
+        action, spikes, levels = snn_controller.get_lengths(corner_distances)
+
+        spike_trains.append(spikes)
+        levels_log.append(levels)
 
         # Clip actuator target lengths to be between 0.6 and 1.6 to prevent buggy behavior
-        action = np.clip(action[0], ACTUATOR_MIN_LEN, ACTUATOR_MAX_LEN)
+        action = np.clip(action, ACTUATOR_MIN_LEN, ACTUATOR_MAX_LEN)
 
         # Set robot action to the action vector. Each actuator corresponds to a vector
         # index and will try to expand/contract to that value
@@ -157,4 +163,4 @@ def run(iters, genome, mode, vid_name=None, vid_path=None):
     if mode in ["v", "b"]:
         create_video(video_frames, vid_name, vid_path, FPS)
 
-    return FITNESS_OFFSET - fitness # Turn into a minimization problem
+    return (FITNESS_OFFSET - fitness), spike_trains, levels_log # Turn into a minimization problem
