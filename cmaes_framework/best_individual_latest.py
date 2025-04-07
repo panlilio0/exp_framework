@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 import pandas
 import argparse
+import pathlib
 import numpy as np
 from matplotlib import pyplot as plt
 from snn_sim.run_simulation import run
@@ -22,7 +23,7 @@ FILEFOLDER = "data"
 
 
 
-def visualize_best(graphs, filename="latest.csv"):
+def visualize_best(graphs, mode, filename="latest.csv"):
     """
     Look at a csv and continuously run best individual.
     
@@ -41,8 +42,17 @@ def visualize_best(graphs, filename="latest.csv"):
             best_fitness = min(df["best_fitness"])
             row = df.loc[df['best_fitness'] == best_fitness]
             genome = row.values.tolist()[0][GENOME_START_INDEX:]
+            generation = row.values.tolist()[0][0]
 
-            _, spikes, levels = run(ITERS, genome, "s")
+            # Make video directory if we're making a video.
+            if mode in ["v", "b"]:
+                os.makedirs("videos", exist_ok=True)
+                this_dir = pathlib.Path(__file__).parent.resolve()
+                vid_name = filename + "_gen" + str(generation)
+                vid_path = os.path.join(this_dir, "videos")
+                _, spikes, levels = run(ITERS, genome, "v", vid_name, vid_path)
+            else:
+                _, spikes, levels = run(ITERS, genome, "s")
 
 
 
@@ -106,10 +116,15 @@ if __name__ == "__main__":
         '--graphs',
         help='graph outputs and levels? n - no, s - spike trains, l - levels, b - both',
         default="n")
+    parser.add_argument(
+        '--mode', #headless, screen, video, both h, s, v, b
+        help='mode for output. h-headless , s-screen, v-video, b-both',
+        default="v")
+
     
     args = parser.parse_args()
     
-    visualize_best(args.graphs)
+    visualize_best(args.graphs, args.mode)
 
         
     

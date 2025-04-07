@@ -50,7 +50,8 @@ def create_video(source, output_name, vid_path, fps=FPS):
                           cv2.VideoWriter_fourcc(*'mp4v'),
                           fps, (source[0].shape[1], source[0].shape[0]))
     for frame in source:
-        out.write(frame)
+        frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        out.write(frame_bgr)
     out.release()
 
 def group_list(flat_list: list, n: int) -> list:
