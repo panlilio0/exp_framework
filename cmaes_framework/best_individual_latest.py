@@ -51,6 +51,7 @@ def visualize_best(graphs, mode, filename="latest.csv"):
                 vid_name = filename + "_gen" + str(generation)
                 vid_path = os.path.join(this_dir, "videos")
                 _, spikes, levels = run(ITERS, genome, "v", vid_name, vid_path)
+                quit()
             else:
                 _, spikes, levels = run(ITERS, genome, "s")
 
