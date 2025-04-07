@@ -14,10 +14,10 @@
 Follow instructions for getting pyenv to load automatically. Append the following to the bottom of .bashrc :
 \
 `export PYENV_ROOT="$HOME/.pyenv"`
-\
+
 
 `[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"`
-\
+
 
 `eval "$(pyenv init - bash)"`
 \
