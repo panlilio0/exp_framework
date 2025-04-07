@@ -127,7 +127,7 @@ def run(iters, genome, mode, vid_name=None, vid_path=None):
         corner_distances = np.array(morphology.get_corner_distances(raw_pm_pos))
 
         # Use the normalized distances as input
-        action = snn_controller.get_lengths(corner_distances)
+        action, log = snn_controller.get_lengths(corner_distances)
 
         # Clip actuator target lengths to be between 0.6 and 1.6 to prevent buggy behavior
         action = np.clip(action[0], ACTUATOR_MIN_LEN, ACTUATOR_MAX_LEN)

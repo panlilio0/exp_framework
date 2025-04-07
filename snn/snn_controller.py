@@ -1,5 +1,7 @@
 """
 Module for running SNN outputs with proper input/output handling.
+
+Authors: Abhay Kashyap, Atharv Tekurkar
 """
 
 import json
@@ -15,7 +17,6 @@ _project_root = os.path.dirname(os.path.dirname(_current_file))
 ROBOT_DATA_PATH = os.path.join(_project_root, "morpho_demo", "world_data",
                                "bestbot.json")
 
-
 class SNNController:
     """Class to handle SNN input/output processing."""
 
@@ -24,7 +25,17 @@ class SNNController:
                  hidden_size,
                  output_size,
                  robot_config=ROBOT_DATA_PATH):
-        """Initialize with None - will set sizes after loading robot data."""
+        """
+        
+        Initializes an SNN Controller for a given robot and SNN hyperparameters.
+
+        Parameters:
+            inp_size (int): Number of inputs for each SNN
+            hidden_size (int): Number of nodes in the hidden layer.
+            output_size (int): Number of outputs.
+            robot_config (str): A robot's .json file.
+        """
+
         self.snns = []
         self.num_snn = 0  # Number of spiking neural networks (actuators)
         self.inp_size = inp_size
@@ -39,19 +50,20 @@ class SNNController:
         Args:
             robot_path (str): Path to robot JSON configuration file
             
-        Returns:
-            tuple: (num_actuators, input_size) - Network dimensions
         """
         if not os.path.exists(robot_path):
             raise FileNotFoundError(
                 f"Robot configuration file not found: {robot_path}")
         with open(robot_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
+
         # Extract robot data
         robot_key = list(data["objects"].keys())[0]
         robot_data = data["objects"][robot_key]
+
         # Count actuators (types 3 and 4)
         self.num_snn = sum(1 for t in robot_data["types"] if t in [3, 4])
+
         # Initialize SNN with proper dimensions
         self.snns = [
             SpikyNet(input_size=self.inp_size,
@@ -74,7 +86,8 @@ class SNNController:
         Raises:
             ValueError: If the length of the CMA-ES output does not match the expected size.
         """
-
+        
+        # Compute parameters for each SNN
         params_per_hidden_layer = (self.inp_size + 1) * self.hidden_size
         params_per_output_layer = (self.hidden_size + 1) * self.output_size
         params_per_snn = params_per_hidden_layer + params_per_output_layer
@@ -91,6 +104,7 @@ class SNNController:
 
         # For each SNN, split the parameters into weights and biases.
         snn_parameters = {}
+
         for snn_idx, params_per_snn in enumerate(reshaped):
             hidden_params = params_per_snn[:params_per_hidden_layer]
             output_params = params_per_snn[params_per_hidden_layer:]
@@ -104,40 +118,25 @@ class SNNController:
 
     def _get_output_state(self, inputs):
         """
-        Run SNN with inter-actuator distances as input over multiple timesteps.
+        Run SNN with distances from each actuator to corners of robot.
         
         Args:
-            inputs (list): inter-actuator distances
+            inputs (list): A list of tuples of the distances to the top left point mass and bottom right point mass
+                           for each actuator in the robot.
             
         Returns:
-            dict: Contains 'continuous_actions' and 'duty_cycles'
-        """
-
-        # Normalizing inputs between -1 and 1
-        """
-        x_vals, y_vals = zip(*inputs)  # Unzips into two lists
-
-        # Find min and max for each component
-        x_min, x_max = min(x_vals), max(x_vals)
-        y_min, y_max = min(y_vals), max(y_vals)
-
-        # Normalize each component independently
-        inputs = [
-            (
-                2 * (x - x_min) / (x_max - x_min) - 1,  # Normalize x
-                2 * (y - y_min) / (y_max - y_min) - 1  # Normalize y
-            ) for x, y in inputs
-        ]
+            dict: Contains 'continuous_actions' and 'duty_cycles' for each SNN.
         """
 
         outputs = {}
         for snn_id, snn in enumerate(self.snns):
             duty_cycle, levels = snn.compute(inputs[snn_id])
-            # print(duty_cycle)
+
             # Map duty_cycle (assumed in [0,1]) to target length in [MIN_LENGTH, MAX_LENGTH]
             actions = [
                 1.6 if duty_cycle[0] == 1 else 0.6
             ]
+
             outputs[snn_id] = {
                 "target_length": actions,
                 "duty_cycle": duty_cycle,
@@ -148,8 +147,16 @@ class SNNController:
 
     def get_lengths(self, inputs):
         """
-        Returns a list of target lengths (action array)
+        Returns a list of target lengths (action array).
+
+        Args:
+            inputs (list): A list of tuples of the distances to the top left point mass and bottom right point mass
+                           for each actuator in the robot.
+
+        Returns:
+            list: Target length for each actuator, the "action array".
         """
+        
         out, levels = self._get_output_state(inputs)
         lengths = []
         for _, item in out.items():
