@@ -10,6 +10,7 @@
 ### Ubuntu w/o sudo access
 `curl https://pyenv.run | bash`
 \
+\
 Follow instructions for getting pyenv to load automatically. Append the following to the bottom of .bashrc :
 \
 `export PYENV_ROOT="$HOME/.pyenv"
