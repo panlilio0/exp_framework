@@ -21,7 +21,7 @@ Open a new terminal window.
 Set version of python 3.10 as global python version or local version:
 `pyenv global 3.10.xx`
 OR
-`pyenv local 3.10.xx`
+`pyenv local 3.10.xx`\
 
 ## Create a virtual environment
 
