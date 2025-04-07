@@ -5,6 +5,7 @@ Module for running SNN outputs with proper input/output handling.
 import json
 import os
 import numpy as np
+import matplotlib.pyplot as plt
 from snn.model_struct import SpikyNet
 
 # Constants for SNN configuration
@@ -132,29 +133,40 @@ class SNNController:
 
         outputs = {}
         for snn_id, snn in enumerate(self.snns):
-            duty_cycle, levels = snn.compute(inputs[snn_id])
+            spikes, levels, duty_cycles = snn.compute(inputs[snn_id])
+            
             # print(duty_cycle)
             # Map duty_cycle (assumed in [0,1]) to target length in [MIN_LENGTH, MAX_LENGTH]
+            # print(duty_cycles[0])
+            # actions = [
+            #     1.6 if duty_cycles[0] > 0.5 else 0.6
+            # ]
             actions = [
-                1.6 if duty_cycle[0] == 1 else 0.6
+                1.6 if spikes[0] == 1 else 0.6
             ]
+            # print(actions)
             outputs[snn_id] = {
                 "target_length": actions,
-                "duty_cycle": duty_cycle,
-                "levels": levels
+                "outputs": spikes[0],
+                "levels": levels,
+                "duty_cycles": duty_cycles
             }
 
-        return outputs, levels
+        return outputs
 
     def get_lengths(self, inputs):
         """
         Returns a list of target lengths (action array)
         """
-        out, levels = self._get_output_state(inputs)
+        out = self._get_output_state(inputs)
         lengths = []
+        spikes = []
+        levels = []
         for _, item in out.items():
             lengths.append(item['target_length'])
-        return lengths, levels
+            spikes.append(item['outputs'])
+            levels.append(item['levels'])
+        return lengths, spikes, levels
 
     def get_out_layer_firelog(self):
         """
@@ -204,3 +216,17 @@ class SNNController:
             }
             for i, snn in enumerate(self.snns)
         }
+    
+    
+    def get_output_layer_firelogs(self):
+        """Returns spike trains for each neuron in the output layer for each SNN."""
+        logs = []
+        for snn in self.snns:
+            snn_logs = []
+            for node in snn.output_layer.nodes:
+                snn_logs.append(node.firelog.get())  # Get full spike history for each node in the output layer
+            logs.append(snn_logs)
+        return logs
+
+
+    

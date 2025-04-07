@@ -50,7 +50,8 @@ def create_video(source, output_name, vid_path, fps=FPS):
                           cv2.VideoWriter_fourcc(*'mp4v'),
                           fps, (source[0].shape[1], source[0].shape[0]))
     for frame in source:
-        out.write(frame)
+        frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        out.write(frame_bgr)
     out.release()
 
 def group_list(flat_list: list, n: int) -> list:
@@ -65,6 +66,9 @@ def group_list(flat_list: list, n: int) -> list:
         list: Grouped list.
     """
     return [list(flat_list[i:i+n]) for i in range(0, len(flat_list), n)]
+
+def input_scaling_2(init_corners, cur_corners):
+    return ((init_corners - cur_corners) / init_corners)
 
 def run(iters, genome, mode, vid_name=None, vid_path=None):
     """
@@ -118,6 +122,9 @@ def run(iters, genome, mode, vid_name=None, vid_path=None):
     snn_controller = SNNController(2, 2, 1, robot_config=robot_file_path)
     snn_controller.set_snn_weights(genome)
 
+    spike_trains = []
+    levels_log = []
+
     for i in range(iters):
 
         # Get point mass locations
@@ -126,11 +133,17 @@ def run(iters, genome, mode, vid_name=None, vid_path=None):
         # Get current corner distances
         corner_distances = np.array(morphology.get_corner_distances(raw_pm_pos))
 
+        if i == 0:
+            init_corner_distances = corner_distances
+
         # Use the normalized distances as input
-        action = snn_controller.get_lengths(corner_distances)
+        action, spikes, levels = snn_controller.get_lengths(input_scaling_2(init_corner_distances, corner_distances))
+
+        spike_trains.append(spikes)
+        levels_log.append(levels)
 
         # Clip actuator target lengths to be between 0.6 and 1.6 to prevent buggy behavior
-        action = np.clip(action[0], ACTUATOR_MIN_LEN, ACTUATOR_MAX_LEN)
+        action = np.clip(action, ACTUATOR_MIN_LEN, ACTUATOR_MAX_LEN)
 
         # Set robot action to the action vector. Each actuator corresponds to a vector
         # index and will try to expand/contract to that value
@@ -157,4 +170,4 @@ def run(iters, genome, mode, vid_name=None, vid_path=None):
     if mode in ["v", "b"]:
         create_video(video_frames, vid_name, vid_path, FPS)
 
-    return FITNESS_OFFSET - fitness # Turn into a minimization problem
+    return (FITNESS_OFFSET - fitness), spike_trains, levels_log # Turn into a minimization problem

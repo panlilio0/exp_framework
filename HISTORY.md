@@ -108,3 +108,14 @@ April 3rd | Matthew Meek & Thomas Breimer
 - Ozempic-ed `cmaes_integration`: removed all code non-essential for it to run. 
 - Renamed `cmaes_integration` to `cmaes_framework`.
 - Reverted framework to old version circa week 9 Winter 2025
+
+### Windows
+April 3rd | Thomas Breimer
+- Changed csv file naming for Windows compat 
+
+### SNN Visualizations
+- Created feature branch to investigate SNN firing and levels
+- Forked repository and switched to SNN branch
+
+April 6th | Hades Panlilio
+- Adjusted weights and neruon resets
