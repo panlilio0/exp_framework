@@ -8,7 +8,6 @@ April 3rd, 2025
 import os
 from pathlib import Path
 import pandas
-import time
 import argparse
 import numpy as np
 from matplotlib import pyplot as plt
@@ -21,6 +20,8 @@ PARENTDIR = Path(__file__).parent.parent.resolve()
 GENOME_START_INDEX = 3
 FILEFOLDER = "data"
 
+
+
 def visualize_best(graphs, filename="latest.csv"):
     """
     Look at a csv and continuously run best individual.
@@ -31,8 +32,6 @@ def visualize_best(graphs, filename="latest.csv"):
 
     #time.sleep(10)
 
-
-    print(PARENTDIR)
     path = os.path.join(PARENTDIR, filename)
 
     while True:
@@ -44,6 +43,8 @@ def visualize_best(graphs, filename="latest.csv"):
             genome = row.values.tolist()[0][GENOME_START_INDEX:]
 
             _, spikes, levels = run(ITERS, genome, "s")
+
+
 
             spikes = np.array(spikes)
             levels = np.array([[x[0] for x in row] for row in levels])
@@ -68,23 +69,43 @@ def visualize_best(graphs, filename="latest.csv"):
         elif graphs == "l":
 
             fig, ax = plt.subplots(figsize=(12, 6))
+            lines = []
 
+            # Plot and make lines pickable
             for i in range(levels.shape[1]):
-                ax.plot(levels[:, i], label=f'Neuron {i}')
+                line, = ax.plot(levels[:, i], label=f'Neuron {i}', picker=True, pickradius=5, alpha=0.4)
+                lines.append(line)
 
             ax.set_xlabel('Time Steps')
             ax.set_ylabel('Level')
-            ax.set_title('Neuron Levels Over Time')
+            ax.set_title('Click a Line to Highlight It')
             ax.legend(loc='upper right')
             plt.tight_layout()
+
+            def on_pick(event):
+                # Reset all lines
+                for line in lines:
+                    line.set_linewidth(1.5)
+                    line.set_alpha(0.4)
+
+                # Highlight selected line
+                picked_line = event.artist
+                picked_line.set_linewidth(3)
+                picked_line.set_alpha(1.0)
+                fig.canvas.draw()
+
+            fig.canvas.mpl_connect('pick_event', on_pick)
+
             plt.show(block=True)
+
+            
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='RL')
     parser.add_argument(
         '--graphs',
-        help='graph outputs and levels? s - spike trains, l - levels, y - both',
-        default="l")
+        help='graph outputs and levels? n - no, s - spike trains, l - levels, b - both',
+        default="n")
     
     args = parser.parse_args()
     

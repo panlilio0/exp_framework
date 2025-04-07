@@ -66,6 +66,9 @@ def group_list(flat_list: list, n: int) -> list:
     """
     return [list(flat_list[i:i+n]) for i in range(0, len(flat_list), n)]
 
+def input_scaling_2(init_corners, cur_corners):
+    return ((init_corners - cur_corners) / init_corners)
+
 def run(iters, genome, mode, vid_name=None, vid_path=None):
     """
     Runs a single simulation of a given genome.
@@ -129,8 +132,11 @@ def run(iters, genome, mode, vid_name=None, vid_path=None):
         # Get current corner distances
         corner_distances = np.array(morphology.get_corner_distances(raw_pm_pos))
 
+        if i == 0:
+            init_corner_distances = corner_distances
+
         # Use the normalized distances as input
-        action, spikes, levels = snn_controller.get_lengths(corner_distances)
+        action, spikes, levels = snn_controller.get_lengths(input_scaling_2(init_corner_distances, corner_distances))
 
         spike_trains.append(spikes)
         levels_log.append(levels)

@@ -90,7 +90,7 @@ def run(mode, gens, sigma_val):
     # Init CMA
     optimizer = CMA(mean=np.array(MEAN_ARRAY), sigma=sigma_val, population_size=12)
 
-    best_fitness_so_far, _, _ = run_simulation.FITNESS_OFFSET
+    best_fitness_so_far = run_simulation.FITNESS_OFFSET
 
     # Run generations
     for generation in range(gens):
@@ -145,7 +145,7 @@ if __name__ == "__main__":
                         default=500)
     parser.add_argument('--sigma',
                         type=float,
-                        default=3,
+                        default=0.1,
                         help='sigma value for cma-es')
     args = parser.parse_args()
 
