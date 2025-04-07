@@ -20,12 +20,12 @@ ACTUATOR_MIN_LEN = 0.6
 ACTUATOR_MAX_LEN = 1.6
 FRAME_CYCLE_LEN = 10
 NUM_ACTUATORS = 8  #8 for walkbot4billion
-NUM_ITERS = 100
+NUM_ITERS = 200
 MUTATE_RATE = 0.2
 
 ENV_FILENAME = "simple_environment_long.json"
 ROBOT_FILENAME = "walkbot4billion.json"
-GENERATIONS = 1500
+GENERATIONS = 2000
 
 EXPER_DIR = 'score_plots/' + ROBOT_FILENAME[:-5] + " " + time.asctime(
 )  #directory generated for a single run of the program. Stores outputs.
@@ -141,10 +141,13 @@ def run_simulation(iters,
     for i in range(iters):
 
         # Get position of all robot voxels
+        print("Time: " + str(sim.get_time()))
         pos_1 = sim.object_pos_at_time(sim.get_time(), "robot")
+        print("pos_1: " + str(pos_1))
 
         # Get mean of robot voxels
         com_1 = np.mean(pos_1, 1)
+        print("com_1: " + str(com_1) + "\n")
 
         # Compute the action vector by averaging the avg x & y
         # coordinates and multiplying this scalar by the genome
