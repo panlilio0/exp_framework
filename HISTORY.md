@@ -112,3 +112,10 @@ April 3rd | Matthew Meek & Thomas Breimer
 ### Windows
 April 3rd | Thomas Breimer
 - Changed csv file naming for Windows compat 
+
+### SNN Visualizations
+- Created feature branch to investigate SNN firing and levels
+- Forked repository and switched to SNN branch
+
+April 6th | Hades Panlilio
+- Adjusted weights and neruon resets

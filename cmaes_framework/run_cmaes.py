@@ -99,7 +99,7 @@ def run(mode, gens, sigma_val):
         # Run individuals
         for _ in range(optimizer.population_size):
             x = optimizer.ask() # Ask cmaes for a genome
-            fitness = run_simulation.run(NUM_ITERS, x, "h") # get fitness
+            fitness, _, _ = run_simulation.run(NUM_ITERS, x, "h") # get fitness
             solutions.append((x, fitness))
 
         optimizer.tell(solutions) # Tell cmaes about population
@@ -145,7 +145,7 @@ if __name__ == "__main__":
                         default=500)
     parser.add_argument('--sigma',
                         type=float,
-                        default=3,
+                        default=0.1,
                         help='sigma value for cma-es')
     args = parser.parse_args()
 

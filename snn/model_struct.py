@@ -18,8 +18,8 @@ class SpikyNode:
 
     def __init__(self, size):
         # a list of weights and a bias (last item in the list)
-        self._weights = np.random.uniform(-1, 1, (size + 1))
-        self.level = -np.inf  # activation level
+        self._weights = np.random.uniform(-0.3, 0.3, (size + 1))
+        self.level = -0.1  # activation level
         self.firelog = RingBuffer(
             MAX_FIRELOG_SIZE)  # tracks whether the neuron fired or not
         self.levels_log = []
@@ -36,17 +36,13 @@ class SpikyNode:
 
         weighted_sum = sum(inputs[i] * self._weights[i]
                            for i in range(len(inputs)))
-
-        if self.level == -np.inf:
-            self.level = weighted_sum
-        else:
-            self.level += weighted_sum
+        self.level += weighted_sum
 
         self.levels_log.append(self.level)
 
         if self.level >= self.get_bias():
             # print("Fired --> activation level reset to 0.0\n")
-            self.level = -np.inf
+            self.level = -0.1
             self.firelog.add(1)
             return 1.0, self.level
         # print("\n")
@@ -69,7 +65,7 @@ class SpikyNode:
             print("Weight size mismatch in node")
         else:
             self._weights = input_weights.copy()
-            self._weights[:-1] = list(map(lambda x: abs(x), self._weights[:-1]))
+            #self._weights[:-1] = list(map(lambda x: abs(x), self._weights[:-1]))
             # self._weights = input_weights.copy()
 
     def set_bias(self, val):
@@ -140,7 +136,10 @@ class SpikyNet:
         """Passes the input through the hidden layer."""
         hidden_output, hidden_levels = self.hidden_layer.compute(inputs)
         output, levels = self.output_layer.compute(hidden_output)
-        return output, levels
+
+        output_duty_cycles = self.output_layer.duty_cycles(firelog_window)
+
+        return output, levels, output_duty_cycles
 
     def set_weights(self, input_weights):
         """Assigns weights to the hidden and the output layer."""
