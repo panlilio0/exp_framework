@@ -123,3 +123,11 @@ April 6th | Hades Panlilio
 ### Install instructions
 April 7th | Matthew Meek
 - updated `INSTALL.md` for getting things working on the sudoless lab machines.
+
+### SNN Refactor
+April 9th | Thomas Bremer
+- Added docs for all SNN methods
+- Fixed neuron duty cycle
+- Added logs for duty cycle and proper fire log
+- Added option to generate SNN logs with run_individual.py
+- Added graphing notebook for SNN logs

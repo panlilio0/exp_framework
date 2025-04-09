@@ -1,9 +1,14 @@
 """
 Module for running SNN outputs with proper input/output handling.
+
+Authors: Abhay Kashyap, Atharv Tekurkar
 """
 
+from datetime import datetime
 import json
 import os
+from pathlib import Path
+import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from snn.model_struct import SpikyNet
@@ -16,7 +21,6 @@ _project_root = os.path.dirname(os.path.dirname(_current_file))
 ROBOT_DATA_PATH = os.path.join(_project_root, "morpho_demo", "world_data",
                                "bestbot.json")
 
-
 class SNNController:
     """Class to handle SNN input/output processing."""
 
@@ -25,7 +29,17 @@ class SNNController:
                  hidden_size,
                  output_size,
                  robot_config=ROBOT_DATA_PATH):
-        """Initialize with None - will set sizes after loading robot data."""
+        """
+        
+        Initializes an SNN Controller for a given robot and SNN hyperparameters.
+
+        Parameters:
+            inp_size (int): Number of inputs for each SNN
+            hidden_size (int): Number of nodes in the hidden layer.
+            output_size (int): Number of outputs.
+            robot_config (str): A robot's .json file.
+        """
+
         self.snns = []
         self.num_snn = 0  # Number of spiking neural networks (actuators)
         self.inp_size = inp_size
@@ -40,19 +54,20 @@ class SNNController:
         Args:
             robot_path (str): Path to robot JSON configuration file
             
-        Returns:
-            tuple: (num_actuators, input_size) - Network dimensions
         """
         if not os.path.exists(robot_path):
             raise FileNotFoundError(
                 f"Robot configuration file not found: {robot_path}")
         with open(robot_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
+
         # Extract robot data
         robot_key = list(data["objects"].keys())[0]
         robot_data = data["objects"][robot_key]
+
         # Count actuators (types 3 and 4)
         self.num_snn = sum(1 for t in robot_data["types"] if t in [3, 4])
+
         # Initialize SNN with proper dimensions
         self.snns = [
             SpikyNet(input_size=self.inp_size,
@@ -75,7 +90,8 @@ class SNNController:
         Raises:
             ValueError: If the length of the CMA-ES output does not match the expected size.
         """
-
+        
+        # Compute parameters for each SNN
         params_per_hidden_layer = (self.inp_size + 1) * self.hidden_size
         params_per_output_layer = (self.hidden_size + 1) * self.output_size
         params_per_snn = params_per_hidden_layer + params_per_output_layer
@@ -92,6 +108,7 @@ class SNNController:
 
         # For each SNN, split the parameters into weights and biases.
         snn_parameters = {}
+
         for snn_idx, params_per_snn in enumerate(reshaped):
             hidden_params = params_per_snn[:params_per_hidden_layer]
             output_params = params_per_snn[params_per_hidden_layer:]
@@ -105,70 +122,104 @@ class SNNController:
 
     def _get_output_state(self, inputs):
         """
-        Run SNN with inter-actuator distances as input over multiple timesteps.
+        Run SNN with distances from each actuator to corners of robot.
         
         Args:
-            inputs (list): inter-actuator distances
+            inputs (list): A list of tuples of the distances to the top left point mass and bottom right point mass
+                           for each actuator in the robot.
             
         Returns:
-            dict: Contains 'continuous_actions' and 'duty_cycles'
-        """
-
-        # Normalizing inputs between -1 and 1
-        """
-        x_vals, y_vals = zip(*inputs)  # Unzips into two lists
-
-        # Find min and max for each component
-        x_min, x_max = min(x_vals), max(x_vals)
-        y_min, y_max = min(y_vals), max(y_vals)
-
-        # Normalize each component independently
-        inputs = [
-            (
-                2 * (x - x_min) / (x_max - x_min) - 1,  # Normalize x
-                2 * (y - y_min) / (y_max - y_min) - 1  # Normalize y
-            ) for x, y in inputs
-        ]
+            dict: Contains 'continuous_actions' and 'duty_cycles' for each SNN.
         """
 
         outputs = {}
         for snn_id, snn in enumerate(self.snns):
-            spikes, levels, duty_cycles = snn.compute(inputs[snn_id])
-            
-            # print(duty_cycle)
-            # Map duty_cycle (assumed in [0,1]) to target length in [MIN_LENGTH, MAX_LENGTH]
-            # print(duty_cycles[0])
-            # actions = [
-            #     1.6 if duty_cycles[0] > 0.5 else 0.6
-            # ]
+
+            spikes, levels = snn.compute(inputs[snn_id])
+
             actions = [
                 1.6 if spikes[0] == 1 else 0.6
             ]
-            # print(actions)
+
             outputs[snn_id] = {
                 "target_length": actions,
                 "outputs": spikes[0],
                 "levels": levels,
-                "duty_cycles": duty_cycles
             }
 
         return outputs
 
     def get_lengths(self, inputs):
         """
-        Returns a list of target lengths (action array)
+        Returns a list of target lengths (action array).
+
+        Args:
+            inputs (list): A list of tuples of the distances to the top left point mass and bottom right point mass
+                           for each actuator in the robot.
+
+        Returns:
+            list: Target length for each actuator, the "action array".
         """
+        
         out = self._get_output_state(inputs)
+
         lengths = []
-        spikes = []
-        levels = []
+
         for _, item in out.items():
             lengths.append(item['target_length'])
-            spikes.append(item['outputs'])
-            levels.append(item['levels'])
-        return lengths, spikes, levels
 
-    def get_out_layer_firelog(self):
+        return lengths
+    
+    def generate_output_csv(self):
+        """
+        Generates an output csv log file for activation level, firelog, and firing frequency for
+        each neuron in each SNN.
+        """
+
+        # Get logs
+        fire_logs = self.get_fire_log()
+        level_logs = self.get_levels_log()
+        duty_cycle_logs = self.get_duty_cycle_log()
+
+        # Find how many time steps there were
+        steps = len(fire_logs[0]['hidden'][0])
+
+        # Generate SNN_log csv file
+        csv_header = ['SNN', "layer", 'neuron', 'log']
+        csv_header.extend([f"step{i}" for i in range(steps)])
+
+        df = pd.DataFrame(columns=csv_header)
+
+        # Iterate through logs to generate csv
+        for snn_id, snn in fire_logs.items():
+            for layer_name, layer in snn.items():
+                for neuron_id, fire_log_data in enumerate(layer):
+                    # Make levels log row
+                    level_log_data = level_logs[snn_id][layer_name][neuron_id]
+                    level_log_row = [str(snn_id), str(layer_name), str(neuron_id), "levellog"]
+                    level_log_row.extend(level_log_data)
+                    df.loc[len(df)] = level_log_row
+
+                    # Make fire log row
+                    fire_log_row = [str(snn_id), str(layer_name), str(neuron_id), "firelog"]
+                    fire_log_row.extend(fire_log_data)
+                    df.loc[len(df)] = fire_log_row
+
+                    # Make duty cycle log row
+                    duty_cycle_data = duty_cycle_logs[snn_id][layer_name][neuron_id]
+                    duty_cycle_row = [str(snn_id), str(layer_name), str(neuron_id), "dutycyclelog"]
+                    duty_cycle_row.extend(duty_cycle_data)
+                    df.loc[len(df)] = duty_cycle_row
+
+        # Generate file
+        date_time = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+        Path(os.path.join(_project_root, "cmaes_framework", "snn_log")).mkdir(parents=True, exist_ok=True)
+        csv_path = os.path.join(os.path.join(_project_root, "cmaes_framework", "snn_log", f"{date_time}.csv"))
+
+        df.to_csv(csv_path, index=False)
+
+
+    def get_fire_log(self):
         """
         Return a dictionary with the firelog for each node in the hidden and output
         layers of each SNN in the controller.
@@ -181,11 +232,11 @@ class SNNController:
         return {
             i: {
                 'hidden': [
-                    snn.hidden_layer.nodes[n].firelog
+                    snn.hidden_layer.nodes[n].fire_log
                     for n in range(len(snn.hidden_layer.nodes))
                 ],
                 'output': [
-                    snn.output_layer.nodes[n].firelog
+                    snn.output_layer.nodes[n].fire_log
                     for n in range(len(snn.output_layer.nodes))
                 ]
             }
@@ -217,16 +268,28 @@ class SNNController:
             for i, snn in enumerate(self.snns)
         }
     
-    
-    def get_output_layer_firelogs(self):
-        """Returns spike trains for each neuron in the output layer for each SNN."""
-        logs = []
-        for snn in self.snns:
-            snn_logs = []
-            for node in snn.output_layer.nodes:
-                snn_logs.append(node.firelog.get())  # Get full spike history for each node in the output layer
-            logs.append(snn_logs)
-        return logs
+    def get_duty_cycle_log(self):
+        """
+        Return a dictionary with the duty cycle
+        log for each node in the hidden and output
+        layers of each SNN in the controller.
+        
+        Returns:
+            dict: Dictionary with structure:
+                    {snn_id: {'hidden': [duty_cycle_node_1, duty_cycle_node_2, ...],
+                              'output': [duty_cycle_node_1, duty_cycle_node_2, ...]}}
+        """
+        return {
+            i: {
+                'hidden': [
+                    snn.hidden_layer.nodes[n].get_duty_cycle_log()
+                    for n in range(len(snn.hidden_layer.nodes))
+                ],
+                'output': [
+                    snn.output_layer.nodes[n].get_duty_cycle_log()
+                    for n in range(len(snn.output_layer.nodes))
+                ]
+            }
+            for i, snn in enumerate(self.snns)
+        }
 
-
-    
