@@ -24,7 +24,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '--mode',  #headless, screen, video, both h, s, v, b
         help='mode for output. h-headless , s-screen, v-video, b-both',
-        default="h")
+        default="s")
     parser.add_argument('--gens',
                         type=int,
                         help='number of generations to run',
