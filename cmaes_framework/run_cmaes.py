@@ -40,7 +40,7 @@ SNN_INPUT_SHAPE = 72
 MEAN_ARRAY = [0.0] * SNN_INPUT_SHAPE
 
 # Num of sim time steps
-NUM_ITERS = 1000
+NUM_ITERS = 100
 
 
 VERBOSE = False
@@ -84,7 +84,7 @@ def run(mode, gens, sigma_val):
     if is_windows():
         os.symlink(csv_path, os.path.join("cmaes_framework", "latest.csv"))
     else:
-        os.system("ln -s " + csv_path + " latest.csv")
+        os.system("ln -s " + csv_path + " " + os.path.join("cmaes_framework", "latest.csv"))
 
     pd.DataFrame(columns=csv_header).to_csv(csv_path, index=False)
 
@@ -100,7 +100,7 @@ def run(mode, gens, sigma_val):
         # Run individuals
         for _ in range(optimizer.population_size):
             x = optimizer.ask() # Ask cmaes for a genome
-            fitness, _, _ = run_simulation.run(NUM_ITERS, x, "h") # get fitness
+            fitness = run_simulation.run(NUM_ITERS, x, "h") # get fitness
             solutions.append((x, fitness))
 
         optimizer.tell(solutions) # Tell cmaes about population

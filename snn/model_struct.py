@@ -28,7 +28,7 @@ class SpikyNode:
 
         self._weights = np.random.uniform(-0.3, 0.3, (size + 1))
         self.level = -0.1  # activation level
-        self.firelog = RingBuffer(
+        self.buffer = RingBuffer(
             MAX_FIRELOG_SIZE)  # tracks whether the neuron fired or not
         self.levels_log = []
         self.fire_log = []
@@ -60,7 +60,7 @@ class SpikyNode:
         self.levels_log.append(self.level)
 
         if self.level >= self.get_bias(): # Neuron fires
-            self.level = -np.inf
+            self.level = 0
             
             self.fire_log.append(1)
             self.buffer.add(1)
@@ -258,9 +258,7 @@ class SpikyNet:
         hidden_output, hidden_levels = self.hidden_layer.compute(inputs)
         output, levels = self.output_layer.compute(hidden_output)
 
-        output_duty_cycles = self.output_layer.duty_cycles(firelog_window)
-
-        return output, levels, output_duty_cycles
+        return output, levels
 
     def set_weights(self, input_weights):
         """

@@ -135,7 +135,7 @@ class SNNController:
         outputs = {}
         for snn_id, snn in enumerate(self.snns):
 
-            duty_cycle, levels = snn.compute(inputs[snn_id])
+            spikes, levels = snn.compute(inputs[snn_id])
 
             actions = [
                 1.6 if spikes[0] == 1 else 0.6
@@ -161,14 +161,14 @@ class SNNController:
             list: Target length for each actuator, the "action array".
         """
         
-        out, levels = self._get_output_state(inputs)
+        out = self._get_output_state(inputs)
 
         lengths = []
 
         for _, item in out.items():
             lengths.append(item['target_length'])
 
-        return lengths, levels
+        return lengths
     
     def generate_output_csv(self):
         """
