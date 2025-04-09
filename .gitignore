@@ -146,8 +146,6 @@ levels_log
 
 latest.csv
 
-snn_log
-
 # backup dir
 backup_*
 
