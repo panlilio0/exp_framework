@@ -4,8 +4,11 @@ Module for running SNN outputs with proper input/output handling.
 Authors: Abhay Kashyap, Atharv Tekurkar
 """
 
+from datetime import datetime
 import json
 import os
+from pathlib import Path
+import pandas as pd
 import numpy as np
 from snn.model_struct import SpikyNet
 
@@ -162,8 +165,57 @@ class SNNController:
         for _, item in out.items():
             lengths.append(item['target_length'])
         return lengths, levels
+    
+    def generate_output_csv(self):
+        """
+        Generates an output csv log file for activation level, firelog, and firing frequency for
+        each neuron in each SNN.
+        """
 
-    def get_out_layer_firelog(self):
+        # Get logs
+        fire_logs = self.get_fire_log()
+        level_logs = self.get_levels_log()
+        duty_cycle_logs = self.get_duty_cycle_log()
+
+        # Find how many time steps there were
+        steps = len(fire_logs[0]['hidden'][0])
+
+        # Generate SNN_log csv file
+        csv_header = ['SNN', "layer", 'neuron', 'log']
+        csv_header.extend([f"step{i}" for i in range(steps)])
+
+        df = pd.DataFrame(columns=csv_header)
+
+        # Iterate through logs to generate csv
+        for snn_id, snn in fire_logs.items():
+            for layer_name, layer in snn.items():
+                for neuron_id, fire_log_data in enumerate(layer):
+                    # Make levels log row
+                    level_log_data = level_logs[snn_id][layer_name][neuron_id]
+                    level_log_row = [str(snn_id), str(layer_name), str(neuron_id), "levellog"]
+                    level_log_row.extend(level_log_data)
+                    df.loc[len(df)] = level_log_row
+
+                    # Make fire log row
+                    fire_log_row = [str(snn_id), str(layer_name), str(neuron_id), "firelog"]
+                    fire_log_row.extend(fire_log_data)
+                    df.loc[len(df)] = fire_log_row
+
+                    # Make duty cycle log row
+                    duty_cycle_data = duty_cycle_logs[snn_id][layer_name][neuron_id]
+                    duty_cycle_row = [str(snn_id), str(layer_name), str(neuron_id), "dutycyclelog"]
+                    duty_cycle_row.extend(duty_cycle_data)
+                    df.loc[len(df)] = duty_cycle_row
+
+        # Generate file
+        date_time = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+        Path(os.path.join(_project_root, "cmaes_framework", "snn_log")).mkdir(parents=True, exist_ok=True)
+        csv_path = os.path.join(os.path.join(_project_root, "cmaes_framework", "snn_log", f"{date_time}.csv"))
+
+        df.to_csv(csv_path, index=False)
+
+
+    def get_fire_log(self):
         """
         Return a dictionary with the firelog for each node in the hidden and output
         layers of each SNN in the controller.
@@ -176,11 +228,11 @@ class SNNController:
         return {
             i: {
                 'hidden': [
-                    snn.hidden_layer.nodes[n].firelog
+                    snn.hidden_layer.nodes[n].fire_log
                     for n in range(len(snn.hidden_layer.nodes))
                 ],
                 'output': [
-                    snn.output_layer.nodes[n].firelog
+                    snn.output_layer.nodes[n].fire_log
                     for n in range(len(snn.output_layer.nodes))
                 ]
             }
@@ -206,6 +258,31 @@ class SNNController:
                 ],
                 'output': [
                     snn.output_layer.nodes[n].get_levels_log()
+                    for n in range(len(snn.output_layer.nodes))
+                ]
+            }
+            for i, snn in enumerate(self.snns)
+        }
+    
+    def get_duty_cycle_log(self):
+        """
+        Return a dictionary with the duty cycle
+        log for each node in the hidden and output
+        layers of each SNN in the controller.
+        
+        Returns:
+            dict: Dictionary with structure:
+                    {snn_id: {'hidden': [duty_cycle_node_1, duty_cycle_node_2, ...],
+                              'output': [duty_cycle_node_1, duty_cycle_node_2, ...]}}
+        """
+        return {
+            i: {
+                'hidden': [
+                    snn.hidden_layer.nodes[n].get_duty_cycle_log()
+                    for n in range(len(snn.hidden_layer.nodes))
+                ],
+                'output': [
+                    snn.output_layer.nodes[n].get_duty_cycle_log()
                     for n in range(len(snn.output_layer.nodes))
                 ]
             }

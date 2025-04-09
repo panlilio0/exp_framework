@@ -29,7 +29,7 @@ SNN_INPUT_SHAPE = 72
 MEAN_ARRAY = [0.0] * SNN_INPUT_SHAPE
 
 # Num of sim time steps
-NUM_ITERS = 100
+NUM_ITERS = 500
 
 VERBOSE = False
 

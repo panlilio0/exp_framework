@@ -10,7 +10,7 @@ from snn.ring_buffer import RingBuffer
 # Constants
 SPIKE_DECAY = 0.1
 MAX_BIAS = 1
-MAX_FIRELOG_SIZE = 200
+MAX_FIRELOG_SIZE = 10
 
 class SpikyNode:
     """
@@ -27,9 +27,10 @@ class SpikyNode:
         # a list of weights and a bias (last item in the list)
         self._weights = np.random.uniform(-1, 1, (size + 1))
         self.level = -np.inf  # activation level
-        self.firelog = RingBuffer(
-            MAX_FIRELOG_SIZE)  # tracks whether the neuron fired or not
+        self.buffer = RingBuffer(MAX_FIRELOG_SIZE)
         self.levels_log = []
+        self.fire_log = []
+        self.duty_cycle_log = []
 
     def compute(self, inputs):
         """
@@ -60,17 +61,22 @@ class SpikyNode:
 
         self.levels_log.append(self.level)
 
-        if self.level >= self.get_bias():
-            # print("Fired --> activation level reset to 0.0\n")
+        if self.level >= self.get_bias(): # Neuron fires
             self.level = -np.inf
-            self.firelog.add(1)
-            return 1.0, self.level
-        
-        # print("\n")
-        self.firelog.add(0)
-        return 0.0, self.level
+            
+            self.fire_log.append(1)
+            self.buffer.add(1)
+            self.duty_cycle_log.append(self.duty_cycle())
 
-    def duty_cycle(self, window=100):
+            return 1.0, self.level
+        else:                             # Neuron doesn't fire
+            self.fire_log.append(0)
+            self.buffer.add(0)
+            self.duty_cycle_log.append(self.duty_cycle())
+
+            return 0.0, self.level
+
+    def duty_cycle(self):
         """
         Measures how frequently the neuron fires.
 
@@ -78,16 +84,15 @@ class SpikyNode:
             window (int): How far back to compute the duty cycle.
 
         Returns:
-            float: What pecent of the last `window` timesteps the neuron fired, in decimal form.
-        
+            float: What pecent of the last `MAX_FIRELOG_SIZE` timesteps the neuron fired, in decimal form.
         """
-        if self.firelog.length() == 0:
+        if self.buffer.length() == 0:
             return 0.0
-        if window is None or window > self.firelog.length():
-            window = self.firelog.length()
-        recent_fires = self.firelog.get()[-window:]
-        # Return an unrounded fraction so the mapping can be more precise.
-        return sum(recent_fires) / window
+
+        recent_fires = self.buffer.get()
+    
+        return recent_fires.count(1)/MAX_FIRELOG_SIZE
+
 
     def set_weights(self, input_weights):
         """
@@ -104,20 +109,57 @@ class SpikyNode:
             # self._weights = input_weights.copy()
 
     def set_bias(self, val):
-        """Sets the neuron's bias."""
+        """Sets the neuron's bias.
+        
+        Parameters:
+            val (float): Value for neuron bias.
+        """
         self._weights[-1] = val
 
     def get_bias(self):
-        """Returns the bias from the combined list of weights and bias."""
+        """
+        Returns the bias from the combined list of weights and bias.
+
+        Returns:
+            float: The neuron's bias.
+        """
         return self._weights[-1]
 
     def print_weights(self):
-        """Prints the combined list of weights and bias."""
+        """
+        Prints the combined list of weights and bias.
+        
+        Returns:
+            list: A list of weights, with the last entry being the neuron's bias.
+        """
         print(self._weights)
 
     def get_levels_log(self):
-        """Return the list of the neuron's recent activation levels."""
+        """
+        Return the list of the neuron's recent activation levels.
+        
+        Returns:
+            list: A list of all the neuron's levels.
+        """
         return self.levels_log
+    
+    def get_fire_log(self):
+        """
+        Return the list of the neuron's firelog.
+        
+        Returns:
+            list: A list representing the neuron's firelog.
+        """
+        return self.fire_log
+    
+    def get_duty_cycle_log(self):
+        """
+        Return the neuron's duty cycle for each timestep.
+        
+        Returns:
+            list: A list of all the neuron's duty cycles for each time step..
+        """
+        return self.duty_cycle_log
 
     @property
     def weights(self):
@@ -177,7 +219,7 @@ class SpikyLayer:
             end = start + weights_per_node
             node.set_weights(input_weights[start:end])
 
-    def duty_cycles(self, window=100):
+    def duty_cycles(self):
         """
         Returns the duty cycles for the neurons in the layer.
         
@@ -187,7 +229,7 @@ class SpikyLayer:
         Returns:
             list: The duty cycle for each neuron in the layer.
         """
-        return [node.duty_cycle(window) for node in self.nodes]
+        return [node.duty_cycle() for node in self.nodes]
 
 
 class SpikyNet:
@@ -208,13 +250,12 @@ class SpikyNet:
         self.hidden_layer = SpikyLayer(hidden_size, input_size)
         self.output_layer = SpikyLayer(output_size, hidden_size)
 
-    def compute(self, inputs, firelog_window=100):
+    def compute(self, inputs):
         """
         Passes the input through the hidden layer.
         
         Parameters:
             inputs (list): Inputs to the network.
-            firelog_window (int): Number of previous timesteps to compute duty cycle.
         """
 
         hidden_output, hidden_levels = self.hidden_layer.compute(inputs)
@@ -222,7 +263,14 @@ class SpikyNet:
         return output, levels
 
     def set_weights(self, input_weights):
-        """Assigns weights to the hidden and the output layer."""
+        """
+        Assigns weights to the hidden and the output layer.
+        
+        Parameters:
+            input_weights: A dictionary with two keys: 'hidden_layer', mapping to a list
+                           of all that layer's weights and biases, and a key 'output_layer',
+                           mapping to a list of all that layers weights and biases.
+        """
         self.hidden_layer.set_weights(input_weights['hidden_layer'])
         self.output_layer.set_weights(input_weights['output_layer'])
 

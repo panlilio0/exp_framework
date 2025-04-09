@@ -66,7 +66,7 @@ def group_list(flat_list: list, n: int) -> list:
     """
     return [list(flat_list[i:i+n]) for i in range(0, len(flat_list), n)]
 
-def run(iters, genome, mode, vid_name=None, vid_path=None):
+def run(iters, genome, mode, vid_name=None, vid_path=None, snn_logs=False):
     """
     Runs a single simulation of a given genome.
 
@@ -80,6 +80,7 @@ def run(iters, genome, mode, vid_name=None, vid_path=None):
                        "b: shows the simulation on a window and saves a video.
         vid_name (string): If mode is "v" or "b", this is the name of the saved video.
         vid_path (string): If mode is "v" or "b", this is the path the video will be saved.
+        snn_logs (bool): Whether to produce SNN logs.
     Returns:
         float: The fitness of the genome.
     """
@@ -130,7 +131,7 @@ def run(iters, genome, mode, vid_name=None, vid_path=None):
         action, log = snn_controller.get_lengths(corner_distances)
 
         # Clip actuator target lengths to be between 0.6 and 1.6 to prevent buggy behavior
-        action = np.clip(action[0], ACTUATOR_MIN_LEN, ACTUATOR_MAX_LEN)
+        action = np.clip(action, ACTUATOR_MIN_LEN, ACTUATOR_MAX_LEN)
 
         # Set robot action to the action vector. Each actuator corresponds to a vector
         # index and will try to expand/contract to that value
@@ -156,5 +157,8 @@ def run(iters, genome, mode, vid_name=None, vid_path=None):
 
     if mode in ["v", "b"]:
         create_video(video_frames, vid_name, vid_path, FPS)
+
+    if snn_logs:
+        snn_controller.generate_output_csv()
 
     return FITNESS_OFFSET - fitness # Turn into a minimization problem
