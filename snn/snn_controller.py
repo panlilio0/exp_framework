@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 from snn.model_struct import SpikyNet
 
 # Constants for SNN configuration
@@ -133,20 +134,20 @@ class SNNController:
 
         outputs = {}
         for snn_id, snn in enumerate(self.snns):
+
             duty_cycle, levels = snn.compute(inputs[snn_id])
 
-            # Map duty_cycle (assumed in [0,1]) to target length in [MIN_LENGTH, MAX_LENGTH]
             actions = [
-                1.6 if duty_cycle[0] == 1 else 0.6
+                1.6 if spikes[0] == 1 else 0.6
             ]
 
             outputs[snn_id] = {
                 "target_length": actions,
-                "duty_cycle": duty_cycle,
-                "levels": levels
+                "outputs": spikes[0],
+                "levels": levels,
             }
 
-        return outputs, levels
+        return outputs
 
     def get_lengths(self, inputs):
         """
@@ -161,9 +162,12 @@ class SNNController:
         """
         
         out, levels = self._get_output_state(inputs)
+
         lengths = []
+
         for _, item in out.items():
             lengths.append(item['target_length'])
+
         return lengths, levels
     
     def generate_output_csv(self):
@@ -288,3 +292,4 @@ class SNNController:
             }
             for i, snn in enumerate(self.snns)
         }
+

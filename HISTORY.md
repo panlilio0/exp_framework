@@ -105,9 +105,24 @@ Mar 20th | Viet-Dung (Darren) Nguyen
 ### Ozempic TWO
 April 3rd | Matthew Meek & Thomas Breimer
 - Removed folders with legacy code. `voxel_length_test`, `rmhc_sim`, `cmaes_demo`, `morpho_demo`.
-- Ozempic-ed `cmaes_integration`: removed all code non-essential for it to run. 
+- Ozempic-ed `cmaes_integration`: removed all code non-essential for it to run.
 - Renamed `cmaes_integration` to `cmaes_framework`.
 - Reverted framework to old version circa week 9 Winter 2025
+
+### Windows
+April 3rd | Thomas Breimer
+- Changed csv file naming for Windows compat
+
+### SNN Visualizations
+- Created feature branch to investigate SNN firing and levels
+- Forked repository and switched to SNN branch
+
+April 6th | Hades Panlilio
+- Adjusted weights and neruon resets
+
+### Install instructions
+April 7th | Matthew Meek
+- updated `INSTALL.md` for getting things working on the sudoless lab machines.
 
 ### SNN Refactor
 April 9th | Thomas Bremer

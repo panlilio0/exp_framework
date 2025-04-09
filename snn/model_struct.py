@@ -25,9 +25,11 @@ class SpikyNode:
             size (int): Number of weights plus the bias.
         """
         # a list of weights and a bias (last item in the list)
-        self._weights = np.random.uniform(-1, 1, (size + 1))
-        self.level = -np.inf  # activation level
-        self.buffer = RingBuffer(MAX_FIRELOG_SIZE)
+
+        self._weights = np.random.uniform(-0.3, 0.3, (size + 1))
+        self.level = -0.1  # activation level
+        self.firelog = RingBuffer(
+            MAX_FIRELOG_SIZE)  # tracks whether the neuron fired or not
         self.levels_log = []
         self.fire_log = []
         self.duty_cycle_log = []
@@ -53,11 +55,7 @@ class SpikyNode:
 
         weighted_sum = sum(inputs[i] * self._weights[i]
                            for i in range(len(inputs)))
-
-        if self.level == -np.inf:
-            self.level = weighted_sum
-        else:
-            self.level += weighted_sum
+        self.level += weighted_sum
 
         self.levels_log.append(self.level)
 
@@ -67,7 +65,6 @@ class SpikyNode:
             self.fire_log.append(1)
             self.buffer.add(1)
             self.duty_cycle_log.append(self.duty_cycle())
-
             return 1.0, self.level
         else:                             # Neuron doesn't fire
             self.fire_log.append(0)
@@ -105,7 +102,7 @@ class SpikyNode:
             print("Weight size mismatch in node")
         else:
             self._weights = input_weights.copy()
-            self._weights[:-1] = list(map(lambda x: abs(x), self._weights[:-1])) # Taking the abs of weight?
+            self._weights[:-1] = list(map(lambda x: abs(x), self._weights[:-1]))
             # self._weights = input_weights.copy()
 
     def set_bias(self, val):
@@ -260,7 +257,10 @@ class SpikyNet:
 
         hidden_output, hidden_levels = self.hidden_layer.compute(inputs)
         output, levels = self.output_layer.compute(hidden_output)
-        return output, levels
+
+        output_duty_cycles = self.output_layer.duty_cycles(firelog_window)
+
+        return output, levels, output_duty_cycles
 
     def set_weights(self, input_weights):
         """
