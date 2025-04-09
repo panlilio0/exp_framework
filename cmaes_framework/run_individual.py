@@ -6,6 +6,9 @@ Takes another command line arg "--mode" which displays the simulation in differe
 each simulation as a video in `./videos`. "-mode b" shows on screen and saves a video.
 Must also specify --filename for csv file.
 
+Run with command line argument `--logs true` to create SNN logs.
+A CSV file will be generated in /cmaes_framework/snn_logs.
+
 Author: Thomas Breimer
 January 29th, 2025
 """
@@ -78,7 +81,7 @@ if __name__ == "__main__":
         '--logs',
         type=str,
         help='whether to generate SNN logs (true/false)',
-        default="true")
+        default="false")
 
     args = parser.parse_args()
 

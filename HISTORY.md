@@ -108,3 +108,11 @@ April 3rd | Matthew Meek & Thomas Breimer
 - Ozempic-ed `cmaes_integration`: removed all code non-essential for it to run. 
 - Renamed `cmaes_integration` to `cmaes_framework`.
 - Reverted framework to old version circa week 9 Winter 2025
+
+### SNN Refactor
+April 9th | Thomas Bremer
+- Added docs for all SNN methods
+- Fixed neuron duty cycle
+- Added logs for duty cycle and proper fire log
+- Added option to generate SNN logs with run_individual.py
+- Added graphing notebook for SNN logs
