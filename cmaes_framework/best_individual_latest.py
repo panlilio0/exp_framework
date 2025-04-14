@@ -43,7 +43,7 @@ def wait_for_file(path):
 
 
 
-def visualize_best(mode, filename="latest.csv"):
+def visualize_best(mode, logs, filename="latest.csv"):
     """
     Look at a csv and continuously run best individual.
     
@@ -55,24 +55,33 @@ def visualize_best(mode, filename="latest.csv"):
 
     while True:
         if os.path.exists(path):
-            df = pandas.read_csv(path)
+            df = wait_for_file(path)
 
-            best_fitness = min(df["best_fitness"])
-            row = df.loc[df['best_fitness'] == best_fitness]
-            genome = row.values.tolist()[0][GENOME_START_INDEX:]
-            generation = row.values.tolist()[0][0]
+            try:
+                best_fitness = min(df["best_fitness"])
+                row = df.loc[df['best_fitness'] == best_fitness]
+                genome = row.values.tolist()[0][GENOME_START_INDEX:]
+                generation = row.values.tolist()[0][0]
+                this_dir = pathlib.Path(__file__).parent.resolve()
+                vid_name = filename + "_gen" + str(generation)
+                vid_path = os.path.join(this_dir, "videos")
 
-            this_dir = pathlib.Path(__file__).parent.resolve()
-            vid_name = filename + "_gen" + str(generation)
-            vid_path = os.path.join(this_dir, "videos")
+                print("Fitness: ", best_fitness)
 
-            # Make video directory if we're making a video.
-            if mode in ["v", "b"]:
-                os.makedirs("videos", exist_ok=True)
-                run(ITERS, genome, mode, vid_name, vid_path)
-                quit()
-            else:
-                run(ITERS, genome, "s")
+                # Make video directory if we're making a video.
+                if mode in ["v", "b"]:
+                    os.makedirs("videos", exist_ok=True)
+                    run(ITERS, genome, mode, vid_name, vid_path, logs)
+                    quit()
+                else:
+                    run(ITERS, genome, "s", None, None, logs)
+                    if logs:
+                        quit()
+                    else:
+                        continue
+
+            except ValueError as e:
+                continue
 
 
 if __name__ == "__main__":
@@ -81,11 +90,16 @@ if __name__ == "__main__":
         '--mode', #headless, screen, video, both h, s, v, b
         help='mode for output. h-headless , s-screen, v-video, b-both',
         default="s")
+    parser.add_argument(
+        '--logs',
+        type=str,
+        help='whether to generate SNN logs (true/false)',
+        default="True")
 
     
     args = parser.parse_args()
     
-    visualize_best(args.mode)
+    visualize_best(args.mode, bool(args.logs))
 
         
     

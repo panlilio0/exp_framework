@@ -8,6 +8,7 @@ April 9th, 2025
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from matplotlib.cm import *
 
 def load_logs(file_path):
     """Load CSV log data."""

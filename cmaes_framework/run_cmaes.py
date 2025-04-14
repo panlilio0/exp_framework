@@ -40,7 +40,7 @@ SNN_INPUT_SHAPE = 72
 MEAN_ARRAY = [0.0] * SNN_INPUT_SHAPE
 
 # Num of sim time steps
-NUM_ITERS = 100
+ITERS = 100
 
 
 VERBOSE = False
@@ -84,13 +84,23 @@ def run(mode, gens, sigma_val):
     if is_windows():
         os.symlink(csv_path, os.path.join("cmaes_framework", "latest.csv"))
     else:
-        os.unlink("latest.csv")
+        try:
+            os.unlink("latest.csv")
+        except FileNotFoundError:
+            pass
         os.system("ln -s " + csv_path + " latest.csv")
 
     pd.DataFrame(columns=csv_header).to_csv(csv_path, index=False)
 
+    # Perhaps try bounds again? doesn't seem to be doing anything
+    # YES! This works
+    bounds = [(-1000, 1000)] * SNN_INPUT_SHAPE
+    for i in range(len(bounds)):
+       if (i+1) % 3 == 0:
+           bounds[i] = (0, 2000)
+
     # Init CMA
-    optimizer = CMA(mean=np.array(MEAN_ARRAY), sigma=sigma_val, population_size=12)
+    optimizer = CMA(mean=np.array(MEAN_ARRAY), sigma=sigma_val, bounds=np.array(bounds), population_size=12, lr_adapt=True)
 
     best_fitness_so_far = run_simulation.FITNESS_OFFSET
 
@@ -101,7 +111,7 @@ def run(mode, gens, sigma_val):
         # Run individuals
         for _ in range(optimizer.population_size):
             x = optimizer.ask() # Ask cmaes for a genome
-            fitness = run_simulation.run(NUM_ITERS, x, "h") # get fitness
+            fitness = run_simulation.run(ITERS, x, "h") # get fitness
             solutions.append((x, fitness))
 
         optimizer.tell(solutions) # Tell cmaes about population
@@ -133,7 +143,7 @@ def run(mode, gens, sigma_val):
             vid_name = DATE_TIME + "_gen" + str(generation)
             vid_path = os.path.join(ROOT_DIR, "videos", DATE_TIME)
 
-            run_simulation.run(NUM_ITERS, best_sol[GENOME_INDEX], mode, vid_name, vid_path)
+            run_simulation.run(ITERS, best_sol[GENOME_INDEX], mode, vid_name, vid_path)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='RL')
@@ -147,7 +157,7 @@ if __name__ == "__main__":
                         default=500)
     parser.add_argument('--sigma',
                         type=float,
-                        default=0.1,
+                        default=10,
                         help='sigma value for cma-es')
     args = parser.parse_args()
 
