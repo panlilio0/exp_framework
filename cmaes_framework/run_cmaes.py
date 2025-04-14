@@ -84,7 +84,8 @@ def run(mode, gens, sigma_val):
     if is_windows():
         os.symlink(csv_path, os.path.join("cmaes_framework", "latest.csv"))
     else:
-        os.system("ln -s " + csv_path + " " + os.path.join("cmaes_framework", "latest.csv"))
+        os.unlink("latest.csv")
+        os.system("ln -s " + csv_path + " latest.csv")
 
     pd.DataFrame(columns=csv_header).to_csv(csv_path, index=False)
 
