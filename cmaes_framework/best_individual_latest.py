@@ -74,10 +74,10 @@ def visualize_best(mode, logs, filename="latest.csv"):
                 # Make video directory if we're making a video.
                 if mode in ["v", "b"]:
                     os.makedirs(os.path.join("data", "videos"), exist_ok=True)
-                    run(ITERS, genome, mode, vid_name, vid_path, logs, (real_filename,".csv"))
+                    run(ITERS, genome, mode, vid_name, vid_path, logs, (real_filename + ".csv"))
                     quit()
                 elif mode in ["s","h"]:
-                    run(ITERS, genome, mode, None, None, logs, (real_filename,".csv"))
+                    run(ITERS, genome, mode, None, None, logs, (real_filename + ".csv"))
                     if logs:
                         quit()
 

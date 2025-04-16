@@ -57,7 +57,7 @@ def run_indvididual(generation, mode, filename, logs):
     real_filename = Path(vid_path).resolve().name.split(".")[0]
     vid_name = real_filename + "_gen_" + str(generation)
 
-    run(ITERS, genome, mode, vid_name, vid_path, logs, (real_filename,".csv"))
+    run(ITERS, genome, mode, vid_name, vid_path, logs, (real_filename + ".csv"))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='RL')
