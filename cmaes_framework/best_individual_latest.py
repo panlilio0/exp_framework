@@ -83,13 +83,16 @@ def visualize_best(mode, logs):
 
                 vid_name = source_file.stem + "_gen_" + str(generation)
 
+                folder_name = source_file.resolve().parent.name
+                log_filename = str(os.path.join(PARENTDIR, "data", "snn_logs", folder_name)) + ".csv"
+
                 # Make video directory if we're making a video.
                 if mode in ["v", "b"]:
                     os.makedirs(vid_path, exist_ok=True)
-                    run(ITERS, genome, mode, vid_name, vid_path, logs, source_file.name)
+                    run(ITERS, genome, mode, vid_name, vid_path, logs, log_filename)
                     quit()
                 elif mode in ["s", "h"]:
-                    run(ITERS, genome, mode, None, None, logs, source_file.name)
+                    run(ITERS, genome, mode, None, None, logs, log_filename)
                     if logs:
                         quit()
             except Exception as e:
