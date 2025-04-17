@@ -39,7 +39,7 @@ if __name__ == "__main__":
 
     # Start thread for running best individual
     if args.mode == "s":
-        t1 = threading.Thread(target=best_individual_latest.visualize_best)
+        t1 = threading.Thread(target=best_individual_latest.visualize_best("s","false"))
         t1.start()
 
         # We want to run in headless mode if in mode v, since the other thread
