@@ -6,6 +6,9 @@ Takes another command line arg "--mode" which displays the simulation in differe
 each simulation as a video in `./videos`. "-mode b" shows on screen and saves a video.
 Must also specify --filename for csv file.
 
+Run with command line argument `--logs true` to create SNN logs.
+A CSV file will be generated in /cmaes_framework/snn_logs.
+
 Author: Thomas Breimer
 January 29th, 2025
 """
@@ -13,13 +16,14 @@ January 29th, 2025
 import os
 import argparse
 import pathlib
+from pathlib import Path
 import pandas as pd
 from snn_sim.run_simulation import run
 
-ITERS = 1000
+ITERS = 100
 GENOME_START_INDEX = 3
 
-def run_indvididual(generation, mode, filename):
+def run_indvididual(generation, mode, filename, logs):
     """
     Run an individual from a csv file.
     
@@ -29,23 +33,31 @@ def run_indvididual(generation, mode, filename):
                        video, or both. "screen" renders the video to the screen. "video" saves a
                        video to the "./videos" folder. "both" does both of these things.
         filename (string): CSV file to look at. Should be in cmaes_framework/data directory.
+        logs (bool): Whether or not to produce SNN logs.
     """
 
     # Make video directory if we're making a video.
     if mode in ["v", "b"]:
-        os.makedirs("videos", exist_ok=True)
+        os.makedirs(os.path.join("data", "videos"), exist_ok=True)
+
+    this_dir = pathlib.Path(__file__).parent.resolve()
 
     # Read genome from csv file
-    this_dir = pathlib.Path(__file__).parent.resolve()
-    df = pd.read_csv(os.path.join(this_dir, os.path.join("data", filename)))
+    if filename == "latest.csv":
+        csv_path = os.path.join(this_dir, "latest.csv")
+    else:
+        csv_path = os.path.join(this_dir, os.path.join("data", filename))
+    
+    df = pd.read_csv(csv_path)
     row = df.loc[(df['generation']==generation)]
     genome = row.values.tolist()[0][GENOME_START_INDEX:]
 
     # Generate video name using times
-    vid_name = filename + "_gen" + str(generation)
-    vid_path = os.path.join(this_dir, "videos")
+    vid_path = os.path.join(this_dir, "data", "videos")
+    real_filename = Path(vid_path).resolve().name.split(".")[0]
+    vid_name = real_filename + "_gen_" + str(generation)
 
-    run(ITERS, genome, mode, vid_name, vid_path)
+    run(ITERS, genome, mode, vid_name, vid_path, logs, (real_filename + ".csv"))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='RL')
@@ -65,8 +77,14 @@ if __name__ == "__main__":
         '--filename',
         type=str,
         help='what csv file to look at',
-        default="default_csv.csv")
+        default="latest.csv")
+    
+    parser.add_argument(
+        '--logs',
+        type=str,
+        help='whether to generate SNN logs (true/false)',
+        default="false")
 
     args = parser.parse_args()
 
-    run_indvididual(args.gen, args.mode, args.filename)
+    run_indvididual(args.gen, args.mode, args.filename, bool(args.logs))
