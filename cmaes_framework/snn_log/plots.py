@@ -2,13 +2,17 @@
 Code for making plots based on SNN logs.
 
 Author: Thomas Breimer
-April 9th, 2025
+Modified by: James Gaskell
+
+Last modified:
+April 16th, 2025
 """
 
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.cm import *
+from pathlib import Path
 
 def load_logs(file_path):
     """Load CSV log data."""
@@ -137,3 +141,74 @@ def plot_snn_dutycycles(df, xlim, snn_id):
     plt.tight_layout()
     plt.xlim(0, xlim)
     plt.show()
+
+
+def plot_fitness_over_time(experiment_path):
+    """
+    Plot fitness over time across all runs in the given folder.
+    - If multiple runs: plot mean, min, and 25-75 percentile shading
+    - If single run: plot only best_so_far line
+    """
+
+    exp_path = Path(__file__).parent.parent.resolve() / experiment_path
+    print(f"Looking for run_*.csv files in: {exp_path}")
+
+    if not exp_path.exists() or not exp_path.is_dir():
+        print(f"Path '{experiment_path}' does not exist or is not a directory.")
+        return
+
+    run_files = list(exp_path.glob("run_*.csv"))
+    num_files = len(run_files)
+
+    if num_files == 0:
+        print(f"No run_*.csv files found in {exp_path}")
+        return
+
+    all_data = []
+
+    for file in run_files:
+        try:
+            df = pd.read_csv(file)
+            if 'generation' in df.columns and 'best_so_far' in df.columns:
+                df = df[['generation', 'best_so_far']]
+                df['run'] = file.name
+                all_data.append(df)
+        except Exception as e:
+            print(f"Could not read {file}: {e}")
+
+    if not all_data:
+        print("No valid data to plot.")
+        return
+
+    combined = pd.concat(all_data, ignore_index=True)
+
+    plt.figure(figsize=(12, 6))
+
+    avg_color = '#ff871d'  # Orange for average best fitness
+    best_color = '#4fafd9'  # Blue for best fitness per generation
+    shade_color = '#ffb266'
+
+    if num_files == 1:
+        df = all_data[0]
+        plt.plot(df['generation'], df['best_so_far'], label="Best Fitness", linewidth=2, Color=best_color)
+    else:
+        stats = combined.groupby('generation')['best_so_far'].agg([
+            'mean', 'min', lambda x: x.quantile(0.25), lambda x: x.quantile(0.75)
+        ]).rename(columns={
+            '<lambda_0>': 'q25',
+            '<lambda_1>': 'q75'
+        }).reset_index()
+
+        plt.plot(stats['generation'], stats['mean'], marker='o', label="Mean Best Fitness", linewidth=2, color=avg_color)
+        plt.plot(stats['generation'], stats['min'], marker='o', label="Overall Best Fitness", color=best_color)
+        plt.fill_between(stats['generation'], stats['q25'], stats['q75'], alpha=0.2, label='25-75th Percentile', color=shade_color)
+
+    plt.xlabel('Generation')
+    plt.ylabel('Best Fitness So Far')
+    title = (f'Fitness Over Time Across {num_files} Runs')
+    plt.title(title)
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
