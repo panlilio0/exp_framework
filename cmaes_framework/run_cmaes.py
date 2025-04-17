@@ -52,7 +52,7 @@ FITNESS_INDEX = 1
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 DATE_TIME = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
-def run(mode, gens, sigma_val):
+def run(mode, gens, sigma_val, output_folder=None, run_number=None):
     """
     Runs the cma_es algorithm on the robot locomotion problem,
     with sin-like robot actuators. Saves a csv file to ./output
@@ -75,22 +75,30 @@ def run(mode, gens, sigma_val):
 
     Path(os.path.join(ROOT_DIR, "data", "genomes")).mkdir(parents=True, exist_ok=True)
 
-    csv_path = os.path.join(ROOT_DIR, "data" , "genomes", f"{DATE_TIME}.csv")
+    if output_folder is None:
+        output_folder = DATE_TIME
 
-    # Set up latest.csv symlink
-    if os.path.exists(os.path.join("cmaes_framework", "latest.csv")):
-        os.remove(os.path.join("cmaes_framework", "latest.csv"))
+    csv_path = os.path.join(ROOT_DIR, "data", "genomes", output_folder)
+    Path(csv_path).mkdir(parents=True, exist_ok=True)
+    csv_filename = f"run_{run_number}.csv"
 
-    if is_windows():
-        os.symlink(csv_path, os.path.join("cmaes_framework", "latest.csv"))
-    else:
+    # Set up symlink to output folder (once, only for run_1)
+    symlink_path = os.path.join(ROOT_DIR, "latest_experiment")
+
+    if run_number == 1:
         try:
-            os.unlink("latest.csv")
-        except FileNotFoundError:
-            pass
-        os.system("ln -s " + csv_path + " latest.csv")
+            if os.path.islink(symlink_path) or os.path.exists(symlink_path):
+                os.remove(symlink_path)
 
-    pd.DataFrame(columns=csv_header).to_csv(csv_path, index=False)
+            if is_windows():
+                os.symlink(csv_path, symlink_path)
+            else:
+                os.system(f'ln -s "{csv_path}" "{symlink_path}"')
+                
+        except Exception as e:
+            print(f"Warning: could not create symlink to latest_experiment folder: {e}")
+
+    pd.DataFrame(columns=csv_header).to_csv(os.path.join(csv_path, csv_filename), index=False)
 
     # Perhaps try bounds again? doesn't seem to be doing anything
     # YES! This works
@@ -136,7 +144,7 @@ def run(mode, gens, sigma_val):
         new_row_df = pd.DataFrame([new_row], columns=csv_header)
 
         # Append the new row to the CSV file using pandas in append mode (no header this time).
-        new_row_df.to_csv(csv_path, mode='a', index=False, header=False)
+        new_row_df.to_csv(os.path.join(csv_path, csv_filename), mode='a', index=False, header=False)
 
         # If --mode s, v, or b show/save best individual from generation
         if mode in ["s", "b", "v"]:
