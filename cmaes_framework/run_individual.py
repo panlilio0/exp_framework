@@ -43,8 +43,8 @@ def run_indvididual(generation, mode, filename, logs):
     this_dir = pathlib.Path(__file__).parent.resolve()
 
     # Read genome from csv file
-    if filename == "latest.csv":
-        csv_path = os.path.join(this_dir, "latest.csv")
+    if filename == "latest_experiment/run_1.csv":
+        csv_path = os.path.join(this_dir, "latest_experiment/run_1.csv")
     else:
         csv_path = os.path.join(this_dir, os.path.join("data", filename))
     
@@ -77,7 +77,7 @@ if __name__ == "__main__":
         '--filename',
         type=str,
         help='what csv file to look at',
-        default="latest.csv")
+        default="latest_experiment/run_1.csv")
     
     parser.add_argument(
         '--logs',
