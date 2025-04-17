@@ -40,7 +40,7 @@ SNN_INPUT_SHAPE = 72
 MEAN_ARRAY = [0.0] * SNN_INPUT_SHAPE
 
 # Num of sim time steps
-ITERS = 500
+ITERS = 1000
 
 
 VERBOSE = False
@@ -94,7 +94,7 @@ def run(mode, gens, sigma_val, output_folder=None, run_number=None):
                 os.symlink(csv_path, symlink_path)
             else:
                 os.system(f'ln -s "{csv_path}" "{symlink_path}"')
-                
+
         except Exception as e:
             print(f"Warning: could not create symlink to latest_experiment folder: {e}")
 
