@@ -52,7 +52,7 @@ FITNESS_INDEX = 1
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 DATE_TIME = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
-def run(mode, gens, sigma_val, output_folder=None, run_number=None):
+def run(mode, gens, sigma_val, output_folder=DATE_TIME, run_number=1):
     """
     Runs the cma_es algorithm on the robot locomotion problem,
     with sin-like robot actuators. Saves a csv file to ./output
