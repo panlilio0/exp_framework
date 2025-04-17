@@ -190,7 +190,7 @@ def plot_fitness_over_time(experiment_path):
 
     if num_files == 1:
         df = all_data[0]
-        plt.plot(df['generation'], df['best_so_far'], label="Best Fitness", linewidth=2, Color=best_color)
+        plt.plot(df['generation'], df['best_so_far'], label="Best Fitness", linewidth=2, color=best_color)
     else:
         stats = combined.groupby('generation')['best_so_far'].agg([
             'mean', 'min', lambda x: x.quantile(0.25), lambda x: x.quantile(0.75)
