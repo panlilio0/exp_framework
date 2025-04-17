@@ -212,3 +212,51 @@ def plot_fitness_over_time(experiment_path):
     plt.tight_layout()
     plt.show()
 
+
+def boxplot_last_generation_fitness(experiment_path):
+    """
+    Create a box plot of best fitness values in the last generation across all runs in the given folder.
+    """
+
+    exp_path = Path(__file__).parent.parent.resolve() / experiment_path
+    print(f"Looking for run_*.csv files in: {exp_path}")
+
+    if not exp_path.exists() or not exp_path.is_dir():
+        print(f"Path '{experiment_path}' does not exist or is not a directory.")
+        return
+
+    run_files = list(exp_path.glob("run_*.csv"))
+    if not run_files:
+        print(f"No run_*.csv files found in {exp_path}")
+        return
+
+    last_gen_fitnesses = []
+
+    for file in run_files:
+        try:
+            df = pd.read_csv(file)
+            if 'generation' in df.columns and 'best_so_far' in df.columns:
+                last_gen = df['generation'].max()
+                last_fitness = df[df['generation'] == last_gen]['best_so_far'].values
+                if len(last_fitness) > 0:
+                    last_gen_fitnesses.append(last_fitness[0])
+        except Exception as e:
+            print(f"Could not read {file}: {e}")
+
+    if not last_gen_fitnesses:
+        print("No valid data found.")
+        return
+
+    plt.figure(figsize=(8, 6))
+    plt.boxplot(last_gen_fitnesses, vert=True, patch_artist=True,
+                boxprops=dict(facecolor='#ff871d', color='#ff871d'),
+                medianprops=dict(color='#4fafd9', linewidth=2))
+    
+    plt.ylabel('Best Fitness (Last Generation)')
+    plt.title(f'Best Fitnesses in Last Generation\n(Across {len(last_gen_fitnesses)} Runs)')
+    plt.grid(axis='y')
+    plt.xticks([1], ['Last Gen'])
+
+    plt.tight_layout()
+    plt.show()
+
