@@ -83,7 +83,7 @@ def run(mode, gens, sigma_val, output_folder=DATE_TIME, run_number=1):
     csv_filename = f"run_{run_number}.csv"
 
     # Set up symlink to output folder (once, only for run_1)
-    symlink_path = os.path.join(ROOT_DIR, "latest_experiment")
+    symlink_path = os.path.join(ROOT_DIR, "data","latest_genome")
 
     if run_number == 1:
         try:
@@ -96,7 +96,7 @@ def run(mode, gens, sigma_val, output_folder=DATE_TIME, run_number=1):
                 os.system(f'ln -s "{csv_path}" "{symlink_path}"')
 
         except Exception as e:
-            print(f"Warning: could not create symlink to latest_experiment folder: {e}")
+            print(f"Warning: could not create symlink to latest_genomes folder: {e}")
 
     pd.DataFrame(columns=csv_header).to_csv(os.path.join(csv_path, csv_filename), index=False)
 
@@ -108,7 +108,7 @@ def run(mode, gens, sigma_val, output_folder=DATE_TIME, run_number=1):
            bounds[i] = (0, 2000)
 
     # Init CMA
-    optimizer = CMA(mean=np.array(MEAN_ARRAY), sigma=sigma_val, bounds=np.array(bounds), population_size=12, lr_adapt=True,)
+    optimizer = CMA(mean=np.array(MEAN_ARRAY), sigma=sigma_val, bounds=np.array(bounds), population_size=12, lr_adapt=True)
 
     best_fitness_so_far = run_simulation.FITNESS_OFFSET
 

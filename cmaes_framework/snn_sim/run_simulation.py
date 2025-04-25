@@ -121,7 +121,6 @@ def run(iters, genome, mode, vid_name=None, vid_path=None, snn_logs=False, log_f
     snn_controller = SNNController(2, 2, 1, robot_config=robot_file_path)
     snn_controller.set_snn_weights(genome)
 
-
     for i in range(iters):
         # Get point mass locations
         raw_pm_pos = sim.object_pos_at_time(sim.get_time(), "robot")
