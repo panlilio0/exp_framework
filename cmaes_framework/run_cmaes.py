@@ -18,7 +18,7 @@ import argparse
 from datetime import datetime
 from pathlib import Path
 import pandas as pd
-from cmaes import CMA
+from cmaes import SepCMA
 import numpy as np
 from snn_sim import run_simulation
 import os
@@ -96,19 +96,19 @@ def run(mode, gens, sigma_val, output_folder=DATE_TIME, run_number=1):
                 os.system(f'ln -s "{csv_path}" "{symlink_path}"')
 
         except Exception as e:
-            print(f"Warning: could not create symlink to latest_genomes folder: {e}")
+            print(f"Warning: could not create symlink to latest_genome folder: {e}")
 
     pd.DataFrame(columns=csv_header).to_csv(os.path.join(csv_path, csv_filename), index=False)
 
     # Perhaps try bounds again? doesn't seem to be doing anything
     # YES! This works
-    bounds = [(-1000, 1000)] * SNN_INPUT_SHAPE
+    bounds = [(-100000, 100000)] * SNN_INPUT_SHAPE
     for i in range(len(bounds)):
        if (i+1) % 3 == 0:
-           bounds[i] = (0, 2000)
+           bounds[i] = (0, 200000)
 
     # Init CMA
-    optimizer = CMA(mean=np.array(MEAN_ARRAY), sigma=sigma_val, bounds=np.array(bounds), population_size=12, lr_adapt=True)
+    optimizer = SepCMA(mean=np.array(MEAN_ARRAY), sigma=sigma_val, bounds=np.array(bounds), population_size=12)
 
     best_fitness_so_far = run_simulation.FITNESS_OFFSET
 
@@ -165,7 +165,7 @@ if __name__ == "__main__":
                         default=500)
     parser.add_argument('--sigma',
                         type=float,
-                        default=10,
+                        default=100,
                         help='sigma value for cma-es')
     args = parser.parse_args()
 

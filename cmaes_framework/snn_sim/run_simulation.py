@@ -68,6 +68,7 @@ def group_list(flat_list: list, n: int) -> list:
     return [list(flat_list[i:i+n]) for i in range(0, len(flat_list), n)]
 
 
+
 def run(iters, genome, mode, vid_name=None, vid_path=None, snn_logs=False, log_filename=None):
     """
     Runs a single simulation of a given genome.
@@ -121,6 +122,18 @@ def run(iters, genome, mode, vid_name=None, vid_path=None, snn_logs=False, log_f
     snn_controller = SNNController(2, 2, 1, robot_config=robot_file_path)
     snn_controller.set_snn_weights(genome)
 
+    def scale_inputs(init, cur):
+        init = np.asarray(init, dtype=float)
+        cur  = np.asarray(cur,  dtype=float)
+        
+        # Compute relative change
+        scaled = ((cur - init) / init) * 10 + 1
+
+        # print("Scaled: ", scaled)
+        
+        # Clip so that min is -1 and max is 0
+        return scaled
+
     for i in range(iters):
         # Get point mass locations
         raw_pm_pos = sim.object_pos_at_time(sim.get_time(), "robot")
@@ -128,8 +141,13 @@ def run(iters, genome, mode, vid_name=None, vid_path=None, snn_logs=False, log_f
         # Get current corner distances
         corner_distances = np.array(morphology.get_corner_distances(raw_pm_pos))
 
+        if i == 0:
+            init = corner_distances
+
+        inputs = scale_inputs(init, corner_distances)
+
         # Get action from SNN controller
-        action = snn_controller.get_lengths(corner_distances)
+        action = snn_controller.get_lengths(inputs)
   
         # Clip actuator target lengths to be between 0.6 and 1.6 to prevent buggy behavior
         action = np.clip(action, ACTUATOR_MIN_LEN, ACTUATOR_MAX_LEN)
