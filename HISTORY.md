@@ -124,6 +124,6 @@ April 6th | Hades Panlilio
 April 7th | Matthew Meek
 - updated `INSTALL.md` for getting things working on the sudoless lab machines.
 
-### Install instructions
+### Devops instructions
 April 25th | Takumi
 - Added `DevOps.md` which is a manual of how to use screen command, du command, and ssh to lab computers.
