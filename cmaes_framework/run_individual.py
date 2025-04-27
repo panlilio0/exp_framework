@@ -23,7 +23,7 @@ from snn_sim.run_simulation import run
 ITERS = 100
 GENOME_START_INDEX = 3
 
-def run_indvididual(generation, mode, filename, logs):
+def run_indvididual(generation, mode, csv_path, logs):
     """
     Run an individual from a csv file.
     
@@ -41,21 +41,17 @@ def run_indvididual(generation, mode, filename, logs):
         os.makedirs(os.path.join("data", "videos"), exist_ok=True)
 
     this_dir = pathlib.Path(__file__).parent.resolve()
-
-    # Read genome from csv file
-    if filename == "latest_experiment/run_1.csv":
-        csv_path = os.path.join(this_dir, "latest_experiment/run_1.csv")
-    else:
-        csv_path = os.path.join(this_dir, os.path.join("data", filename))
     
     df = pd.read_csv(csv_path)
-    row = df.loc[(df['generation']==generation)]
+    row = df.loc[(df['generation']==generation-1)] # W have a 0 index generation which is actually our 1st
     genome = row.values.tolist()[0][GENOME_START_INDEX:]
 
     # Generate video name using times
     vid_path = os.path.join(this_dir, "data", "videos")
-    real_filename = Path(vid_path).resolve().name.split(".")[0]
+    real_filename = Path(csv_path).parent.resolve().name.split(".")[0]
     vid_name = real_filename + "_gen_" + str(generation)
+
+    print(f"\n\n\nFitness: ", row.values.tolist()[0][2])
 
     run(ITERS, genome, mode, vid_name, vid_path, logs, (real_filename + ".csv"))
 
@@ -77,7 +73,13 @@ if __name__ == "__main__":
         '--filename',
         type=str,
         help='what csv file to look at',
-        default="latest_experiment/run_1.csv")
+        default="latest_genome")
+    
+    parser.add_argument(
+        '--run_number',
+        type=int,
+        help="experiment run number",
+        default=1)
     
     parser.add_argument(
         '--logs',
@@ -87,4 +89,9 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    run_indvididual(args.gen, args.mode, args.filename, bool(args.logs))
+    if args.filename == "latest_genome":
+        filepath = os.path.join("data", "latest_genome", "run_" + str(args.run_number) + ".csv")
+    else:
+        filepath = os.path.join("data","genomes", args.filename, "run_" + str(args.run_number) + ".csv")
+
+    run_indvididual(args.gen, args.mode, filepath, bool(args.logs))
