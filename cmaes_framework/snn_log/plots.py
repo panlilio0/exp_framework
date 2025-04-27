@@ -8,6 +8,7 @@ Last modified:
 April 16th, 2025
 """
 
+import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -150,8 +151,12 @@ def plot_fitness_over_time(experiment_path):
     - If single run: plot only best_so_far line
     """
 
-    exp_path = Path(__file__).parent.parent.resolve() / experiment_path
-    print(f"Looking for run_*.csv files in: {exp_path}")
+    if experiment_path == 'latest_genome':
+        exp_path = Path(os.path.join(Path(__file__).parent.parent.resolve(), "data", experiment_path))
+    else:
+        exp_path = Path(os.path.join(Path(__file__).parent.parent.resolve(), "data", "genomes", experiment_path))
+
+    print(exp_path)
 
     if not exp_path.exists() or not exp_path.is_dir():
         print(f"Path '{experiment_path}' does not exist or is not a directory.")
@@ -259,4 +264,3 @@ def boxplot_last_generation_fitness(experiment_path):
 
     plt.tight_layout()
     plt.show()
-
