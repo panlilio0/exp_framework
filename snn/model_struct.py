@@ -2,6 +2,7 @@
 Module for simulating spiking neural networks (SNNs) with spiky neurons.
 
 Authors: Abhay Kashyap, Atharv Tekurkar
+Modified by: Hades Panlilio
 """
 
 import numpy as np
@@ -179,7 +180,7 @@ class SpikyLayer:
             num_inputs (int): Number of inputs into each neuron the layer.
         """
 
-        self.nodes = [SpikyNode(num_inputs) for _ in range(num_nodes)]
+        self.nodes = [SpikyNode(int(num_inputs)) for _ in range(num_nodes)]
 
     def compute(self, inputs):
         """
@@ -232,53 +233,69 @@ class SpikyLayer:
 
 class SpikyNet:
     """
-    Combines 2 spiky layers, a hidden layer and an output layer.
+    Combines multiple spiky hidden layers and one output layer.
     """
 
-    def __init__(self, input_size, hidden_size, output_size):
+    def __init__(self, input_size, hidden_sizes, output_size):
         """
         Initializes network.
         
         Parameters:
             input_size (int): Number of inputs into the network.
-            hidden_size (int): Number of neurons in the hidden layer.
+            hidden_sizes (list): List containing number of neurons in each hidden layer.
             output_size (int): Number of outputs.
         """
 
-        self.hidden_layer = SpikyLayer(hidden_size, input_size)
-        self.output_layer = SpikyLayer(output_size, hidden_size)
+        self.hidden_layers = []
+        prev_size = input_size
+        for hidden_size in hidden_sizes:
+            layer = SpikyLayer(int(hidden_size), prev_size)
+            self.hidden_layers.append(layer)
+            prev_size = hidden_size
+
+        self.output_layer = SpikyLayer(output_size, prev_size)
 
     def compute(self, inputs):
         """
-        Passes the input through the hidden layer.
-        
+        Passes the input through all hidden layers, then output layer.
+
         Parameters:
             inputs (list): Inputs to the network.
+
+        Returns:
+            tuple: (output spikes, final neuron levels)
         """
 
-        hidden_output, hidden_levels = self.hidden_layer.compute(inputs)
-        output, levels = self.output_layer.compute(hidden_output)
+        current_output = inputs
+        for layer in self.hidden_layers:
+            current_output, _ = layer.compute(current_output)
 
+        output, levels = self.output_layer.compute(current_output)
         return output, levels
 
     def set_weights(self, input_weights):
         """
-        Assigns weights to the hidden and the output layer.
+        Assigns weights to all hidden layers and the output layer.
         
         Parameters:
             input_weights: A dictionary with two keys: 'hidden_layer', mapping to a list
                            of all that layer's weights and biases, and a key 'output_layer',
                            mapping to a list of all that layers weights and biases.
         """
-        self.hidden_layer.set_weights(input_weights['hidden_layer'])
+        hidden_layer_weights = input_weights['hidden_layers']
+        for layer, weights in zip(self.hidden_layers, hidden_layer_weights):
+            layer.set_weights(weights)
+
         self.output_layer.set_weights(input_weights['output_layer'])
 
     def print_structure(self):
         """Displays the network weights."""
-        print("Hidden Layer:")
-        for node_index, hidden_node in enumerate(self.hidden_layer.nodes):
-            print(f"Node {node_index}: ", end="")
-            hidden_node.print_weights()
+        for idx, hidden_layer in enumerate(self.hidden_layers):
+            print(f"Hidden Layer {idx}:")
+            for node_index, hidden_node in enumerate(hidden_layer.nodes):
+                print(f"Node {node_index}: ", end="")
+                hidden_node.print_weights()
+
         print("\nOutput Layer:")
         for node_index, output_node in enumerate(self.output_layer.nodes):
             print(f"Node {node_index}: ", end="")

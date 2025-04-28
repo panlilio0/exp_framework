@@ -18,6 +18,7 @@ ITERS = 1000
 PARENTDIR = Path(__file__).parent.resolve()
 GENOME_START_INDEX = 3
 GENOME_FOLDER = PARENTDIR / "latest_experiment"
+HIDDEN_SIZES = [2]
 
 def wait_for_file(path):
     """
@@ -89,10 +90,10 @@ def visualize_best(mode, logs):
                 # Make video directory if we're making a video.
                 if mode in ["v", "b"]:
                     os.makedirs(vid_path, exist_ok=True)
-                    run(ITERS, genome, mode, vid_name, vid_path, logs, log_filename)
+                    run(ITERS, genome, mode, HIDDEN_SIZES, vid_name, vid_path, logs, log_filename)
                     quit()
                 elif mode in ["s", "h"]:
-                    run(ITERS, genome, mode, None, None, logs, log_filename)
+                    run(ITERS, genome, mode, HIDDEN_SIZES, None, None, logs, log_filename)
                     if logs:
                         quit()
             except Exception as e:

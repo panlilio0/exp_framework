@@ -33,9 +33,16 @@ if __name__ == "__main__":
                         type=float,
                         default=1,
                         help='sigma value for cma-es')
+    parser.add_argument('--hidden_sizes', 
+                        type=int, 
+                        nargs='+', 
+                        default=[2], 
+                        help='list of hidden layer sizes')
     args = parser.parse_args()
 
     mode = args.mode
+
+    hidden_sizes = args.hidden_sizes
 
     # Start thread for running best individual
     if args.mode == "s":
@@ -47,7 +54,7 @@ if __name__ == "__main__":
         mode = "h"
 
     # Run experiment
-    run_cmaes.run(mode, args.gens, args.sigma)
+    run_cmaes.run(mode, args.gens, args.sigma, hidden_sizes)
 
     # Join best individual thread
     t1.join()
