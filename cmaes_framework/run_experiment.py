@@ -45,6 +45,10 @@ def main():
                         help='Sigma value (exploration strength)')
     parser.add_argument('--runs', type=int, default=1,
                         help='Number of independent CMA-ES runs')
+    parser.add_argument('--spike_decay', type=float, default=0.01,
+                        help='Neuron spike decay rate (default=0.01)')
+    parser.add_argument('--robot_config', type=str,
+                        help='Path to robot config file (default=bestbot.json)')
 
     # Output params
     parser.add_argument('--exp_name', type=str, default=None,
@@ -68,12 +72,12 @@ def main():
     if args.runs == 1:
         print("[INFO] Starting single CMA-ES run...")
         run_cmaes.run(args.mode, args.gens, args.sigma,
-                      output_folder=exp_folder, run_number=1)
+                      output_folder=exp_folder, run_number=1, spike_decay=args.spike_decay, robot_config=args.robot_config)
     else:
         print(f"[INFO] Starting {args.runs} CMA-ES runs...")
         for run_number in range(1, args.runs + 1):
             run_cmaes.run(args.mode, args.gens, args.sigma,
-                          output_folder=exp_folder, run_number=run_number)
+                          output_folder=exp_folder, run_number=run_number, spike_decay=args.spike_decay, robot_config=args.robot_config)
 
     # visualization
     if args.visualize_best:
