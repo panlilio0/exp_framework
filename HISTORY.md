@@ -142,3 +142,9 @@ April 14th | James Gaskell
 April 16th | James Gaskell
 - Edited the data file structure to include symlink for latest data and grouping of videos, logs and genomes
 - Edited creation of logs - one log per genome for tidiness
+
+### Multiple hidden SNN layers
+April 28th | Hades Panlilio
+- Added parameter hidden_layers to specify amount of hidden layers/neurons per layer
+- Added hidden layer functionality to SpikyNet
+- Updated files that run the simulation to accept new parameter and multiple layers
