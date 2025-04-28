@@ -19,7 +19,7 @@ from snn_sim.run_simulation import run
 ITERS = 1000
 GENOME_START_INDEX = 3
 
-def run_indvididual(generation, mode, filename):
+def run_individual(generation, mode, filename):
     """
     Run an individual from a csv file.
     
