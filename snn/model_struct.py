@@ -24,6 +24,7 @@ class SpikyNode:
 
         Parameters:
             size (int): Number of weights plus the bias.
+            spike_decay (float): Spike decay rate for neurons
         """
         # a list of weights and a bias (last item in the list)
 
@@ -172,16 +173,18 @@ class SpikyLayer:
     Collection of multiple neurons (SpikyNodes).
     """
 
-    def __init__(self, num_nodes, num_inputs):
+    def __init__(self, num_nodes, num_inputs, spike_decay=0.01):
         """
         Initializes a SpikyLayer.
 
         Parameters:
             num_nodes (int): Number of neurons in the layer.
             num_inputs (int): Number of inputs into each neuron the layer.
+            spike_decay (float): Spike decay rate for neurons
         """
 
-        self.nodes = [SpikyNode(num_inputs) for _ in range(num_nodes)]
+        self.nodes = [SpikyNode(num_inputs, spike_decay)
+                      for _ in range(num_nodes)]
 
     def compute(self, inputs):
         """
@@ -237,7 +240,7 @@ class SpikyNet:
     Combines 2 spiky layers, a hidden layer and an output layer.
     """
 
-    def __init__(self, input_size, hidden_size, output_size):
+    def __init__(self, input_size, hidden_size, output_size, spike_decay=0.01):
         """
         Initializes network.
 
@@ -245,10 +248,11 @@ class SpikyNet:
             input_size (int): Number of inputs into the network.
             hidden_size (int): Number of neurons in the hidden layer.
             output_size (int): Number of outputs.
+            spike_decay (float): Spike decay rate for neurons
         """
 
-        self.hidden_layer = SpikyLayer(hidden_size, input_size)
-        self.output_layer = SpikyLayer(output_size, hidden_size)
+        self.hidden_layer = SpikyLayer(hidden_size, input_size, spike_decay)
+        self.output_layer = SpikyLayer(output_size, hidden_size, spike_decay)
 
     def compute(self, inputs):
         """
