@@ -123,6 +123,10 @@ April 6th | Hades Panlilio
 April 7th | Matthew Meek
 - updated `INSTALL.md` for getting things working on the sudoless lab machines.
 
+### Pull Request Template
+April 11th | John Rieffel
+- added pull request template
+
 ### SNN Refactor
 April 9th | Thomas Bremer
 - Added docs for all SNN methods
@@ -161,4 +165,3 @@ April 28th | Hades Panlilio
 - Added parameter hidden_layers to specify amount of hidden layers/neurons per layer
 - Added hidden layer functionality to SpikyNet
 - Updated files that run the simulation to accept new parameter and multiple layers
-
