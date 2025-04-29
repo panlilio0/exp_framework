@@ -1,6 +1,3 @@
-
-
-
 1. Fork the repo on GitHub (if you haven't already)
 1. Clone your fork fork locally:
 1. Create a branch for local development:
