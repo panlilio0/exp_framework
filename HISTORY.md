@@ -156,4 +156,9 @@ April 25th | James Gaskell
 - Edited plotting to show fitness over time for mutliple runs of the same experiment
 - Moved around data and symlinks to keep everything in the data folderg
 
+### Multiple hidden SNN layers
+April 28th | Hades Panlilio
+- Added parameter hidden_layers to specify amount of hidden layers/neurons per layer
+- Added hidden layer functionality to SpikyNet
+- Updated files that run the simulation to accept new parameter and multiple layers
 

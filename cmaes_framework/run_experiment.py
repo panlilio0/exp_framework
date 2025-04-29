@@ -22,12 +22,15 @@ import plot_fitness_over_gens
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='RL')
+
     parser.add_argument('--mode', choices=("h","s","v","b"), default="s",
                         help='h=headless, s=screen, v=video, b=both')
     parser.add_argument('--gens', type=int, default=100,
                         help='number of generations to run')
     parser.add_argument('--sigma', type=float, default=1,
                         help='sigma value for CMA-ES')
+    parser.add_argument('--hidden_sizes', type=int, nargs='+', default=[2], 
+                        help='list of hidden layer sizes')
     args = parser.parse_args()
 
     num_workers = multiprocessing.cpu_count()
