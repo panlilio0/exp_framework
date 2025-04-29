@@ -21,6 +21,7 @@ import pandas as pd
 from cmaes import SepCMA
 import numpy as np
 from snn_sim import run_simulation
+from snn.model_struct import PIKE_DECAY_DEFAULT
 import os
 import sys
 
@@ -55,7 +56,7 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 DATE_TIME = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
 
-def run(mode, gens, sigma_val, output_folder=DATE_TIME, run_number=1, spike_decay=0.01, robot_config_path=None):
+def run(mode, gens, sigma_val, output_folder=DATE_TIME, run_number=1, spike_decay=PIKE_DECAY_DEFAULT, robot_config_path=None):
     """
     Runs the cma_es algorithm on the robot locomotion problem,
     with sin-like robot actuators. Saves a csv file to ./output

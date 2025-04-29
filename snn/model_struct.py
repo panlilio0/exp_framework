@@ -8,7 +8,7 @@ import numpy as np
 from snn.ring_buffer import RingBuffer
 
 # Constants
-# SPIKE_DECAY = 0.01 /// It is parmeterized ///
+PIKE_DECAY_DEFAULT = 0.01
 MAX_BIAS = 1
 MAX_FIRELOG_SIZE = 10
 
@@ -18,7 +18,7 @@ class SpikyNode:
     Class representing a spiky neuron.
     """
 
-    def __init__(self, size, spike_decay=0.01):
+    def __init__(self, size, spike_decay=PIKE_DECAY_DEFAULT):
         """
         Initializes a spike neuron.
 
@@ -173,7 +173,7 @@ class SpikyLayer:
     Collection of multiple neurons (SpikyNodes).
     """
 
-    def __init__(self, num_nodes, num_inputs, spike_decay=0.01):
+    def __init__(self, num_nodes, num_inputs, spike_decay=PIKE_DECAY_DEFAULT):
         """
         Initializes a SpikyLayer.
 
@@ -240,7 +240,7 @@ class SpikyNet:
     Combines 2 spiky layers, a hidden layer and an output layer.
     """
 
-    def __init__(self, input_size, hidden_size, output_size, spike_decay=0.01):
+    def __init__(self, input_size, hidden_size, output_size, spike_decay=PIKE_DECAY_DEFAULT):
         """
         Initializes network.
 

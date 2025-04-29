@@ -7,9 +7,10 @@ and runs the specified number of instances one after another.
 import argparse
 from run_cmaes import run
 from datetime import datetime
+from snn.model_struct import PIKE_DECAY_DEFAULT
 
 
-def run_cmaes_instance(mode, gens, sigma, output_folder, run_number, spike_decay=0.01, robot_config_path=None):
+def run_cmaes_instance(mode, gens, sigma, output_folder, run_number, spike_decay=PIKE_DECAY_DEFAULT, robot_config_path=None):
     """
     Wrapper to call the run() function from run_cmaes.py with provided parameters.
     """
@@ -39,7 +40,7 @@ if __name__ == "__main__":
     parser.add_argument('--runs', type=int, default=5,
                         help='Total number of CMA-ES runs to execute')
     parser.add_argument('--spike_decay', type=float,
-                        default=0.01, help='Spike decay rate for neurons')
+                        default=PIKE_DECAY_DEFAULT, help='Spike decay rate for neurons')
     parser.add_argument('--robot_config', type=str,
                         help='Robot config path')
 

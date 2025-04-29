@@ -8,6 +8,7 @@ January 29th, 2025
 
 from snn.snn_controller import SNNController
 from snn_sim.robot.morphology import Morphology
+from snn.model_struct import PIKE_DECAY_DEFAULT
 import os
 import sys
 from pathlib import Path
@@ -72,7 +73,7 @@ def group_list(flat_list: list, n: int) -> list:
     return [list(flat_list[i:i+n]) for i in range(0, len(flat_list), n)]
 
 
-def run(iters, genome, mode, vid_name=None, vid_path=None, snn_logs=False, log_filename=None, spike_decay=0.01, robot_config=ROBOT_FILENAME):
+def run(iters, genome, mode, vid_name=None, vid_path=None, snn_logs=False, log_filename=None, spike_decay=PIKE_DECAY_DEFAULT, robot_config=ROBOT_FILENAME):
     """
     Runs a single simulation of a given genome.
 

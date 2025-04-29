@@ -12,7 +12,7 @@ import pandas as pd
 import numpy as np
 import sys
 import matplotlib.pyplot as plt
-from snn.model_struct import SpikyNet
+from snn.model_struct import SpikyNet, PIKE_DECAY_DEFAULT
 
 # Constants for SNN configuration
 MIN_LENGTH = 0.6  # Minimum actuator length
@@ -41,7 +41,7 @@ class SNNController:
                  hidden_size,
                  output_size,
                  robot_config=ROBOT_DATA_PATH,
-                 spike_decay=0.01):
+                 spike_decay=PIKE_DECAY_DEFAULT):
         """
 
         Initializes an SNN Controller for a given robot and SNN hyperparameters.

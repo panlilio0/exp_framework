@@ -30,6 +30,7 @@ import run_cmaes
 import run_cmaes_multiple
 import best_individual_latest
 import plot_fitness_over_gens
+from snn.model_struct import PIKE_DECAY_DEFAULT
 
 
 def main():
@@ -45,7 +46,7 @@ def main():
                         help='Sigma value (exploration strength)')
     parser.add_argument('--runs', type=int, default=1,
                         help='Number of independent CMA-ES runs')
-    parser.add_argument('--spike_decay', type=float, default=0.01,
+    parser.add_argument('--spike_decay', type=float, default=PIKE_DECAY_DEFAULT,
                         help='Neuron spike decay rate (default=0.01)')
     parser.add_argument('--robot_config', type=str,
                         help='Path to robot config file (default=bestbot.json)')
