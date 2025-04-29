@@ -15,6 +15,9 @@ import numpy as np
 from snn_sim.run_simulation import run
 
 ITERS = 1000
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
 PARENTDIR = Path(__file__).parent.resolve()
 GENOME_START_INDEX = 3
 GENOME_FOLDER = Path(os.path.join(PARENTDIR,"data","latest_genome"))
@@ -106,7 +109,12 @@ if __name__ == "__main__":
     parser.add_argument(
         '--mode', help='mode for output. h-headless , s-screen, v-video, b-both', default="s")
     parser.add_argument(
+        '--mode', #headless, screen, video, both h, s, v, b
+        help='mode for output. h-headless , s-screen, v-video, b-both',
+        default="s")
+    parser.add_argument(
         '--logs', type=str, help='whether to generate SNN logs (true/false)', default="True")
+
 
     args = parser.parse_args()
 

@@ -46,7 +46,6 @@ Feb 17th | Luodi Wang
 - Run inputs through the SNN
 - and we've now finally outputted actuator control values
 
-
 Feb 17th | Abhay Kashyap
 - Merged all utility functions for SNN (eg. cmaes output => snn w&b; getting snn outputs, etc.) into one class
 - Updated SNN code to fix some duty cycle and firelog errors (duty cycle was always 0 as firelog was not getting updated because of threshold)
@@ -132,6 +131,10 @@ April 9th | Thomas Bremer
 - Added option to generate SNN logs with run_individual.py
 - Added graphing notebook for SNN logs
 
+Apr 10th | By Takumi Kojima
+- bugfix of best_individual_latest regarding the directory path
+- change the default setting best_individual_latest
+
 ### best_individual changes
 April 14th | James Gaskell
 - Edited best individual to create logs
@@ -148,3 +151,4 @@ April 25th | James Gaskell
 - Edited file structure to collect multiple runs under the same experiment name
 - Edited plotting to show fitness over time for mutliple runs of the same experiment
 - Moved around data and symlinks to keep everything in the data folderg
+
