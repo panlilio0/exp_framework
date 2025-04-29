@@ -6,6 +6,9 @@ Author: Thomas Breimer, James Gaskell
 January 29th, 2025
 """
 
+from snn.snn_controller import SNNController
+from snn_sim.robot.morphology import Morphology
+from snn.model_struct import PIKE_DECAY_DEFAULT
 import os
 import sys
 from pathlib import Path
@@ -14,10 +17,9 @@ import numpy as np
 from evogym import EvoWorld, EvoSim, EvoViewer
 from evogym import WorldObject
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+sys.path.append(os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '../..')))
 
-from snn_sim.robot.morphology import Morphology
-from snn.snn_controller import SNNController
 
 # Simulation constants
 ROBOT_SPAWN_X = 2
@@ -25,14 +27,16 @@ ROBOT_SPAWN_Y = 0
 ACTUATOR_MIN_LEN = 0.6
 ACTUATOR_MAX_LEN = 1.6
 FPS = 50
-MODE = "v" # "headless", "screen", or "video"
+MODE = "v"  # "headless", "screen", or "video"
 
 FITNESS_OFFSET = 100
 
 # Files
 ENV_FILENAME = "bigger_platform.json"
 ROBOT_FILENAME = "bestbot.json"
+
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
+
 
 def create_video(source, output_name, vid_path, fps=FPS):
     """
@@ -54,6 +58,7 @@ def create_video(source, output_name, vid_path, fps=FPS):
         out.write(frame_bgr)
     out.release()
 
+
 def group_list(flat_list: list, n: int) -> list:
     """
     Groups flat_array into a list of list of size n.
@@ -61,14 +66,13 @@ def group_list(flat_list: list, n: int) -> list:
     Parameters:
         flat_list (list): List to groups.
         n: (int): Size of sublists.
-    
+
     Returns:
         list: Grouped list.
     """
     return [list(flat_list[i:i+n]) for i in range(0, len(flat_list), n)]
 
-
-def run(iters, genome, mode, hidden_sizes, vid_name=None, vid_path=None, snn_logs=False, log_filename=None):
+def run(iters, genome, mode, vid_name=None, vid_path=None, snn_logs=False, log_filename=None, spike_decay=PIKE_DECAY_DEFAULT, robot_config=ROBOT_FILENAME):
     """
     Runs a single simulation of a given genome.
 
@@ -88,10 +92,12 @@ def run(iters, genome, mode, hidden_sizes, vid_name=None, vid_path=None, snn_log
     """
 
     # Create world
-    world = EvoWorld.from_json(os.path.join(THIS_DIR, 'robot', 'world_data', ENV_FILENAME))
+    world = EvoWorld.from_json(os.path.join(
+        THIS_DIR, 'robot', 'world_data', ENV_FILENAME))
 
     # Add robot
-    robot = WorldObject.from_json(os.path.join(THIS_DIR, 'robot', 'world_data', ROBOT_FILENAME))
+    robot = WorldObject.from_json(os.path.join(
+        THIS_DIR, 'robot', 'world_data', robot_config))
 
     world.add_from_array(
         name='robot',
@@ -113,23 +119,24 @@ def run(iters, genome, mode, hidden_sizes, vid_name=None, vid_path=None, snn_log
     # Get position of all robot point masses
     init_raw_pm_pos = sim.object_pos_at_time(sim.get_time(), "robot")
 
-    morphology = Morphology(ROBOT_FILENAME)
+    morphology = Morphology(robot_config)
 
     robot_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                   'robot', 'world_data', ROBOT_FILENAME)
+                                   'robot', 'world_data', robot_config)
 
-    snn_controller = SNNController(2, hidden_sizes, 1, robot_config=robot_file_path)
+    snn_controller = SNNController(
+        2, 2, 1, robot_config=robot_file_path, spike_decay=spike_decay, robot_config=robot_config)
     snn_controller.set_snn_weights(genome)
 
     def scale_inputs(init, cur):
         init = np.asarray(init, dtype=float)
-        cur  = np.asarray(cur,  dtype=float)
-        
+        cur = np.asarray(cur,  dtype=float)
+
         # Compute relative change
         scaled = ((cur - init) / init) * 10 + 1
 
         # print("Scaled: ", scaled)
-        
+
         # Clip so that min is -1 and max is 0
         return scaled
 
@@ -138,7 +145,8 @@ def run(iters, genome, mode, hidden_sizes, vid_name=None, vid_path=None, snn_log
         raw_pm_pos = sim.object_pos_at_time(sim.get_time(), "robot")
 
         # Get current corner distances
-        corner_distances = np.array(morphology.get_corner_distances(raw_pm_pos))
+        corner_distances = np.array(
+            morphology.get_corner_distances(raw_pm_pos))
 
         if i == 0:
             init = corner_distances
@@ -147,7 +155,7 @@ def run(iters, genome, mode, hidden_sizes, vid_name=None, vid_path=None, snn_log
 
         # Get action from SNN controller
         action = snn_controller.get_lengths(inputs)
-  
+
         # Clip actuator target lengths to be between 0.6 and 1.6 to prevent buggy behavior
         action = np.clip(action, ACTUATOR_MIN_LEN, ACTUATOR_MAX_LEN)
 
@@ -179,5 +187,4 @@ def run(iters, genome, mode, hidden_sizes, vid_name=None, vid_path=None, snn_log
     if snn_logs:
         snn_controller.generate_output_csv(log_filename)
 
-    return FITNESS_OFFSET - fitness # Turn into a minimization problem
-
+    return FITNESS_OFFSET - fitness  # Turn into a minimization problem
