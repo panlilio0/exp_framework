@@ -34,6 +34,7 @@ def is_windows():
     return os.name == 'nt' or sys.platform.startswith('win')
 
 NUM_ACTUATORS = 8
+POP_SIZE = 12
 
 INPUT_SIZE = 2
 OUTPUT_SIZE = 1
@@ -123,7 +124,7 @@ def run(mode, gens, sigma_val, hidden_sizes, output_folder=DATE_TIME, run_number
            bounds[i] = (0, 200000)
 
     # Init CMA
-    optimizer = SepCMA(mean=np.array(MEAN_ARRAY), sigma=sigma_val, bounds=np.array(bounds), population_size=12)
+    optimizer = SepCMA(mean=np.array(MEAN_ARRAY), sigma=sigma_val, bounds=np.array(bounds), population_size=POP_SIZE)
 
     best_fitness_so_far = run_simulation.FITNESS_OFFSET
 

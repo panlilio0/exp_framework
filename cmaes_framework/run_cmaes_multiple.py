@@ -34,6 +34,6 @@ if __name__ == "__main__":
         file_name = args.exp_name
 
     for run_number in range(1, args.runs + 1):
-        run_cmaes_instance(args.mode, args.gens, args.sigma, args.hidden_sizes, file_name, timestamp_folder, run_number)
+        run_cmaes_instance(args.mode, args.gens, args.sigma, args.hidden_sizes, file_name, run_number)
 
     print("\nAll CMA-ES runs completed.")
