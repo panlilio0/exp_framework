@@ -1,131 +1,129 @@
 """
-Visualize the best individual so far during a run, pulling from latest.csv.
+Visualize the best individual so far during a run, pulling from all CSVs in latest_genome.
 
 Author: James Gaskell, Thomas Breimer
-April 3rd, 2025
+Modified: April 16th, 2025
 """
 
 import os
 from pathlib import Path
-import pandas
+import pandas as pd
 import argparse
 import pathlib
+import time
 import numpy as np
-from matplotlib import pyplot as plt
 from snn_sim.run_simulation import run
 
 ITERS = 1000
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
+
 PARENTDIR = Path(__file__).parent.resolve()
 GENOME_START_INDEX = 3
-FILEFOLDER = "data"
+GENOME_FOLDER = Path(os.path.join(PARENTDIR,"data","latest_genome"))
 
-
-
-def visualize_best(graphs, mode, filename="latest.csv"):
+def wait_for_file(path):
     """
-    Look at a csv and continuously run best individual.
-    
-    Parameters:
-        filename (str): Filename of csv to look at. Defaults to latest.csv.
+    Wait for a file to be created and contain valid 'best_fitness' data.
     """
+    while True:
+        try:
+            df = pd.read_csv(path)
+            if not df.empty and "best_fitness" in df.columns:
+                _ = min(df["best_fitness"])
+                return df
+        except Exception:
+            pass
 
-    #time.sleep(10)
+        print(f"Waiting for valid file: {path}")
+        time.sleep(5)
 
-    path = os.path.join(PARENTDIR, filename)
+
+def get_best_from_all_csvs():
+    """
+    Iterate through all CSV files in GENOME_FOLDER and return the row with the best fitness.
+    """
+    best_row = None
+    best_fitness = float('inf')
+    best_file = None
+
+    for csv_file in GENOME_FOLDER.glob("*.csv"):
+        df = wait_for_file(csv_file)
+
+        try:
+            current_best = df.loc[df["best_fitness"] == min(df["best_fitness"])]
+            current_fitness = current_best["best_fitness"].values[0]
+
+            if current_fitness < best_fitness:
+                best_fitness = current_fitness
+                best_row = current_best
+                best_file = csv_file
+
+        except Exception as e:
+            print(f"Skipping file {csv_file} due to error: {e}")
+
+    return best_row, best_file
+
+
+def visualize_best(mode, logs):
+    """
+    Continuously run the best individual across all CSVs.
+    """
+    os.makedirs("data", exist_ok=True)
 
     while True:
-        if os.path.exists(path):
-            df = pandas.read_csv(path)
 
-            best_fitness = min(df["best_fitness"])
-            row = df.loc[df['best_fitness'] == best_fitness]
-            genome = row.values.tolist()[0][GENOME_START_INDEX:]
-            generation = row.values.tolist()[0][0]
+        best_row, source_file = get_best_from_all_csvs()
 
-            # Make video directory if we're making a video.
-            if mode in ["v", "b"]:
-                os.makedirs("videos", exist_ok=True)
+        if best_row is not None:
+            try:
+                genome = best_row.values.tolist()[0][GENOME_START_INDEX:]
+                generation = int(best_row.values.tolist()[0][0])
                 this_dir = pathlib.Path(__file__).parent.resolve()
-                vid_name = filename + "_gen" + str(generation)
-                vid_path = os.path.join(this_dir, "videos")
-                _, spikes, levels = run(ITERS, genome, "v", vid_name, vid_path)
-                quit()
-            else:
-                _, spikes, levels = run(ITERS, genome, "s")
+                vid_path = os.path.join(this_dir, "data", "videos")
 
+                print(f"\n\n\nFitness: {min(best_row['best_fitness'])}")
+                print(f"From file: {source_file.name}")
 
+                vid_name = source_file.stem + "_gen_" + str(generation)
 
-            spikes = np.array(spikes)
-            levels = np.array([[x[0] for x in row] for row in levels])
+                folder_name = source_file.resolve().parent.name
+                log_filename = str(os.path.join(PARENTDIR, "data", "logs", folder_name)) + ".csv"
 
-        if graphs == "s":
+                # Make video directory if we're making a video.
+                if mode in ["v", "b"]:
+                    os.makedirs(vid_path, exist_ok=True)
+                    run(ITERS, genome, mode, vid_name, vid_path, logs, log_filename)
+                    quit()
+                elif mode in ["s", "h"]:
+                    run(ITERS, genome, mode, None, None, logs, log_filename)
+                    if logs:
+                        quit()
+            except Exception as e:
+                print("Error during run:", e)
+                continue
 
-            fig, ax = plt.subplots(figsize=(12, 5))
-
-            for neuron_idx in range(spikes.shape[1]):
-                spike_times = np.where(spikes[:, neuron_idx])[0]
-                ax.vlines(spike_times, neuron_idx - 0.4, neuron_idx + 0.4)
-
-            ax.set_yticks(np.arange(spikes.shape[1]))
-            ax.set_yticklabels([f'Neuron {i}' for i in range(spikes.shape[1])])
-            ax.set_xlabel("Time Steps")
-            ax.set_ylabel("Neuron Index")
-            ax.set_title("Spike Train of Neurons")
-            plt.tight_layout()
-            plt.xlim(0, 100)
-            plt.show(block=True)
-        
-        elif graphs == "l":
-
-            fig, ax = plt.subplots(figsize=(12, 6))
-            lines = []
-
-            # Plot and make lines pickable
-            for i in range(levels.shape[1]):
-                line, = ax.plot(levels[:, i], label=f'Neuron {i}', picker=True, pickradius=5, alpha=0.4)
-                lines.append(line)
-
-            ax.set_xlabel('Time Steps')
-            ax.set_ylabel('Level')
-            ax.set_title('Click a Line to Highlight It')
-            ax.legend(loc='upper right')
-            plt.tight_layout()
-
-            def on_pick(event):
-                # Reset all lines
-                for line in lines:
-                    line.set_linewidth(1.5)
-                    line.set_alpha(0.4)
-
-                # Highlight selected line
-                picked_line = event.artist
-                picked_line.set_linewidth(3)
-                picked_line.set_alpha(1.0)
-                fig.canvas.draw()
-
-            fig.canvas.mpl_connect('pick_event', on_pick)
-
-            plt.show(block=True)
-
-            
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='RL')
     parser.add_argument(
-        '--graphs',
-        help='graph outputs and levels? n - no, s - spike trains, l - levels, b - both',
-        default="n")
+        '--mode', help='mode for output. h-headless , s-screen, v-video, b-both', default="s")
     parser.add_argument(
         '--mode', #headless, screen, video, both h, s, v, b
         help='mode for output. h-headless , s-screen, v-video, b-both',
         default="s")
+    parser.add_argument(
+        '--logs', type=str, help='whether to generate SNN logs (true/false)', default="True")
 
-    
+
     args = parser.parse_args()
-    
-    visualize_best(args.graphs, args.mode)
 
-        
-    
+    logs = args.logs
+    if logs.lower() in ('yes', 'true', 't', '1'):
+        logs = True
+    elif logs.lower() in ('no', 'false', 'f', '0'):
+        logs = False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
+    visualize_best(args.mode, logs)

@@ -123,6 +123,32 @@ April 6th | Hades Panlilio
 April 7th | Matthew Meek
 - updated `INSTALL.md` for getting things working on the sudoless lab machines.
 
+### SNN Refactor
+April 9th | Thomas Bremer
+- Added docs for all SNN methods
+- Fixed neuron duty cycle
+- Added logs for duty cycle and proper fire log
+- Added option to generate SNN logs with run_individual.py
+- Added graphing notebook for SNN logs
+
 Apr 10th | By Takumi Kojima
 - bugfix of best_individual_latest regarding the directory path
 - change the default setting best_individual_latest
+
+### best_individual changes
+April 14th | James Gaskell
+- Edited best individual to create logs
+- Updated requirements for the correct version of matplotlib
+- Fixed symlink for MacOS
+
+### Data file structure
+April 16th | James Gaskell
+- Edited the data file structure to include symlink for latest data and grouping of videos, logs and genomes
+- Edited creation of logs - one log per genome for tidiness
+
+### Data file structure continued
+April 25th | James Gaskell
+- Edited file structure to collect multiple runs under the same experiment name
+- Edited plotting to show fitness over time for mutliple runs of the same experiment
+- Moved around data and symlinks to keep everything in the data folderg
+

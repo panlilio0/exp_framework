@@ -4,7 +4,7 @@ This repository offers a development framework for running experiments in morpho
 
 ## CMA-ES-Integration
 
-The current experimental framework, integrated with CMA-ES. [Link](https://github.com/Union-College-Computer-Science/exp_framework/tree/main/cmaes_integration)
+The current experimental framework, integrated with CMA-ES. [Link](https://github.com/Union-College-Computer-Science/exp_framework/tree/main/cmaes_framework)
 
 ## SNN
 

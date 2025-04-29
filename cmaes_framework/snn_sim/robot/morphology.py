@@ -165,7 +165,8 @@ class Morphology:
                            y positions.
         
         Returns:
-            list: A tuple of the distances to the top left point mass and bottom right point mass.
+            list: A list of tuples of the distances to the top left point mass and bottom right point mass
+                  of each actuator.
         """
 
         actuator_distances = []
