@@ -146,9 +146,14 @@ April 16th | James Gaskell
 - Edited the data file structure to include symlink for latest data and grouping of videos, logs and genomes
 - Edited creation of logs - one log per genome for tidiness
 
+### Devops instructions
+April 25th | Takumi
+- Added `DevOps.md` which is a manual of how to use screen command, du command, and ssh to lab computers.
+
 ### Data file structure continued
 April 25th | James Gaskell
 - Edited file structure to collect multiple runs under the same experiment name
 - Edited plotting to show fitness over time for mutliple runs of the same experiment
 - Moved around data and symlinks to keep everything in the data folderg
+
 
