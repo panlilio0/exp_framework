@@ -148,3 +148,9 @@ April 25th | James Gaskell
 - Edited file structure to collect multiple runs under the same experiment name
 - Edited plotting to show fitness over time for mutliple runs of the same experiment
 - Moved around data and symlinks to keep everything in the data folderg
+
+### run_experiment Update & parameterize spiky decay and robot config
+April 28th | Takumi
+- Updated run_experiment with all possible params for now
+- parameterized spiky decay
+- parameterized robot_config
