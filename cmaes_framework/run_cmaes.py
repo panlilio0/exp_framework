@@ -36,11 +36,16 @@ def is_windows():
     return os.name == 'nt' or sys.platform.startswith('win')
 
 
+
 # Shape of the genome
 SNN_INPUT_SHAPE = 72
 
-# Mean genome
-MEAN_ARRAY = [0.0] * SNN_INPUT_SHAPE
+NUM_ACTUATORS = 8
+POP_SIZE = 12
+
+
+INPUT_SIZE = 2
+OUTPUT_SIZE = 1
 
 # Num of sim time steps
 ITERS = 1000
@@ -55,8 +60,8 @@ FITNESS_INDEX = 1
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 DATE_TIME = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
-
 def run(mode, gens, sigma_val, output_folder=DATE_TIME, run_number=1, spike_decay=PIKE_DECAY_DEFAULT, robot_config_path=None):
+
     """
     Runs the cma_es algorithm on the robot locomotion problem,
     with sin-like robot actuators. Saves a csv file to ./output
@@ -72,6 +77,22 @@ def run(mode, gens, sigma_val, output_folder=DATE_TIME, run_number=1, spike_deca
         sigma_val (float): The standard deviation of the normal distribution
         used to generate new candidate solutions
     """
+
+    params_per_snn = 0
+
+    # Sum hidden layers
+    for hidden_size in hidden_sizes:
+        params_per_snn += (INPUT_SIZE + 1) * hidden_size
+        layer_input_size = hidden_size
+
+    # Output layer
+    params_per_snn += (layer_input_size + 1) * OUTPUT_SIZE
+
+    # Shape of the genome
+    SNN_INPUT_SHAPE = NUM_ACTUATORS * params_per_snn
+
+    # Mean genome
+    MEAN_ARRAY = [0.0] * SNN_INPUT_SHAPE
 
     # Generate output.csv file
     csv_header = ['generation', 'best_fitness', "best_so_far"]
@@ -171,10 +192,9 @@ def run(mode, gens, sigma_val, output_folder=DATE_TIME, run_number=1, spike_deca
         if mode in ["s", "b", "v"]:
             vid_name = DATE_TIME + "_gen" + str(generation)
             vid_path = os.path.join(ROOT_DIR, "data", "videos", DATE_TIME)
-
+            
             run_simulation.run(
                 ITERS, best_sol[GENOME_INDEX], mode, vid_name, vid_path)
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='RL')
@@ -190,6 +210,11 @@ if __name__ == "__main__":
                         type=float,
                         default=100,
                         help='sigma value for cma-es')
+    parser.add_argument('--hidden_sizes', 
+                        type=int, 
+                        nargs='+', 
+                        default=[2], 
+                        help='list of hidden layer sizes')
     args = parser.parse_args()
 
-    run(args.mode, args.gens, args.sigma)
+    run(args.mode, args.gens, args.sigma, args.hidden_sizes)

@@ -46,7 +46,6 @@ Feb 17th | Luodi Wang
 - Run inputs through the SNN
 - and we've now finally outputted actuator control values
 
-
 Feb 17th | Abhay Kashyap
 - Merged all utility functions for SNN (eg. cmaes output => snn w&b; getting snn outputs, etc.) into one class
 - Updated SNN code to fix some duty cycle and firelog errors (duty cycle was always 0 as firelog was not getting updated because of threshold)
@@ -124,6 +123,10 @@ April 6th | Hades Panlilio
 April 7th | Matthew Meek
 - updated `INSTALL.md` for getting things working on the sudoless lab machines.
 
+### Pull Request Template
+April 11th | John Rieffel
+- added pull request template
+
 ### SNN Refactor
 April 9th | Thomas Bremer
 - Added docs for all SNN methods
@@ -131,6 +134,10 @@ April 9th | Thomas Bremer
 - Added logs for duty cycle and proper fire log
 - Added option to generate SNN logs with run_individual.py
 - Added graphing notebook for SNN logs
+
+Apr 10th | By Takumi Kojima
+- bugfix of best_individual_latest regarding the directory path
+- change the default setting best_individual_latest
 
 ### best_individual changes
 April 14th | James Gaskell
@@ -143,6 +150,10 @@ April 16th | James Gaskell
 - Edited the data file structure to include symlink for latest data and grouping of videos, logs and genomes
 - Edited creation of logs - one log per genome for tidiness
 
+### Devops instructions
+April 25th | Takumi
+- Added `DevOps.md` which is a manual of how to use screen command, du command, and ssh to lab computers.
+
 ### Data file structure continued
 April 25th | James Gaskell
 - Edited file structure to collect multiple runs under the same experiment name
@@ -154,3 +165,10 @@ April 28th | Takumi
 - Updated run_experiment with all possible params for now
 - parameterized spiky decay
 - parameterized robot_config
+
+### Multiple hidden SNN layers
+April 28th | Hades Panlilio
+- Added parameter hidden_layers to specify amount of hidden layers/neurons per layer
+- Added hidden layer functionality to SpikyNet
+- Updated files that run the simulation to accept new parameter and multiple layers
+

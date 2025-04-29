@@ -32,7 +32,6 @@ import best_individual_latest
 import plot_fitness_over_gens
 from snn.model_struct import PIKE_DECAY_DEFAULT
 
-
 def main():
     parser = argparse.ArgumentParser(
         description="Run a full evolutionary experiment.")

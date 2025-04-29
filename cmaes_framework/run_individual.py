@@ -23,7 +23,7 @@ from snn_sim.run_simulation import run
 ITERS = 100
 GENOME_START_INDEX = 3
 
-def run_indvididual(generation, mode, csv_path, logs):
+def run_indvididual(generation, mode, filename, logs, hidden_sizes):
     """
     Run an individual from a csv file.
     
@@ -34,6 +34,7 @@ def run_indvididual(generation, mode, csv_path, logs):
                        video to the "./videos" folder. "both" does both of these things.
         filename (string): CSV file to look at. Should be in cmaes_framework/data directory.
         logs (bool): Whether or not to produce SNN logs.
+        hidden_sizes (list): List of integers representing the number of neurons in each hidden layer.
     """
 
     # Make video directory if we're making a video.
@@ -51,9 +52,8 @@ def run_indvididual(generation, mode, csv_path, logs):
     real_filename = Path(csv_path).parent.resolve().name.split(".")[0]
     vid_name = real_filename + "_gen_" + str(generation)
 
+    run(ITERS, genome, mode, hidden_sizes, vid_name, vid_path, logs, (real_filename + ".csv"))
     print(f"\n\n\nFitness: ", row.values.tolist()[0][2])
-
-    run(ITERS, genome, mode, vid_name, vid_path, logs, (real_filename + ".csv"))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='RL')
@@ -86,6 +86,13 @@ if __name__ == "__main__":
         type=str,
         help='whether to generate SNN logs (true/false)',
         default="false")
+    
+    parser.add_argument(
+        '--hidden_sizes', 
+        type=int,
+        nargs='+', 
+        help='list of hidden layer sizes',
+        default=[2])
 
     args = parser.parse_args()
 
@@ -93,5 +100,5 @@ if __name__ == "__main__":
         filepath = os.path.join("data", "latest_genome", "run_" + str(args.run_number) + ".csv")
     else:
         filepath = os.path.join("data","genomes", args.filename, "run_" + str(args.run_number) + ".csv")
-
-    run_indvididual(args.gen, args.mode, filepath, bool(args.logs))
+        
+    run_indvididual(args.gen, args.mode, filepath, bool(args.logs), args.hidden_sizes)
