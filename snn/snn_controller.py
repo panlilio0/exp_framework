@@ -239,13 +239,13 @@ class SNNController:
                     df.loc[len(df)] = duty_cycle_row
 
         # Generate file
-        data_folder =  Path(os.path.join(_project_root, "cmaes_framework","data","snn_logs"))
+        data_folder =  Path(os.path.join(_project_root, "cmaes_framework","data","logs"))
         Path(data_folder).mkdir(parents=True, exist_ok=True)
         csv_path = os.path.join(data_folder, log_filename)
 
         df.to_csv(csv_path, index=False)
 
-        link = (os.path.join(_project_root, "cmaes_framework","snn_log","latest_data.csv"))
+        link = (os.path.join(_project_root, "cmaes_framework","data","latest_log.csv"))
 
         # Set up latest.csv symlink
         if os.path.exists(link):

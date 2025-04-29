@@ -1,5 +1,5 @@
 """
-Visualize the best individual so far during a run, pulling from all CSVs in latest_experiment.
+Visualize the best individual so far during a run, pulling from all CSVs in latest_genome.
 
 Author: James Gaskell, Thomas Breimer
 Modified: April 16th, 2025
@@ -17,8 +17,8 @@ from snn_sim.run_simulation import run
 ITERS = 1000
 PARENTDIR = Path(__file__).parent.resolve()
 GENOME_START_INDEX = 3
-GENOME_FOLDER = PARENTDIR / "latest_experiment"
 HIDDEN_SIZES = [2]
+GENOME_FOLDER = Path(os.path.join(PARENTDIR,"data","latest_genome"))
 
 def wait_for_file(path):
     """
@@ -70,6 +70,7 @@ def visualize_best(mode, logs):
     os.makedirs("data", exist_ok=True)
 
     while True:
+
         best_row, source_file = get_best_from_all_csvs()
 
         if best_row is not None:
@@ -85,7 +86,7 @@ def visualize_best(mode, logs):
                 vid_name = source_file.stem + "_gen_" + str(generation)
 
                 folder_name = source_file.resolve().parent.name
-                log_filename = str(os.path.join(PARENTDIR, "data", "snn_logs", folder_name)) + ".csv"
+                log_filename = str(os.path.join(PARENTDIR, "data", "logs", folder_name)) + ".csv"
 
                 # Make video directory if we're making a video.
                 if mode in ["v", "b"]:
