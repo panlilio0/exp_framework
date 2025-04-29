@@ -13,10 +13,6 @@ Feb 11th | By Abhay Kashyap
 - Script reshapes the flat array into an array of shape (NUM_SNN * PARAMS_PER_SNN)
 and then returns a list of dictionaries explicitly separating weights and biases of each SNN
 
-Apr 10th | By Takumi Kojima
-- bugfix of best_individual_latest regarding the directory path
-- change the default setting best_individual_latest
-
 ### Introducing snn to evogym pipeline
 Thurs. Feb 13th | Luodi Wang | SNN output to evogym through .json file
 - Saving the output into a json file from a mock (random) input
@@ -126,3 +122,7 @@ April 6th | Hades Panlilio
 ### Install instructions
 April 7th | Matthew Meek
 - updated `INSTALL.md` for getting things working on the sudoless lab machines.
+
+Apr 10th | By Takumi Kojima
+- bugfix of best_individual_latest regarding the directory path
+- change the default setting best_individual_latest
