@@ -18,7 +18,7 @@ import argparse
 from datetime import datetime
 from pathlib import Path
 import pandas as pd
-from cmaes import CMA
+from cmaes import SepCMA
 import numpy as np
 from snn_sim import run_simulation
 import os
@@ -33,14 +33,14 @@ def is_windows():
     """
     return os.name == 'nt' or sys.platform.startswith('win')
 
-# Shape of the genome
-SNN_INPUT_SHAPE = 72
+NUM_ACTUATORS = 8
 
-# Mean genome
-MEAN_ARRAY = [0.0] * SNN_INPUT_SHAPE
+INPUT_SIZE = 2
+OUTPUT_SIZE = 1
 
 # Num of sim time steps
-NUM_ITERS = 1000
+ITERS = 1000
+
 
 VERBOSE = False
 
@@ -51,7 +51,7 @@ FITNESS_INDEX = 1
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 DATE_TIME = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
-def run(mode, gens, sigma_val):
+def run(mode, gens, sigma_val, hidden_sizes, output_folder=DATE_TIME, run_number=1):
     """
     Runs the cma_es algorithm on the robot locomotion problem,
     with sin-like robot actuators. Saves a csv file to ./output
@@ -68,27 +68,62 @@ def run(mode, gens, sigma_val):
         used to generate new candidate solutions
     """
 
+    params_per_snn = 0
+
+    # Sum hidden layers
+    for hidden_size in hidden_sizes:
+        params_per_snn += (INPUT_SIZE + 1) * hidden_size
+        layer_input_size = hidden_size
+
+    # Output layer
+    params_per_snn += (layer_input_size + 1) * OUTPUT_SIZE
+
+    # Shape of the genome
+    SNN_INPUT_SHAPE = NUM_ACTUATORS * params_per_snn
+
+    # Mean genome
+    MEAN_ARRAY = [0.0] * SNN_INPUT_SHAPE
+
     # Generate output.csv file
     csv_header = ['generation', 'best_fitness', "best_so_far"]
     csv_header.extend([f"weight{i}" for i in range(SNN_INPUT_SHAPE)])
 
-    Path(os.path.join(ROOT_DIR, "data")).mkdir(parents=True, exist_ok=True)
+    Path(os.path.join(ROOT_DIR, "data", "genomes")).mkdir(parents=True, exist_ok=True)
 
-    csv_path = os.path.join(ROOT_DIR, "data", f"{DATE_TIME}.csv")
+    if output_folder is None:
+        output_folder = DATE_TIME
 
-    # Set up latest.csv symlink
-    if os.path.exists(os.path.join("cmaes_framework", "latest.csv")):
-        os.remove(os.path.join("cmaes_framework", "latest.csv"))
+    csv_path = os.path.join(ROOT_DIR, "data", "genomes", output_folder)
+    Path(csv_path).mkdir(parents=True, exist_ok=True)
+    csv_filename = f"run_{run_number}.csv"
 
-    if is_windows():
-        os.symlink(csv_path, os.path.join("cmaes_framework", "latest.csv"))
-    else:
-        os.system("ln -s " + csv_path + " latest.csv")
+    # Set up symlink to output folder (once, only for run_1)
+    symlink_path = os.path.join(ROOT_DIR, "data","latest_genome")
 
-    pd.DataFrame(columns=csv_header).to_csv(csv_path, index=False)
+    if run_number == 1:
+        try:
+            if os.path.islink(symlink_path) or os.path.exists(symlink_path):
+                os.remove(symlink_path)
+
+            if is_windows():
+                os.symlink(csv_path, symlink_path)
+            else:
+                os.system(f'ln -s "{csv_path}" "{symlink_path}"')
+
+        except Exception as e:
+            print(f"Warning: could not create symlink to latest_genome folder: {e}")
+
+    pd.DataFrame(columns=csv_header).to_csv(os.path.join(csv_path, csv_filename), index=False)
+
+    # Perhaps try bounds again? doesn't seem to be doing anything
+    # YES! This works
+    bounds = [(-100000, 100000)] * SNN_INPUT_SHAPE
+    for i in range(len(bounds)):
+       if (i+1) % 3 == 0:
+           bounds[i] = (0, 200000)
 
     # Init CMA
-    optimizer = CMA(mean=np.array(MEAN_ARRAY), sigma=sigma_val, population_size=12)
+    optimizer = SepCMA(mean=np.array(MEAN_ARRAY), sigma=sigma_val, bounds=np.array(bounds), population_size=12)
 
     best_fitness_so_far = run_simulation.FITNESS_OFFSET
 
@@ -99,7 +134,7 @@ def run(mode, gens, sigma_val):
         # Run individuals
         for _ in range(optimizer.population_size):
             x = optimizer.ask() # Ask cmaes for a genome
-            fitness, _, _ = run_simulation.run(NUM_ITERS, x, "h") # get fitness
+            fitness = run_simulation.run(ITERS, x, "h", hidden_sizes) # get fitness
             solutions.append((x, fitness))
 
         optimizer.tell(solutions) # Tell cmaes about population
@@ -124,14 +159,14 @@ def run(mode, gens, sigma_val):
         new_row_df = pd.DataFrame([new_row], columns=csv_header)
 
         # Append the new row to the CSV file using pandas in append mode (no header this time).
-        new_row_df.to_csv(csv_path, mode='a', index=False, header=False)
+        new_row_df.to_csv(os.path.join(csv_path, csv_filename), mode='a', index=False, header=False)
 
         # If --mode s, v, or b show/save best individual from generation
         if mode in ["s", "b", "v"]:
             vid_name = DATE_TIME + "_gen" + str(generation)
-            vid_path = os.path.join(ROOT_DIR, "videos", DATE_TIME)
+            vid_path = os.path.join(ROOT_DIR, "data", "videos", DATE_TIME)
 
-            run_simulation.run(NUM_ITERS, best_sol[GENOME_INDEX], mode, vid_name, vid_path)
+            run_simulation.run(ITERS, best_sol[GENOME_INDEX], mode, hidden_sizes, vid_name, vid_path)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='RL')
@@ -145,8 +180,13 @@ if __name__ == "__main__":
                         default=500)
     parser.add_argument('--sigma',
                         type=float,
-                        default=0.1,
+                        default=100,
                         help='sigma value for cma-es')
+    parser.add_argument('--hidden_sizes', 
+                        type=int, 
+                        nargs='+', 
+                        default=[2], 
+                        help='list of hidden layer sizes')
     args = parser.parse_args()
 
-    run(args.mode, args.gens, args.sigma)
+    run(args.mode, args.gens, args.sigma, args.hidden_sizes)

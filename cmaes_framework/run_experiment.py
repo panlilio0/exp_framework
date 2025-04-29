@@ -13,44 +13,34 @@ March 6th, 2025
 """
 
 import argparse
-import threading
+import multiprocessing
+import time
+
 import run_cmaes
 import best_individual_latest
 import plot_fitness_over_gens
 
 if __name__ == "__main__":
-    # Parse args
     parser = argparse.ArgumentParser(description='RL')
-    parser.add_argument(
-        '--mode',  #headless, screen, video, both h, s, v, b
-        help='mode for output. h-headless , s-screen, v-video, b-both',
-        default="s")
-    parser.add_argument('--gens',
-                        type=int,
-                        help='number of generations to run',
-                        default=100)
-    parser.add_argument('--sigma',
-                        type=float,
-                        default=1,
-                        help='sigma value for cma-es')
+
+    parser.add_argument('--mode', choices=("h","s","v","b"), default="s",
+                        help='h=headless, s=screen, v=video, b=both')
+    parser.add_argument('--gens', type=int, default=100,
+                        help='number of generations to run')
+    parser.add_argument('--sigma', type=float, default=1,
+                        help='sigma value for CMA-ES')
+    parser.add_argument('--hidden_sizes', type=int, nargs='+', default=[2], 
+                        help='list of hidden layer sizes')
     args = parser.parse_args()
 
-    mode = args.mode
+    num_workers = multiprocessing.cpu_count()
 
-    # Start thread for running best individual
-    if args.mode == "s":
-        t1 = threading.Thread(target=best_individual_latest.visualize_best)
-        t1.start()
-
-        # We want to run in headless mode if in mode v, since the other thread
-        # is already visualizing the best individual. 
-        mode = "h"
-
-    # Run experiment
-    run_cmaes.run(mode, args.gens, args.sigma)
-
-    # Join best individual thread
-    t1.join()
+    with multiprocessing.Pool(processes=num_workers) as pool:
+        pool.apply_async(run_cmaes.run(args.mode, args.gens, args.sigma))
+        time.sleep(2)
+        pool.apply_async(best_individual_latest.visualize_best("t1", args.mode, "false"))
+        pool.close()
+        pool.join()
 
     # Plot fitness
-    plot_fitness_over_gens.plot()
+    # plot_fitness_over_gens.plot()
