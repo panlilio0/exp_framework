@@ -9,23 +9,21 @@ import numpy as np
 from snn.ring_buffer import RingBuffer
 
 # Constants
-PIKE_DECAY_DEFAULT = 0.01
+SPIKE_DECAY = 0.01
 MAX_BIAS = 1
 MAX_FIRELOG_SIZE = 10
-
 
 class SpikyNode:
     """
     Class representing a spiky neuron.
     """
 
-    def __init__(self, size, spike_decay=PIKE_DECAY_DEFAULT):
+    def __init__(self, size):
         """
         Initializes a spike neuron.
 
         Parameters:
             size (int): Number of weights plus the bias.
-            spike_decay (float): Spike decay rate for neurons
         """
         # a list of weights and a bias (last item in the list)
 
@@ -33,7 +31,6 @@ class SpikyNode:
         self.level = 0  # activation level
         self.buffer = RingBuffer(
             MAX_FIRELOG_SIZE)  # tracks whether the neuron fired or not
-        self.spike_decay = spike_decay
         self.levels_log = []
         self.fire_log = []
         self.duty_cycle_log = []
@@ -41,7 +38,7 @@ class SpikyNode:
     def compute(self, inputs):
         """
         Compute the neuron's output based on inputs.
-
+        
         Parameters:
             inputs (list): Inputs into this node.
 
@@ -50,7 +47,7 @@ class SpikyNode:
                     the neuron's current level).
         """
 
-        self.level *= (1 - self.spike_decay)
+        self.level *= (1 - SPIKE_DECAY)
 
         if (len(inputs) + 1) != len(self._weights):
             print(f"Error: {len(inputs)} inputs vs {len(self._weights)} \
@@ -59,12 +56,12 @@ class SpikyNode:
 
         weighted_sum = sum(inputs[i] * self._weights[i]
                            for i in range(len(inputs)))
-
+        
         self.level += weighted_sum
 
         self.levels_log.append(self.level)
 
-        if self.level >= self.get_bias():  # Neuron fires
+        if self.level >= self.get_bias(): # Neuron fires
 
             self.level = 0
             self.fire_log.append(1)
@@ -72,7 +69,7 @@ class SpikyNode:
             self.duty_cycle_log.append(self.duty_cycle())
             return 1.0, self.level
         else:                             # Neuron doesn't fire
-
+            
             self.fire_log.append(0)
             self.buffer.add(0)
             self.duty_cycle_log.append(self.duty_cycle())
@@ -92,13 +89,14 @@ class SpikyNode:
             return 0.0
 
         recent_fires = self.buffer.get()
-
+    
         return recent_fires.count(1)/MAX_FIRELOG_SIZE
+
 
     def set_weights(self, input_weights):
         """
         Sets the neuron's weights.
-
+        
         Parameters:
             input_weights (list): Incoming weights into the neuron.
         """
@@ -106,13 +104,12 @@ class SpikyNode:
             print("Weight size mismatch in node")
         else:
             self._weights = input_weights.copy()
-            self._weights[:-
-                          1] = list(map(lambda x: abs(x), self._weights[:-1]))
+            self._weights[:-1] = list(map(lambda x: abs(x), self._weights[:-1]))
             # self._weights = input_weights.copy()
 
     def set_bias(self, val):
         """Sets the neuron's bias.
-
+        
         Parameters:
             val (float): Value for neuron bias.
         """
@@ -130,7 +127,7 @@ class SpikyNode:
     def print_weights(self):
         """
         Prints the combined list of weights and bias.
-
+        
         Returns:
             list: A list of weights, with the last entry being the neuron's bias.
         """
@@ -139,25 +136,25 @@ class SpikyNode:
     def get_levels_log(self):
         """
         Return the list of the neuron's recent activation levels.
-
+        
         Returns:
             list: A list of all the neuron's levels.
         """
         return self.levels_log
-
+    
     def get_fire_log(self):
         """
         Return the list of the neuron's firelog.
-
+        
         Returns:
             list: A list representing the neuron's firelog.
         """
         return self.fire_log
-
+    
     def get_duty_cycle_log(self):
         """
         Return the neuron's duty cycle for each timestep.
-
+        
         Returns:
             list: A list of all the neuron's duty cycles for each time step..
         """
@@ -174,22 +171,21 @@ class SpikyLayer:
     Collection of multiple neurons (SpikyNodes).
     """
 
-    def __init__(self, num_nodes, num_inputs, spike_decay=PIKE_DECAY_DEFAULT):
+    def __init__(self, num_nodes, num_inputs):
         """
         Initializes a SpikyLayer.
 
         Parameters:
             num_nodes (int): Number of neurons in the layer.
             num_inputs (int): Number of inputs into each neuron the layer.
-            spike_decay (float): Spike decay rate for neurons
         """
-        self.nodes = [SpikyNode(num_inputs, spike_decay)
-                      for _ in range(num_nodes)]
+
+        self.nodes = [SpikyNode(int(num_inputs)) for _ in range(num_nodes)]
 
     def compute(self, inputs):
         """
         Feeds input to each node and returns their output.
-
+        
         Parameters:
             inputs (list): A list of inputs into this layer.
 
@@ -210,7 +206,7 @@ class SpikyLayer:
     def set_weights(self, input_weights):
         """
         Sets weights for all the neurons in the layer.
-
+        
         Parameters:
             input_weights (list): List of weights for all neurons in the layer.
         """
@@ -225,7 +221,7 @@ class SpikyLayer:
     def duty_cycles(self):
         """
         Returns the duty cycles for the neurons in the layer.
-
+        
         Parameters:
             window (int): How many previous time steps to compute the duty cycle.
 
@@ -240,23 +236,28 @@ class SpikyNet:
     Combines multiple spiky hidden layers and one output layer.
     """
 
-    def __init__(self, input_size, hidden_size, output_size, spike_decay=PIKE_DECAY_DEFAULT):
+    def __init__(self, input_size, hidden_sizes, output_size):
         """
         Initializes network.
-
+        
         Parameters:
             input_size (int): Number of inputs into the network.
             hidden_sizes (list): List containing number of neurons in each hidden layer.
             output_size (int): Number of outputs.
-            spike_decay (float): Spike decay rate for neurons
         """
 
-        self.hidden_layer = SpikyLayer(hidden_size, input_size, spike_decay)
-        self.output_layer = SpikyLayer(output_size, hidden_size, spike_decay)
+        self.hidden_layers = []
+        prev_size = input_size
+        for hidden_size in hidden_sizes:
+            layer = SpikyLayer(int(hidden_size), prev_size)
+            self.hidden_layers.append(layer)
+            prev_size = hidden_size
+
+        self.output_layer = SpikyLayer(output_size, prev_size)
 
     def compute(self, inputs):
         """
-        Passes the input through the hidden layer.
+        Passes the input through all hidden layers, then output layer.
 
         Parameters:
             inputs (list): Inputs to the network.
@@ -274,8 +275,8 @@ class SpikyNet:
 
     def set_weights(self, input_weights):
         """
-        Assigns weights to the hidden and the output layer.
-
+        Assigns weights to all hidden layers and the output layer.
+        
         Parameters:
             input_weights: A dictionary with two keys: 'hidden_layer', mapping to a list
                            of all that layer's weights and biases, and a key 'output_layer',
