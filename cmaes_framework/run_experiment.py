@@ -1,46 +1,109 @@
 """
 Runs the latest experiment. Also launches best_individual.py to show the best individual so far
-and plots fitness over generations after the run is over.
+and plots fitness over generations after the run is over. It handles:
+- Parameter configuration via command-line arguments
+- Single or multiple optimization runs
+- Real-time visualization of best individuals
+- Fitness progression plotting
+- Output organization with timestamped/custom experiment directories
 
-Whether to show the simulation or save as video, number of generations, sigma can be passed as
-command line arguments. Example: `python3 run_experiment.py --gens 50 --sigma 2 --mode h` 
-runs cma-es for 50 generations in headless mode with a sigma of 2. Replacing "--mode h" with 
-"--mode s" makes the simulation output to the screen, and replacing it with "--mode v" saves 
-each simulation as a video in `./videos`.  "--mode b" shows on screen and saves a video.
+Example usage:
+python experiment.py --gens 200 --runs 5 --sigma 0.8 --plot --visualize_best
+
+Dependencies: 
+- Custom modules: run_cmaes, best_individual_latest, plot_fitness_over_gens
+- Requires full neuroevolution project environment configuration
 
 By Thomas Breimer
 March 6th, 2025
+
+Modified by Takumi Kojima
+Apr 28th, 2025
 """
 
 import argparse
 import multiprocessing
 import time
+from datetime import datetime
 
 import run_cmaes
+import run_cmaes_multiple
 import best_individual_latest
 import plot_fitness_over_gens
+from snn.model_struct import PIKE_DECAY_DEFAULT
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='RL')
+def main():
+    parser = argparse.ArgumentParser(
+        description="Run a full evolutionary experiment.")
 
-    parser.add_argument('--mode', choices=("h","s","v","b"), default="s",
-                        help='h=headless, s=screen, v=video, b=both')
+    # Core params
+    parser.add_argument('--mode', choices=["h", "s", "v", "b"], default="h",
+                        help='Execution mode: h=headless, s=screen, v=video, b=both')
     parser.add_argument('--gens', type=int, default=100,
-                        help='number of generations to run')
-    parser.add_argument('--sigma', type=float, default=1,
-                        help='sigma value for CMA-ES')
+                        help='Number of generations to run')
+    parser.add_argument('--sigma', type=float, default=1.0,
+                        help='Sigma value (exploration strength)')
+    parser.add_argument('--runs', type=int, default=1,
+                        help='Number of independent CMA-ES runs')
+    parser.add_argument('--spike_decay', type=float, default=PIKE_DECAY_DEFAULT,
+                        help='Neuron spike decay rate (default=0.01)')
+    parser.add_argument('--robot_config', type=str,
+                        help='Path to robot config file (default=bestbot.json)', default="bestbot.json")
     parser.add_argument('--hidden_sizes', type=int, nargs='+', default=[2], 
                         help='list of hidden layer sizes')
+
+    # Output params
+    parser.add_argument('--exp_name', type=str, default=None,
+                        help='Optional experiment folder name (otherwise timestamped)')
+    parser.add_argument('--plot', action='store_true',
+                        help='Whether to plot fitness over generations after running')
+    parser.add_argument('--visualize_best', action='store_true',
+                        help='Whether to visualize best individual live during training')
+    parser.add_argument('--logs', type=str, default="false",
+                        help='Whether to generate SNN logs during visualization (true/false)')
+
     args = parser.parse_args()
 
-    num_workers = multiprocessing.cpu_count()
+    # Resolve experiment name
+    if args.exp_name:
+        exp_folder = args.exp_name
+    else:
+        exp_folder = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
 
-    with multiprocessing.Pool(processes=num_workers) as pool:
-        pool.apply_async(run_cmaes.run(args.mode, args.gens, args.sigma))
-        time.sleep(2)
-        pool.apply_async(best_individual_latest.visualize_best("t1", args.mode, "false"))
-        pool.close()
-        pool.join()
+    # Decide whether to run one or multiple CMA-ES runs
+    if args.runs == 1:
+        print("[INFO] Starting single CMA-ES run...")
+        run_cmaes.run(args.mode, args.gens, args.sigma, hidden_sizes=args.hidden_sizes,
+                      output_folder=exp_folder, run_number=1, spike_decay=args.spike_decay, robot_config_path=args.robot_config)
+    else:
+        print(f"[INFO] Starting {args.runs} CMA-ES runs...")
+        for run_number in range(1, args.runs + 1):
+            run_cmaes.run(args.mode, args.gens, args.sigma, hidden_sizes=args.hidden_sizes,
+                          output_folder=exp_folder, run_number=run_number, spike_decay=args.spike_decay, robot_config_path=args.robot_config)
 
-    # Plot fitness
-    # plot_fitness_over_gens.plot()
+    # visualization
+    if args.visualize_best:
+        print("[INFO] Launching live visualization of best individual...")
+
+        logs_bool = args.logs.lower() in ('yes', 'true', 't', '1')
+
+        # Spawn visualization in a separate process
+        process = multiprocessing.Process(
+            target=best_individual_latest.visualize_best, args=(args.mode, logs_bool))
+        process.start()
+        time.sleep(2)  # Give some time to set up visualization
+
+    # plotting
+    if args.plot:
+        print("[INFO] Plotting fitness over generations...")
+        try:
+            filename = f"genomes/{exp_folder}/run_1.csv"
+            plot_fitness_over_gens.plot(filename)
+        except Exception as e:
+            print(f"[WARN] Could not plot fitness: {e}")
+
+    print("[INFO] Experiment completed.")
+
+
+if __name__ == "__main__":
+    main()

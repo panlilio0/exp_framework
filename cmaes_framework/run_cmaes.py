@@ -21,6 +21,7 @@ import pandas as pd
 from cmaes import SepCMA
 import numpy as np
 from snn_sim import run_simulation
+from snn.model_struct import PIKE_DECAY_DEFAULT
 import os
 import sys
 
@@ -34,6 +35,7 @@ def is_windows():
     return os.name == 'nt' or sys.platform.startswith('win')
 
 NUM_ACTUATORS = 8
+POP_SIZE = 12
 
 INPUT_SIZE = 2
 OUTPUT_SIZE = 1
@@ -41,6 +43,10 @@ OUTPUT_SIZE = 1
 # Num of sim time steps
 ITERS = 1000
 
+ROBOT_CONFIG_PATH_DEFAULT = "bestbot.json"
+
+# Shape of the genome
+SNN_INPUT_SHAPE = 72
 
 VERBOSE = False
 
@@ -51,7 +57,8 @@ FITNESS_INDEX = 1
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 DATE_TIME = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
-def run(mode, gens, sigma_val, hidden_sizes, output_folder=DATE_TIME, run_number=1):
+def run(mode, gens, sigma_val, hidden_sizes, output_folder=DATE_TIME, run_number=1, 
+        spike_decay=PIKE_DECAY_DEFAULT, robot_config_path=ROBOT_CONFIG_PATH_DEFAULT):
     """
     Runs the cma_es algorithm on the robot locomotion problem,
     with sin-like robot actuators. Saves a csv file to ./output
@@ -123,7 +130,7 @@ def run(mode, gens, sigma_val, hidden_sizes, output_folder=DATE_TIME, run_number
            bounds[i] = (0, 200000)
 
     # Init CMA
-    optimizer = SepCMA(mean=np.array(MEAN_ARRAY), sigma=sigma_val, bounds=np.array(bounds), population_size=12)
+    optimizer = SepCMA(mean=np.array(MEAN_ARRAY), sigma=sigma_val, bounds=np.array(bounds), population_size=POP_SIZE)
 
     best_fitness_so_far = run_simulation.FITNESS_OFFSET
 
@@ -134,7 +141,18 @@ def run(mode, gens, sigma_val, hidden_sizes, output_folder=DATE_TIME, run_number
         # Run individuals
         for _ in range(optimizer.population_size):
             x = optimizer.ask() # Ask cmaes for a genome
-            fitness = run_simulation.run(ITERS, x, "h", hidden_sizes) # get fitness
+            fitness = run_simulation.run(
+                iters=ITERS,
+                genome=x,
+                mode="h",
+                hidden_sizes=hidden_sizes,
+                vid_name=None,
+                vid_path=None,
+                snn_logs=False,
+                log_filename=None,
+                robot_config=robot_config_path,
+                spike_decay=spike_decay
+            ) # get fitness
             solutions.append((x, fitness))
 
         optimizer.tell(solutions) # Tell cmaes about population

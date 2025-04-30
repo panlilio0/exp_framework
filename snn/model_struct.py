@@ -9,7 +9,7 @@ import numpy as np
 from snn.ring_buffer import RingBuffer
 
 # Constants
-SPIKE_DECAY = 0.01
+PIKE_DECAY_DEFAULT = 0.01
 MAX_BIAS = 1
 MAX_FIRELOG_SIZE = 10
 
@@ -18,12 +18,13 @@ class SpikyNode:
     Class representing a spiky neuron.
     """
 
-    def __init__(self, size):
+    def __init__(self, size, spike_decay=PIKE_DECAY_DEFAULT):
         """
         Initializes a spike neuron.
 
         Parameters:
             size (int): Number of weights plus the bias.
+            spike_decay (float): Spike decay rate for neurons.
         """
         # a list of weights and a bias (last item in the list)
 
@@ -31,6 +32,7 @@ class SpikyNode:
         self.level = 0  # activation level
         self.buffer = RingBuffer(
             MAX_FIRELOG_SIZE)  # tracks whether the neuron fired or not
+        self.spike_decay = spike_decay
         self.levels_log = []
         self.fire_log = []
         self.duty_cycle_log = []
@@ -47,7 +49,7 @@ class SpikyNode:
                     the neuron's current level).
         """
 
-        self.level *= (1 - SPIKE_DECAY)
+        self.level *= (1 - self.spike_decay)
 
         if (len(inputs) + 1) != len(self._weights):
             print(f"Error: {len(inputs)} inputs vs {len(self._weights)} \
@@ -171,16 +173,18 @@ class SpikyLayer:
     Collection of multiple neurons (SpikyNodes).
     """
 
-    def __init__(self, num_nodes, num_inputs):
+    def __init__(self, num_nodes, num_inputs, spike_decay=PIKE_DECAY_DEFAULT):
         """
         Initializes a SpikyLayer.
 
         Parameters:
             num_nodes (int): Number of neurons in the layer.
             num_inputs (int): Number of inputs into each neuron the layer.
+            spike_decay (float): Spike decay rate for neurons
         """
 
-        self.nodes = [SpikyNode(int(num_inputs)) for _ in range(num_nodes)]
+        self.nodes = [SpikyNode(num_inputs, spike_decay)
+                      for _ in range(num_nodes)]
 
     def compute(self, inputs):
         """
@@ -236,7 +240,7 @@ class SpikyNet:
     Combines multiple spiky hidden layers and one output layer.
     """
 
-    def __init__(self, input_size, hidden_sizes, output_size):
+    def __init__(self, input_size, hidden_sizes, output_size, spike_decay=PIKE_DECAY_DEFAULT):
         """
         Initializes network.
         
@@ -244,12 +248,13 @@ class SpikyNet:
             input_size (int): Number of inputs into the network.
             hidden_sizes (list): List containing number of neurons in each hidden layer.
             output_size (int): Number of outputs.
+            spike_decay (float): Spike decay rate for neurons
         """
 
         self.hidden_layers = []
         prev_size = input_size
         for hidden_size in hidden_sizes:
-            layer = SpikyLayer(int(hidden_size), prev_size)
+            layer = SpikyLayer(int(hidden_size), prev_size, spike_decay)
             self.hidden_layers.append(layer)
             prev_size = hidden_size
 

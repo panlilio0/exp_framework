@@ -165,3 +165,9 @@ April 28th | Hades Panlilio
 - Added parameter hidden_layers to specify amount of hidden layers/neurons per layer
 - Added hidden layer functionality to SpikyNet
 - Updated files that run the simulation to accept new parameter and multiple layers
+
+### run_experiment Update & parameterize spiky decay and robot config
+April 28th | Takumi
+- Updated run_experiment with all possible params for now
+- parameterized spiky decay
+- parameterized robot_confi

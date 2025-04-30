@@ -18,6 +18,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')
 
 from snn_sim.robot.morphology import Morphology
 from snn.snn_controller import SNNController
+from snn.model_struct import PIKE_DECAY_DEFAULT
 
 # Simulation constants
 ROBOT_SPAWN_X = 2
@@ -68,7 +69,7 @@ def group_list(flat_list: list, n: int) -> list:
     return [list(flat_list[i:i+n]) for i in range(0, len(flat_list), n)]
 
 
-def run(iters, genome, mode, hidden_sizes, vid_name=None, vid_path=None, snn_logs=False, log_filename=None):
+def run(iters, genome, mode, hidden_sizes, vid_name=None, vid_path=None, snn_logs=False, log_filename=None, spike_decay=PIKE_DECAY_DEFAULT, robot_config=ROBOT_FILENAME):    
     """
     Runs a single simulation of a given genome.
 
@@ -89,10 +90,9 @@ def run(iters, genome, mode, hidden_sizes, vid_name=None, vid_path=None, snn_log
 
     # Create world
     world = EvoWorld.from_json(os.path.join(THIS_DIR, 'robot', 'world_data', ENV_FILENAME))
-
-    # Add robot
-    robot = WorldObject.from_json(os.path.join(THIS_DIR, 'robot', 'world_data', ROBOT_FILENAME))
-
+    
+    robot = WorldObject.from_json(os.path.join(THIS_DIR, 'robot', 'world_data', robot_config))
+    
     world.add_from_array(
         name='robot',
         structure=robot.get_structure(),
@@ -113,12 +113,14 @@ def run(iters, genome, mode, hidden_sizes, vid_name=None, vid_path=None, snn_log
     # Get position of all robot point masses
     init_raw_pm_pos = sim.object_pos_at_time(sim.get_time(), "robot")
 
-    morphology = Morphology(ROBOT_FILENAME)
+    morphology = Morphology(robot_config)
 
     robot_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                   'robot', 'world_data', ROBOT_FILENAME)
+                                   'robot', 'world_data', robot_config)
 
-    snn_controller = SNNController(2, hidden_sizes, 1, robot_config=robot_file_path)
+    snn_controller = SNNController(
+        2, hidden_sizes, 1, robot_config=robot_file_path, spike_decay=spike_decay)    
+    
     snn_controller.set_snn_weights(genome)
 
     def scale_inputs(init, cur):
