@@ -6,6 +6,7 @@ February 21st, 2025
 """
 
 import os
+import math
 import numpy as np
 from evogym import WorldObject
 from snn_sim.robot.actuator import Actuator
@@ -31,23 +32,19 @@ class Morphology:
         self.robot_filepath = os.path.join(
             os.path.dirname(os.path.realpath(__file__)), "world_data",
             filename)
-        self.structure = self.get_structure(self.robot_filepath)
+        self.get_config()
         self.actuators = self.create_actuator_voxels(self.structure)
 
-    def get_structure(self, robot_filepath: str) -> np.ndarray:
+    def get_config(self):
         """
-        Return the robot’s structure matrix.
+        Inits robot characteristics.
 
         Parameters:
             robot_filepath (str): The filename of the robot to get.
-
-        Returns:
-            np.ndarray: (n, m) array specifing the voxel structure of the object.
         """
-
-        # Get robot structure
-        robot = WorldObject.from_json(robot_filepath)
-        return robot.get_structure()
+        robot = WorldObject.from_json(self.robot_filepath)
+        self.structure = robot.get_structure()
+        self.connections = robot.get_connections()
 
     def create_actuator_voxels(self, structure: np.ndarray) -> list:
         """
@@ -153,10 +150,10 @@ class Morphology:
 
         return actuators
 
-    def get_corner_distances(self, pm_pos: list) -> tuple:
+    def get_corner_distances(self, pm_pos: list) -> list:
         """
         Given the list of robot point mass coordinates generated from sim.object_pos_at_time(),
-        returns an list of an lists where each top level list corresponds to a an actuator voxel,
+        returns an list of lists where each top level list corresponds to a an actuator voxel,
         the the sublist contains the distance to the [top left corner, bottom right corner].
         
         Parameters:
@@ -165,8 +162,8 @@ class Morphology:
                            y positions.
         
         Returns:
-            list: A list of tuples of the distances to the top left point mass and bottom right point mass
-                  of each actuator.
+            list: A list of tuples of the distances to the top left point mass and bottom right point 
+            mass of each actuator.
         """
 
         actuator_distances = []
@@ -178,3 +175,34 @@ class Morphology:
                     self.bottom_right_corner_index))
 
         return actuator_distances
+
+    def get_actuator_distances(self, pm_pos: list) -> list:
+        """
+        Given the list of robot point mass coordinates generated from sim.object_pos_at_time(),
+        returns an list of lists where each top level list corresponds to a an actuator voxel,
+        the the sublist contains the distance to all other voxels.
+        
+        Parameters:
+            pm_pos (list): A list with the first element being a np.ndarray containing all
+                           point mass x positions, and second element containig all point mass
+                           y positions.
+        
+        Returns:
+            list: A list of list of the distances to all other voxels.
+        """
+
+        distances = []
+
+        for this_actuator in self.actuators:
+            x1, y1 = this_actuator.get_center_of_mass(pm_pos)
+            this_actuator_distances = []
+
+            for other_actuator in self.actuators:
+                if not this_actuator == other_actuator:
+                    x2, y2 = other_actuator.get_center_of_mass(pm_pos)
+                    this_actuator_distances.append(
+                        math.sqrt((x2 - x1)**2 + (y2 - y1)**2))
+
+            distances.append(this_actuator_distances)
+
+        return distances
