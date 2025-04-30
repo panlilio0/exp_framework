@@ -14,11 +14,12 @@ import numpy as np
 from evogym import EvoWorld, EvoSim, EvoViewer
 from evogym import WorldObject
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+sys.path.append(
+    os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
-from snn_sim.robot.morphology import Morphology
-from snn.snn_controller import SNNController
+import snn.snn_controller as snn_control
 from snn.model_struct import PIKE_DECAY_DEFAULT
+from snn_sim.robot.morphology import Morphology
 
 # Simulation constants
 ROBOT_SPAWN_X = 2
@@ -26,7 +27,10 @@ ROBOT_SPAWN_Y = 0
 ACTUATOR_MIN_LEN = 0.6
 ACTUATOR_MAX_LEN = 1.6
 FPS = 50
-MODE = "v" # "headless", "screen", or "video"
+MODE = "v"  # "headless", "screen", or "video"
+
+SNN_INPUT_METHOD_DEFAULT = "corners"
+DEFAULT_SCALE_SNN_INPUTS = True
 
 FITNESS_OFFSET = 100
 
@@ -34,6 +38,7 @@ FITNESS_OFFSET = 100
 ENV_FILENAME = "bigger_platform.json"
 ROBOT_FILENAME = "bestbot.json"
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
+
 
 def create_video(source, output_name, vid_path, fps=FPS):
     """
@@ -48,12 +53,13 @@ def create_video(source, output_name, vid_path, fps=FPS):
 
     Path(vid_path).mkdir(parents=True, exist_ok=True)
     out = cv2.VideoWriter(os.path.join(vid_path, output_name + ".mp4"),
-                          cv2.VideoWriter_fourcc(*'mp4v'),
-                          fps, (source[0].shape[1], source[0].shape[0]))
+                          cv2.VideoWriter_fourcc(*'mp4v'), fps,
+                          (source[0].shape[1], source[0].shape[0]))
     for frame in source:
         frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
         out.write(frame_bgr)
     out.release()
+
 
 def group_list(flat_list: list, n: int) -> list:
     """
@@ -66,10 +72,21 @@ def group_list(flat_list: list, n: int) -> list:
     Returns:
         list: Grouped list.
     """
-    return [list(flat_list[i:i+n]) for i in range(0, len(flat_list), n)]
+    return [list(flat_list[i:i + n]) for i in range(0, len(flat_list), n)]
 
 
-def run(iters, genome, mode, hidden_sizes, vid_name=None, vid_path=None, snn_logs=False, log_filename=None, spike_decay=PIKE_DECAY_DEFAULT, robot_config=ROBOT_FILENAME):    
+def run(iters,
+        genome,
+        mode,
+        hidden_sizes,
+        vid_name=None,
+        vid_path=None,
+        snn_logs=False,
+        log_filename=None,
+        spike_decay=PIKE_DECAY_DEFAULT,
+        robot_config=ROBOT_FILENAME,
+        snn_input_method=SNN_INPUT_METHOD_DEFAULT,
+        scale_snn_inputs=DEFAULT_SCALE_SNN_INPUTS):
     """
     Runs a single simulation of a given genome.
 
@@ -84,21 +101,25 @@ def run(iters, genome, mode, hidden_sizes, vid_name=None, vid_path=None, snn_log
         vid_name (string): If mode is "v" or "b", this is the name of the saved video.
         vid_path (string): If mode is "v" or "b", this is the path the video will be saved.
         snn_logs (bool): Whether to produce SNN logs.
+        snn_input_method (str): How SNN inputs are computed. 
+                          Options are ["corners", "neighbors"]
+        scale_inputs (bool): Whether or not to scale SNN inputs.
     Returns:
         float: The fitness of the genome.
     """
 
     # Create world
-    world = EvoWorld.from_json(os.path.join(THIS_DIR, 'robot', 'world_data', ENV_FILENAME))
-    
-    robot = WorldObject.from_json(os.path.join(THIS_DIR, 'robot', 'world_data', robot_config))
-    
-    world.add_from_array(
-        name='robot',
-        structure=robot.get_structure(),
-        x=ROBOT_SPAWN_X + 1,
-        y=ROBOT_SPAWN_Y + 1,
-        connections=robot.get_connections())
+    world = EvoWorld.from_json(
+        os.path.join(THIS_DIR, 'robot', 'world_data', ENV_FILENAME))
+
+    robot = WorldObject.from_json(
+        os.path.join(THIS_DIR, 'robot', 'world_data', robot_config))
+
+    world.add_from_array(name='robot',
+                         structure=robot.get_structure(),
+                         x=ROBOT_SPAWN_X + 1,
+                         y=ROBOT_SPAWN_Y + 1,
+                         connections=robot.get_connections())
 
     # Create simulation
     sim = EvoSim(world)
@@ -118,20 +139,31 @@ def run(iters, genome, mode, hidden_sizes, vid_name=None, vid_path=None, snn_log
     robot_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                    'robot', 'world_data', robot_config)
 
-    snn_controller = SNNController(
-        2, hidden_sizes, 1, robot_config=robot_file_path, spike_decay=spike_decay)    
-    
+    NUM_ACTUATORS, SNN_INPUT_SHAPE = snn_control.compute_genome_size(
+        robot_file_path, snn_input_method, hidden_sizes)
+
+    if snn_input_method == "corners":
+        snn_input_size = 2
+    elif snn_input_method == "all_dist":
+        snn_input_size = NUM_ACTUATORS - 1
+
+    snn_controller = snn_control.SNNController(snn_input_size,
+                                               hidden_sizes,
+                                               1,
+                                               robot_config=robot_file_path,
+                                               spike_decay=spike_decay)
+
     snn_controller.set_snn_weights(genome)
 
     def scale_inputs(init, cur):
         init = np.asarray(init, dtype=float)
-        cur  = np.asarray(cur,  dtype=float)
-        
+        cur = np.asarray(cur, dtype=float)
+
         # Compute relative change
         scaled = ((cur - init) / init) * 10 + 1
 
         # print("Scaled: ", scaled)
-        
+
         # Clip so that min is -1 and max is 0
         return scaled
 
@@ -139,17 +171,22 @@ def run(iters, genome, mode, hidden_sizes, vid_name=None, vid_path=None, snn_log
         # Get point mass locations
         raw_pm_pos = sim.object_pos_at_time(sim.get_time(), "robot")
 
-        # Get current corner distances
-        corner_distances = np.array(morphology.get_corner_distances(raw_pm_pos))
+        # Decide what our inputs to the SNN are going to be
+
+        if snn_input_method == "corners":
+            inputs = np.array(morphology.get_corner_distances(raw_pm_pos))
+        elif snn_input_method == "all_dist":
+            inputs = np.array(morphology.get_actuator_distances(raw_pm_pos))
 
         if i == 0:
-            init = corner_distances
+            init = inputs
 
-        inputs = scale_inputs(init, corner_distances)
+        if scale_snn_inputs:
+            inputs = scale_inputs(init, inputs)
 
         # Get action from SNN controller
         action = snn_controller.get_lengths(inputs)
-  
+
         # Clip actuator target lengths to be between 0.6 and 1.6 to prevent buggy behavior
         action = np.clip(action, ACTUATOR_MIN_LEN, ACTUATOR_MAX_LEN)
 
@@ -181,5 +218,4 @@ def run(iters, genome, mode, hidden_sizes, vid_name=None, vid_path=None, snn_log
     if snn_logs:
         snn_controller.generate_output_csv(log_filename)
 
-    return FITNESS_OFFSET - fitness # Turn into a minimization problem
-
+    return FITNESS_OFFSET - fitness  # Turn into a minimization problem

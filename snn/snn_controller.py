@@ -2,7 +2,7 @@
 Module for running SNN outputs with proper input/output handling.
 
 Authors: Abhay Kashyap, Atharv Tekurkar
-Modified by: Hades Panlilio
+Modified by: Hades Panlilio, Thomas Breimer
 """
 
 from datetime import datetime
@@ -23,6 +23,7 @@ _project_root = os.path.dirname(os.path.dirname(_current_file))
 ROBOT_DATA_PATH = os.path.join(_project_root, "morpho_demo", "world_data",
                                "bestbot.json")
 
+
 def is_windows():
     """
     Checks if the operating system is Windows.
@@ -31,6 +32,7 @@ def is_windows():
         bool: True if the OS is Windows, False otherwise.
     """
     return os.name == 'nt' or sys.platform.startswith('win')
+
 
 class SNNController:
     """Class to handle SNN input/output processing."""
@@ -67,15 +69,8 @@ class SNNController:
             robot_path (str): Path to robot JSON configuration file
             
         """
-        if not os.path.exists(robot_path):
-            raise FileNotFoundError(
-                f"Robot configuration file not found: {robot_path}")
-        with open(robot_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
 
-        # Extract robot data
-        robot_key = list(data["objects"].keys())[0]
-        robot_data = data["objects"][robot_key]
+        robot_data = self._load_robot_file(robot_path)
 
         # Count actuators (types 3 and 4)
         self.num_snn = sum(1 for t in robot_data["types"] if t in [3, 4])
@@ -85,9 +80,29 @@ class SNNController:
             SpikyNet(input_size=self.inp_size,
                      hidden_sizes=self.hidden_sizes,
                      output_size=self.output_size,
-                     spike_decay=self.spike_decay)
-            for _ in range(self.num_snn)
+                     spike_decay=self.spike_decay) for _ in range(self.num_snn)
         ]
+
+    def _load_robot_file(self, robot_path):
+        """
+        Loads a robot file.
+        
+        Parameters:
+            robot_path (str): Path to robot JSON configuration file
+
+        Returns:
+            Robot data.
+        """
+
+        if not os.path.exists(robot_path):
+            raise FileNotFoundError(
+                f"Robot configuration file not found: {robot_path}")
+        with open(robot_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+
+        # Extract robot data
+        robot_key = list(data["objects"].keys())[0]
+        return data["objects"][robot_key]
 
     def set_snn_weights(self, cmaes_out):
         """
@@ -106,7 +121,7 @@ class SNNController:
         """
 
         flat_vector = np.array(cmaes_out)
-        
+
         # Compute parameters for each SNN
         params_per_snn = 0
         layer_input_size = self.inp_size
@@ -120,8 +135,9 @@ class SNNController:
         params_per_snn += (layer_input_size + 1) * self.output_size
 
         if flat_vector.size != (self.num_snn * params_per_snn):
-            raise ValueError(f"Expected CMA-ES output vector of size "
-                             f"{self.num_snn * params_per_snn}, got {flat_vector.size}.")
+            raise ValueError(
+                f"Expected CMA-ES output vector of size "
+                f"{self.num_snn * params_per_snn}, got {flat_vector.size}.")
 
         reshaped = flat_vector.reshape((self.num_snn, params_per_snn))
 
@@ -167,9 +183,7 @@ class SNNController:
 
             spikes, levels = snn.compute(inputs[snn_id])
 
-            actions = [
-                1.6 if spikes[0] == 1 else 0.6
-            ]
+            actions = [1.6 if spikes[0] == 1 else 0.6]
 
             outputs[snn_id] = {
                 "target_length": actions,
@@ -190,7 +204,7 @@ class SNNController:
         Returns:
             list: Target length for each actuator, the "action array".
         """
-        
+
         out = self._get_output_state(inputs)
 
         lengths = []
@@ -199,7 +213,7 @@ class SNNController:
             lengths.append(item['target_length'])
 
         return lengths
-    
+
     def generate_output_csv(self, log_filename):
         """
         Generates an output csv log file for activation level, firelog, and firing frequency for
@@ -226,29 +240,44 @@ class SNNController:
                 for neuron_id, fire_log_data in enumerate(layer):
                     # Make levels log row
                     level_log_data = level_logs[snn_id][layer_name][neuron_id]
-                    level_log_row = [str(snn_id), str(layer_name), str(neuron_id), "levellog"]
+                    level_log_row = [
+                        str(snn_id),
+                        str(layer_name),
+                        str(neuron_id), "levellog"
+                    ]
                     level_log_row.extend(level_log_data)
                     df.loc[len(df)] = level_log_row
 
                     # Make fire log row
-                    fire_log_row = [str(snn_id), str(layer_name), str(neuron_id), "firelog"]
+                    fire_log_row = [
+                        str(snn_id),
+                        str(layer_name),
+                        str(neuron_id), "firelog"
+                    ]
                     fire_log_row.extend(fire_log_data)
                     df.loc[len(df)] = fire_log_row
 
                     # Make duty cycle log row
-                    duty_cycle_data = duty_cycle_logs[snn_id][layer_name][neuron_id]
-                    duty_cycle_row = [str(snn_id), str(layer_name), str(neuron_id), "dutycyclelog"]
+                    duty_cycle_data = duty_cycle_logs[snn_id][layer_name][
+                        neuron_id]
+                    duty_cycle_row = [
+                        str(snn_id),
+                        str(layer_name),
+                        str(neuron_id), "dutycyclelog"
+                    ]
                     duty_cycle_row.extend(duty_cycle_data)
                     df.loc[len(df)] = duty_cycle_row
 
         # Generate file
-        data_folder =  Path(os.path.join(_project_root, "cmaes_framework","data","logs"))
+        data_folder = Path(
+            os.path.join(_project_root, "cmaes_framework", "data", "logs"))
         Path(data_folder).mkdir(parents=True, exist_ok=True)
         csv_path = os.path.join(data_folder, log_filename)
 
         df.to_csv(csv_path, index=False)
 
-        link = (os.path.join(_project_root, "cmaes_framework","data","latest_log.csv"))
+        link = (os.path.join(_project_root, "cmaes_framework", "data",
+                             "latest_log.csv"))
 
         # Set up latest.csv symlink
         if os.path.exists(link):
@@ -262,7 +291,6 @@ class SNNController:
             except FileNotFoundError:
                 pass
             os.system("ln -s " + csv_path + " " + link)
-
 
     def get_fire_log(self):
         """
@@ -312,7 +340,7 @@ class SNNController:
             }
             for i, snn in enumerate(self.snns)
         }
-    
+
     def get_duty_cycle_log(self):
         """
         Return a dictionary with the duty cycle
@@ -338,3 +366,52 @@ class SNNController:
             for i, snn in enumerate(self.snns)
         }
 
+
+def compute_genome_size(robot_path, snn_input_method, hidden_sizes):
+    """
+    Given a robot body file an SNN input method, and hidden layer sizes, 
+    computes how long the genome needs to be and how many actuators there are.
+
+    Parameters:
+        robot_path (str): Path to robot JSON configuration file.
+        snn_input_method (str): How SNN inputs are computed. 
+                        Options are ["corners", "neighbors"]
+        hidden_sizes (list): A list of the sizes of all the hidden layers.
+
+    Returns:
+        tuple: (num_actuators (int), genome_length (int)).
+    """
+
+    if not os.path.exists(robot_path):
+        raise FileNotFoundError(
+            f"Robot configuration file not found: {robot_path}")
+    with open(robot_path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+
+    # Extract robot data
+    robot_key = list(data["objects"].keys())[0]
+    robot_data = data["objects"][robot_key]
+
+    # Count actuators (types 3 and 4)
+    num_snn = sum(1 for t in robot_data["types"] if t in [3, 4])
+
+    if snn_input_method == "corners":
+        inp_size = 2  # Inputs are distances to two corners
+    elif snn_input_method == "all_dist":
+        inp_size = num_snn - 1  # Inputs are distances to all other actuators
+
+    # Compute parameters for each SNN
+    params_per_snn = 0
+    layer_input_size = inp_size
+
+    # Sum hidden layers
+    for hidden_size in hidden_sizes:
+        params_per_snn += (layer_input_size + 1) * hidden_size
+        layer_input_size = hidden_size
+
+    # Output layer
+    params_per_snn += (layer_input_size + 1)
+
+    genome_length = num_snn * params_per_snn
+
+    return num_snn, genome_length
