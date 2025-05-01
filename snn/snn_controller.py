@@ -212,7 +212,7 @@ class SNNController:
         duty_cycle_logs = self.get_duty_cycle_log()
 
         # Find how many time steps there were
-        steps = len(fire_logs[0]['hidden'][0])
+        steps = len(fire_logs[0]['output'][0])
 
         # Generate SNN_log csv file
         csv_header = ['SNN', "layer", 'neuron', 'log']
@@ -271,19 +271,15 @@ class SNNController:
         
         Returns:
             dict: Dictionary with structure:
-                    {snn_id: {'hidden': [firelog_node_1, firelog_node_2, ...],
-                              'output': [firelog_node_1, firelog_node_2, ...]}}
+                    {snn_id: {'hidden0': [...], 'hidden1': [...], ..., 'output': [...]}}
         """
         return {
             i: {
-                'hidden': [
-                    snn.hidden_layer.nodes[n].fire_log
-                    for n in range(len(snn.hidden_layer.nodes))
-                ],
-                'output': [
-                    snn.output_layer.nodes[n].fire_log
-                    for n in range(len(snn.output_layer.nodes))
-                ]
+                **{
+                    f'hidden{j}': [node.fire_log for node in layer.nodes]
+                    for j, layer in enumerate(snn.hidden_layers)
+                },
+                'output': [node.fire_log for node in snn.output_layer.nodes]
             }
             for i, snn in enumerate(self.snns)
         }
@@ -296,19 +292,16 @@ class SNNController:
         
         Returns:
             dict: Dictionary with structure:
-                    {snn_id: {'hidden': [levels_log_node_1, levels_log_node_2, ...],
-                              'output': [levels_log_node_1, levels_log_node_2, ...]}}
+                    {snn_id: {'hidden0': [levels_log_node_1, levels_log_node_2, ...], 
+                    'hidden1': [...], ..., 'output': [levels_log_node_1, levels_log_node_2, ...]}}
         """
         return {
             i: {
-                'hidden': [
-                    snn.hidden_layer.nodes[n].get_levels_log()
-                    for n in range(len(snn.hidden_layer.nodes))
-                ],
-                'output': [
-                    snn.output_layer.nodes[n].get_levels_log()
-                    for n in range(len(snn.output_layer.nodes))
-                ]
+                **{
+                    f'hidden{j}': [node.get_levels_log() for node in layer.nodes]
+                    for j, layer in enumerate(snn.hidden_layers)
+                },
+                'output': [node.get_levels_log() for node in snn.output_layer.nodes]
             }
             for i, snn in enumerate(self.snns)
         }
@@ -321,20 +314,16 @@ class SNNController:
         
         Returns:
             dict: Dictionary with structure:
-                    {snn_id: {'hidden': [duty_cycle_node_1, duty_cycle_node_2, ...],
-                              'output': [duty_cycle_node_1, duty_cycle_node_2, ...]}}
+                    {snn_id: {'hidden0': [duty_cycle_node_1, duty_cycle_node_2, ...], 
+                    'hidden1': [...], ..., 'output': [duty_cycle_node_1, duty_cycle_node_2, ...]}}
         """
         return {
             i: {
-                'hidden': [
-                    snn.hidden_layer.nodes[n].get_duty_cycle_log()
-                    for n in range(len(snn.hidden_layer.nodes))
-                ],
-                'output': [
-                    snn.output_layer.nodes[n].get_duty_cycle_log()
-                    for n in range(len(snn.output_layer.nodes))
-                ]
+                **{
+                    f'hidden{j}': [node.get_duty_cycle_log() for node in layer.nodes]
+                    for j, layer in enumerate(snn.hidden_layers)
+                },
+                'output': [node.get_duty_cycle_log() for node in snn.output_layer.nodes]
             }
             for i, snn in enumerate(self.snns)
         }
-

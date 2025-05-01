@@ -76,10 +76,11 @@ def run(mode, gens, sigma_val, hidden_sizes, output_folder=DATE_TIME, run_number
     """
 
     params_per_snn = 0
-
+    
+    layer_input_size = INPUT_SIZE
     # Sum hidden layers
     for hidden_size in hidden_sizes:
-        params_per_snn += (INPUT_SIZE + 1) * hidden_size
+        params_per_snn += (layer_input_size + 1) * hidden_size
         layer_input_size = hidden_size
 
     # Output layer
