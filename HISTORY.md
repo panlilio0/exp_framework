@@ -171,3 +171,8 @@ April 28th | Takumi
 - Updated run_experiment with all possible params for now
 - parameterized spiky decay
 - parameterized robot_confi
+
+### Supporting alternative SNN Input
+April 29th | Thomas Breimer
+- Added infrastructure for alternative SNN input options
+- Added distance to all other actuators SNN input option
