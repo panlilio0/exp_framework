@@ -22,7 +22,7 @@ import pandas as pd
 from cmaes import SepCMA
 import numpy as np
 from snn_sim import run_simulation
-from snn.model_struct import PIKE_DECAY_DEFAULT
+from snn.model_struct import SPIKE_DECAY_DEFAULT
 import snn.snn_controller as snn_controller
 
 
@@ -63,7 +63,7 @@ def run(mode,
         hidden_sizes,
         output_folder=DATE_TIME,
         run_number=1,
-        spike_decay=PIKE_DECAY_DEFAULT,
+        spike_decay=SPIKE_DECAY_DEFAULT,
         robot_config_path=ROBOT_CONFIG_PATH_DEFAULT,
         snn_input_method=SNN_INPUT_METHOD_DEFAULT,
         scale_snn_inputs=DEFAULT_SCALE_SNN_INPUTS):
