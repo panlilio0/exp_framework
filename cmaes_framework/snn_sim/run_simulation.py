@@ -83,7 +83,7 @@ def run(iters,
         vid_path=None,
         snn_logs=False,
         log_filename=None,
-        spike_decay=PIKE_DECAY_DEFAULT,
+        spike_decay=SPIKE_DECAY_DEFAULT,
         robot_config=ROBOT_FILENAME,
         snn_input_method=SNN_INPUT_METHOD_DEFAULT,
         scale_snn_inputs=DEFAULT_SCALE_SNN_INPUTS):
