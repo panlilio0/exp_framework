@@ -9,7 +9,7 @@ import numpy as np
 from snn.ring_buffer import RingBuffer
 
 # Constants
-PIKE_DECAY_DEFAULT = 0.01
+SPIKE_DECAY_DEFAULT = 0.01
 MAX_BIAS = 1
 MAX_FIRELOG_SIZE = 10
 
