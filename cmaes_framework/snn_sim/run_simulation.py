@@ -18,7 +18,7 @@ sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 import snn.snn_controller as snn_control
-from snn.model_struct import PIKE_DECAY_DEFAULT
+from snn.model_struct import SPIKE_DECAY_DEFAULT
 from snn_sim.robot.morphology import Morphology
 
 # Simulation constants
