@@ -18,7 +18,7 @@ class SpikyNode:
     Class representing a spiky neuron.
     """
 
-    def __init__(self, size, spike_decay=PIKE_DECAY_DEFAULT):
+    def __init__(self, size, spike_decay=SPIKE_DECAY_DEFAULT):
         """
         Initializes a spike neuron.
 
@@ -173,7 +173,7 @@ class SpikyLayer:
     Collection of multiple neurons (SpikyNodes).
     """
 
-    def __init__(self, num_nodes, num_inputs, spike_decay=PIKE_DECAY_DEFAULT):
+    def __init__(self, num_nodes, num_inputs, spike_decay=SPIKE_DECAY_DEFAULT):
         """
         Initializes a SpikyLayer.
 
@@ -240,7 +240,7 @@ class SpikyNet:
     Combines multiple spiky hidden layers and one output layer.
     """
 
-    def __init__(self, input_size, hidden_sizes, output_size, spike_decay=PIKE_DECAY_DEFAULT):
+    def __init__(self, input_size, hidden_sizes, output_size, spike_decay=SPIKE_DECAY_DEFAULT):
         """
         Initializes network.
         
