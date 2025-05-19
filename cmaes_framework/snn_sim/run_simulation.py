@@ -18,7 +18,7 @@ sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 import snn.snn_controller as snn_control
-from snn.model_struct import PIKE_DECAY_DEFAULT
+from snn.model_struct import SPIKE_DECAY_DEFAULT
 from snn_sim.robot.morphology import Morphology
 
 # Simulation constants
@@ -83,7 +83,7 @@ def run(iters,
         vid_path=None,
         snn_logs=False,
         log_filename=None,
-        spike_decay=PIKE_DECAY_DEFAULT,
+        spike_decay=SPIKE_DECAY_DEFAULT,
         robot_config=ROBOT_FILENAME,
         snn_input_method=SNN_INPUT_METHOD_DEFAULT,
         scale_snn_inputs=DEFAULT_SCALE_SNN_INPUTS):

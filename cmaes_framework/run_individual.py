@@ -37,6 +37,7 @@ def run_indvididual(generation, mode, filename, logs, hidden_sizes):
         hidden_sizes (list): List of integers representing the number of neurons in each hidden layer.
     """
 
+    print(filename)
     # Make video directory if we're making a video.
     if mode in ["v", "b"]:
         os.makedirs(os.path.join("data", "videos"), exist_ok=True)
