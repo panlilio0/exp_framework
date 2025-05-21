@@ -86,22 +86,9 @@ def run(mode,
         scale_inputs (bool): Whether or not to scale SNN inputs.
     """
 
-
-    params_per_snn = 0
-    
-    layer_input_size = INPUT_SIZE
-    # Sum hidden layers
-    for hidden_size in hidden_sizes:
-        params_per_snn += (layer_input_size + 1) * hidden_size
-        layer_input_size = hidden_size
-
-    # Output layer
-    params_per_snn += (layer_input_size + 1) * OUTPUT_SIZE
-
-    # Shape of the genome
-    SNN_INPUT_SHAPE = NUM_ACTUATORS * params_per_snn
     robot_path = os.path.join(ROOT_DIR, "snn_sim", "robot", "world_data",
                               robot_config_path)
+
     NUM_ACTUATORS, SNN_INPUT_SHAPE = snn_controller.compute_genome_size(
         robot_path, snn_input_method, HIDDEN_SIZES)
 
