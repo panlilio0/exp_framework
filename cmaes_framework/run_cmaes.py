@@ -47,8 +47,6 @@ DEFAULT_SCALE_SNN_INPUTS = True
 
 HIDDEN_SIZES = [2]
 
-OUTPUT_SIZE = 4
-
 VERBOSE = False
 
 # Index of genome & fitness in tuple
