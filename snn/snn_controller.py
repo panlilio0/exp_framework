@@ -22,7 +22,10 @@ _current_file = os.path.abspath(__file__)
 _project_root = os.path.dirname(os.path.dirname(_current_file))
 ROBOT_DATA_PATH = os.path.join(_project_root, "morpho_demo", "world_data",
                                "bestbot.json")
-
+# number of actuators for each of these robots. add to this dict if you add a morphology
+ACTUATOR_MAP = {"bestbot.json":8, "bigwormbot.json":19, "evopogo.json":9, "evostepper.json":10, 
+                "chargerbot2.json":8, "Ubot_soft.json":8, "sambot.json":4, "chargerbot.json":18, 
+                "radbot.json":16, "pentabot.json":14, "bluebot.json":22, "orangebot.json":22}
 
 def is_windows():
     """
@@ -70,10 +73,13 @@ class SNNController:
             
         """
 
-        robot_data = self._load_robot_file(robot_path)
+        # Commented out because it wasn't working
+        # robot_data = self._load_robot_file(robot_path)
+        # # Count actuators (types 3 and 4)
+        # self.num_snn = sum(1 for t in robot_data["types"] if t in [3, 4])
 
-        # Count actuators (types 3 and 4)
-        self.num_snn = sum(1 for t in robot_data["types"] if t in [3, 4])
+        robot_file = os.path.basename(robot_path)
+        self.num_snn = ACTUATOR_MAP[robot_file]
 
         # Initialize SNN with proper dimensions
         self.snns = [
