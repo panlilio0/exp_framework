@@ -7,11 +7,11 @@ and runs the specified number of instances one after another.
 import argparse
 from run_cmaes import run
 from datetime import datetime
-from snn.model_struct import PIKE_DECAY_DEFAULT
+from snn.model_struct import SPIKE_DECAY_DEFAULT
 
 
 def run_cmaes_instance(mode, gens, sigma, hidden_sizes, output_folder, 
-                       run_number, spike_decay=PIKE_DECAY_DEFAULT, robot_config_path=None):   
+                       run_number, spike_decay=SPIKE_DECAY_DEFAULT, robot_config_path=None):   
     """
     Wrapper to call the run() function from run_cmaes.py with provided parameters.
     """
@@ -37,13 +37,13 @@ if __name__ == "__main__":
                         help='Number of generations to run')
     parser.add_argument('--sigma', type=float, default=3,
                         help='Sigma value for CMA-ES')
-    parser.add_argument('--hidden_sizes', type=int, nargs='+', default=[2])
+    parser.add_argument('--hidden_sizes', type=int, nargs='+', default=[2,2])
     parser.add_argument('--exp_name', type=str, default=None,
                         help='Output folder for results')
     parser.add_argument('--runs', type=int, default=5,
                         help='Total number of CMA-ES runs to execute')
     parser.add_argument('--spike_decay', type=float,
-                        default=PIKE_DECAY_DEFAULT, help='Spike decay rate for neurons')
+                        default=SPIKE_DECAY_DEFAULT, help='Spike decay rate for neurons')
     parser.add_argument('--robot_config', type=str,
                         help='Robot config path', default="bestbot.json")
     args = parser.parse_args()

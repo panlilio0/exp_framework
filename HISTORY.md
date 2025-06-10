@@ -176,3 +176,8 @@ April 28th | Takumi
 April 29th | Thomas Breimer
 - Added infrastructure for alternative SNN input options
 - Added distance to all other actuators SNN input option
+
+## Additional Robot Morphologies
+June 10th | Hades Panlilio
+- added .json files for different robot morphologies
+- added support for running different robot morphologies
