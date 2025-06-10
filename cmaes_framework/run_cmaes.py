@@ -56,6 +56,9 @@ FITNESS_INDEX = 1
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 DATE_TIME = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
+ACTUATOR_MAP = {"bestbot.json":8, "bigwormbot.json":19, "evopogo.json":9, "evostepper.json":10, 
+                "chargerbot2.json":8, "Ubot_soft.json":8, "sambot.json":4, "chargerbot.json":18, 
+                "radbot.json":16, "pentabot.json":14, "bluebot.json":22, "orangebot.json":22}
 
 def run(mode,
         gens,
@@ -91,6 +94,8 @@ def run(mode,
 
     NUM_ACTUATORS, SNN_INPUT_SHAPE = snn_controller.compute_genome_size(
         robot_path, snn_input_method, HIDDEN_SIZES)
+
+    NUM_ACTUATORS = ACTUATOR_MAP[robot_config_path]
 
     # Mean genome
     MEAN_ARRAY = [0.0] * SNN_INPUT_SHAPE
@@ -229,7 +234,7 @@ if __name__ == "__main__":
     parser.add_argument('--hidden_sizes',
                         type=int,
                         nargs='+',
-                        default=[2],
+                        default=[2, 2],
                         help='list of hidden layer sizes')
     args = parser.parse_args()
 
